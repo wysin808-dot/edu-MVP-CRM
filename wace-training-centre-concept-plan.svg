@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1080" viewBox="0 0 1600 1080">
+  <defs>
+    <style>
+      .bg { fill: #f7f7f3; }
+      .title { font: 700 30px "Avenir Next", "Helvetica Neue", Arial, sans-serif; fill: #101010; }
+      .subtitle { font: 500 15px "Avenir Next", "Helvetica Neue", Arial, sans-serif; fill: #555; }
+      .room { fill: #ffffff; stroke: #111; stroke-width: 3; rx: 14; ry: 14; }
+      .zoneA { fill: #f5f1e8; }
+      .zoneB { fill: #eef6fb; }
+      .zoneC { fill: #edf5ef; }
+      .zoneD { fill: #f8f2f9; }
+      .corridor { fill: #ecebe5; stroke: #cfcbbf; stroke-width: 2; }
+      .core { fill: #e6e6e6; stroke: #111; stroke-width: 3; }
+      .label { font: 700 22px "Avenir Next", "Helvetica Neue", Arial, sans-serif; fill: #111; text-anchor: middle; }
+      .small { font: 500 15px "Avenir Next", "Helvetica Neue", Arial, sans-serif; fill: #444; text-anchor: middle; }
+      .tiny { font: 500 13px "Avenir Next", "Helvetica Neue", Arial, sans-serif; fill: #5a5a5a; }
+      .note { font: 600 14px "Avenir Next", "Helvetica Neue", Arial, sans-serif; fill: #444; }
+      .wall-note { font: 600 12px "Avenir Next", "Helvetica Neue", Arial, sans-serif; fill: #7a5e23; }
+      .outline { fill: none; stroke: #111; stroke-width: 8; }
+      .column { fill: #8c6a2e; stroke: #5f4619; stroke-width: 2; rx: 6; ry: 6; }
+      .door { fill: none; stroke: #888; stroke-width: 3; stroke-dasharray: 8 8; }
+      .operable { fill: none; stroke: #295d9b; stroke-width: 4; stroke-dasharray: 10 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1600" height="1080" />
+
+  <text x="120" y="78" class="title">WACE Training Centre - Concept Plan</text>
+  <text x="120" y="108" class="subtitle">8 classrooms, brighter flexible learning spaces, simplified office ratio, columns wrapped into walls / joinery</text>
+
+  <path class="outline" d="M150 140 L1425 185 L1490 900 L260 940 L175 740 L150 140 Z" />
+
+  <path class="corridor" d="M440 398 L1220 398 L1220 445 L1285 445 L1285 640 L1110 640 L1110 618 L430 618 L430 398 Z" />
+
+  <rect class="room zoneA" x="188" y="175" width="250" height="235" rx="18" ry="18" />
+  <text x="313" y="260" class="label">Admin + Teachers</text>
+  <text x="313" y="292" class="small">workroom / print / prep</text>
+
+  <rect class="room zoneA" x="195" y="470" width="235" height="220" rx="18" ry="18" />
+  <text x="312" y="548" class="label">Reception</text>
+  <text x="312" y="580" class="small">front desk + waiting</text>
+  <text x="312" y="603" class="small">brand wall / parent lounge</text>
+
+  <rect class="room zoneA" x="260" y="735" width="170" height="135" rx="18" ry="18" />
+  <text x="345" y="795" class="label">Store</text>
+  <text x="345" y="825" class="small">exam archive</text>
+
+  <rect class="room zoneB" x="470" y="180" width="230" height="210" rx="18" ry="18" />
+  <text x="585" y="257" class="label">Classroom 1</text>
+  <text x="585" y="289" class="small">18-20 pax</text>
+
+  <rect class="room zoneB" x="708" y="180" width="215" height="210" rx="18" ry="18" />
+  <text x="815" y="257" class="label">Classroom 2</text>
+  <text x="815" y="289" class="small">16-18 pax</text>
+
+  <rect class="room zoneB" x="930" y="180" width="285" height="210" rx="18" ry="18" />
+  <text x="1072" y="257" class="label">Classroom 3</text>
+  <text x="1072" y="289" class="small">22-24 pax</text>
+
+  <rect class="room zoneC" x="1225" y="180" width="175" height="210" rx="18" ry="18" />
+  <text x="1312" y="245" class="label">Counselling</text>
+  <text x="1312" y="278" class="small">2 consult rooms</text>
+  <text x="1312" y="301" class="small">+ principal room</text>
+  <line x1="1312" y1="310" x2="1312" y2="388" class="door" />
+
+  <rect class="room zoneB" x="520" y="440" width="180" height="170" rx="18" ry="18" />
+  <text x="610" y="505" class="label">Classroom 4</text>
+  <text x="610" y="537" class="small">12-14 pax</text>
+
+  <rect class="room zoneB" x="708" y="440" width="180" height="170" rx="18" ry="18" />
+  <text x="798" y="505" class="label">Classroom 5</text>
+  <text x="798" y="537" class="small">10-12 pax</text>
+
+  <rect class="room zoneB" x="896" y="440" width="180" height="170" rx="18" ry="18" />
+  <text x="986" y="505" class="label">Classroom 6</text>
+  <text x="986" y="537" class="small">10-12 pax</text>
+
+  <rect class="room zoneC" x="1084" y="440" width="145" height="170" rx="18" ry="18" />
+  <text x="1156" y="500" class="label">Interview</text>
+  <text x="1156" y="532" class="small">speaking /</text>
+  <text x="1156" y="555" class="small">1-on-1 room</text>
+
+  <rect class="room zoneC" x="1238" y="440" width="182" height="170" rx="18" ry="18" />
+  <text x="1329" y="497" class="label">Breakout</text>
+  <text x="1329" y="529" class="small">self-study +</text>
+  <text x="1329" y="552" class="small">discussion zone</text>
+
+  <rect class="room zoneB" x="470" y="650" width="220" height="180" rx="18" ry="18" />
+  <text x="580" y="724" class="label">Classroom 7</text>
+  <text x="580" y="756" class="small">12-16 pax</text>
+
+  <rect class="room zoneB" x="698" y="650" width="220" height="180" rx="18" ry="18" />
+  <text x="808" y="724" class="label">Classroom 8</text>
+  <text x="808" y="756" class="small">12-16 pax</text>
+  <line x1="698" y1="650" x2="698" y2="830" class="operable" />
+  <text x="707" y="845" class="wall-note">operable wall for merge / split</text>
+
+  <rect class="room zoneC" x="926" y="650" width="160" height="180" rx="18" ry="18" />
+  <text x="1006" y="715" class="label">Student</text>
+  <text x="1006" y="747" class="label">Lounge</text>
+  <text x="1006" y="779" class="small">club / project room</text>
+
+  <rect class="room zoneA" x="1094" y="650" width="140" height="180" rx="18" ry="18" />
+  <text x="1164" y="723" class="label">Store</text>
+  <text x="1164" y="755" class="small">cleaning / AV</text>
+
+  <rect class="room zoneD" x="1242" y="650" width="205" height="225" rx="18" ry="18" />
+  <text x="1344" y="726" class="label">Multipurpose</text>
+  <text x="1344" y="758" class="label">Hall</text>
+  <text x="1344" y="790" class="small">workshop / events /</text>
+  <text x="1344" y="813" class="small">parent briefings</text>
+
+  <rect class="core" x="500" y="852" width="185" height="74" rx="18" ry="18" />
+  <text x="592" y="895" class="label">Lift / Stair</text>
+
+  <rect class="core" x="696" y="852" width="160" height="74" rx="18" ry="18" />
+  <text x="776" y="895" class="label">Smoke Lobby</text>
+
+  <rect class="core" x="868" y="852" width="158" height="74" rx="18" ry="18" />
+  <text x="947" y="895" class="label">Female WC</text>
+
+  <rect class="core" x="1038" y="852" width="165" height="74" rx="18" ry="18" />
+  <text x="1120" y="895" class="label">Male WC</text>
+
+  <rect class="column" x="430" y="340" width="28" height="28" />
+  <rect class="column" x="670" y="170" width="28" height="28" />
+  <rect class="column" x="885" y="352" width="28" height="28" />
+  <rect class="column" x="1030" y="350" width="28" height="28" />
+  <rect class="column" x="1192" y="328" width="28" height="28" />
+  <rect class="column" x="740" y="608" width="28" height="28" />
+  <rect class="column" x="972" y="608" width="28" height="28" />
+  <rect class="column" x="1222" y="630" width="28" height="28" />
+
+  <line x1="458" y1="354" x2="520" y2="330" class="door" />
+  <text x="524" y="326" class="wall-note">wrap into partition / joinery</text>
+
+  <line x1="1248" y1="644" x2="1320" y2="625" class="door" />
+  <text x="1325" y="620" class="wall-note">box column into bench or display</text>
+
+  <text x="196" y="975" class="note">Planning logic:</text>
+  <text x="196" y="999" class="tiny">1. Keep 8 teaching rooms for daily classes while reducing enclosed office area.</text>
+  <text x="196" y="1021" class="tiny">2. Use Breakout + Multipurpose Hall as the two main flexible activity spaces.</text>
+  <text x="196" y="1043" class="tiny">3. Treat exposed columns as part of walls, whiteboard bands, storage, benches, or display joinery.</text>
+
+  <text x="1165" y="980" class="note">Design direction:</text>
+  <text x="1165" y="1004" class="tiny">bright white walls / pale grey flooring / light oak / glass fronts / 4000K linear lighting</text>
+</svg>

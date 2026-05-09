@@ -1,0 +1,202 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1840" height="1260" viewBox="0 0 1840 1260">
+  <defs>
+    <style>
+      .bg { fill: #f7f6f1; }
+      .title { font: 700 36px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #111; }
+      .subtitle { font: 500 16px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #555; }
+      .outline { fill: none; stroke: #111; stroke-width: 8; }
+      .room { fill: #fff; stroke: #111; stroke-width: 4; rx: 18; ry: 18; }
+      .classroom { fill: #edf5fb; }
+      .public { fill: #eef6ef; }
+      .front { fill: #f5efe5; }
+      .multi { fill: #f8f1f3; }
+      .corridor { fill: #eceae3; stroke: #d4d0c3; stroke-width: 2; }
+      .core { fill: #e7e7e7; stroke: #111; stroke-width: 3; rx: 14; ry: 14; }
+      .label { font: 700 24px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #111; text-anchor: middle; }
+      .meta { font: 500 15px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #555; text-anchor: middle; }
+      .small { font: 600 14px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #444; text-anchor: middle; }
+      .column { fill: #9a7731; stroke: #6d531f; stroke-width: 2; rx: 6; ry: 6; }
+      .columnText { font: 700 12px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #fff; text-anchor: middle; }
+      .noteTitle { font: 700 18px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #111; }
+      .note { font: 500 15px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #444; }
+      .door { fill: none; stroke: #888; stroke-width: 3; stroke-dasharray: 8 7; }
+      .operable { fill: none; stroke: #2d5e9b; stroke-width: 4; stroke-dasharray: 10 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1840" height="1260" />
+
+  <text x="110" y="76" class="title">WACE 培训中心公共空间加强版平面</text>
+  <text x="110" y="106" class="subtitle">按原始柱网与核心筒重组：修正电梯开门方向，完整标注柱位与各房间面积，并增加公共学习与活动空间</text>
+
+  <path class="outline" d="M160 150 L1495 194 L1562 1002 L275 1044 L182 800 L160 150 Z" />
+
+  <path class="corridor" d="M452 412 L1245 412 L1245 458 L1318 458 L1318 652 L1128 652 L1128 632 L448 632 L448 412 Z" />
+  <text x="882" y="530" class="label">公共学习街</text>
+  <text x="882" y="558" class="meta">约 105㎡</text>
+  <text x="882" y="582" class="meta">等候 / 展示 / 临时自习 / 课间交流</text>
+
+  <rect class="room public" x="205" y="188" width="250" height="218" rx="18" ry="18" />
+  <text x="330" y="268" class="label">开放资源区</text>
+  <text x="330" y="298" class="meta">约 46㎡</text>
+  <text x="330" y="322" class="meta">图书展示 / 开放学习 / 家长休息</text>
+
+  <rect class="room classroom" x="488" y="192" width="205" height="210" rx="18" ry="18" />
+  <text x="590" y="264" class="label">教室 1</text>
+  <text x="590" y="294" class="meta">约 24㎡</text>
+  <text x="590" y="318" class="meta">14-16 人</text>
+
+  <rect class="room classroom" x="702" y="192" width="205" height="210" rx="18" ry="18" />
+  <text x="804" y="264" class="label">教室 2</text>
+  <text x="804" y="294" class="meta">约 24㎡</text>
+  <text x="804" y="318" class="meta">14-16 人</text>
+
+  <rect class="room classroom" x="916" y="192" width="290" height="210" rx="18" ry="18" />
+  <text x="1061" y="264" class="label">教室 3</text>
+  <text x="1061" y="294" class="meta">约 34㎡</text>
+  <text x="1061" y="318" class="meta">18-20 人</text>
+
+  <rect class="room front" x="1218" y="192" width="205" height="210" rx="18" ry="18" />
+  <text x="1320" y="254" class="label">教务 / 咨询</text>
+  <text x="1320" y="284" class="meta">约 28㎡</text>
+  <text x="1320" y="308" class="meta">2 间咨询室 + 1 间小办公室</text>
+  <text x="1320" y="332" class="meta">压缩封闭办公，释放公共面积</text>
+
+  <rect class="room front" x="212" y="458" width="228" height="220" rx="18" ry="18" />
+  <text x="326" y="540" class="label">前台接待</text>
+  <text x="326" y="570" class="meta">约 44㎡</text>
+  <text x="326" y="594" class="meta">接待 / 品牌墙 / 家长等候</text>
+
+  <rect class="room classroom" x="542" y="456" width="176" height="166" rx="18" ry="18" />
+  <text x="630" y="514" class="label">教室 4</text>
+  <text x="630" y="542" class="meta">约 24㎡</text>
+  <text x="630" y="566" class="meta">12-14 人</text>
+
+  <rect class="room classroom" x="728" y="456" width="172" height="166" rx="18" ry="18" />
+  <text x="814" y="514" class="label">教室 5</text>
+  <text x="814" y="542" class="meta">约 22㎡</text>
+  <text x="814" y="566" class="meta">10-12 人</text>
+
+  <rect class="room classroom" x="910" y="456" width="168" height="166" rx="18" ry="18" />
+  <text x="994" y="514" class="label">教室 6</text>
+  <text x="994" y="542" class="meta">约 20㎡</text>
+  <text x="994" y="566" class="meta">10-12 人</text>
+
+  <rect class="room public" x="1088" y="436" width="350" height="190" rx="18" ry="18" />
+  <text x="1263" y="504" class="label">开放讨论区</text>
+  <text x="1263" y="534" class="meta">约 58㎡</text>
+  <text x="1263" y="558" class="meta">小组讨论 / 临时自习 / 等候交流</text>
+
+  <rect class="room front" x="278" y="758" width="172" height="136" rx="18" ry="18" />
+  <text x="364" y="812" class="label">考试资料库</text>
+  <text x="364" y="840" class="meta">约 18㎡</text>
+  <text x="364" y="864" class="meta">试卷 / 清洁 / 设备</text>
+
+  <rect class="room classroom" x="490" y="674" width="198" height="182" rx="18" ry="18" />
+  <text x="589" y="738" class="label">教室 7</text>
+  <text x="589" y="768" class="meta">约 30㎡</text>
+  <text x="589" y="792" class="meta">12-16 人</text>
+
+  <rect class="room classroom" x="698" y="674" width="220" height="182" rx="18" ry="18" />
+  <text x="808" y="730" class="label">可分合研讨室</text>
+  <text x="808" y="760" class="meta">约 42㎡</text>
+  <text x="808" y="784" class="meta">16-20 人 / 讲座 / Mock 考前说明</text>
+  <line x1="810" y1="674" x2="810" y2="856" class="operable" />
+  <text x="808" y="882" class="small">可移动隔墙，可与公共区联动</text>
+
+  <rect class="room public" x="928" y="674" width="250" height="182" rx="18" ry="18" />
+  <text x="1053" y="738" class="label">学生共享空间</text>
+  <text x="1053" y="768" class="meta">约 70㎡</text>
+  <text x="1053" y="792" class="meta">社团 / 项目展示 / 自习 / 轻沙发</text>
+
+  <rect class="room multi" x="1188" y="662" width="276" height="230" rx="18" ry="18" />
+  <text x="1326" y="734" class="label">多功能活动厅</text>
+  <text x="1326" y="764" class="meta">约 86㎡</text>
+  <text x="1326" y="788" class="meta">公开课 / 家长会 / Workshop / Open Day</text>
+
+  <!-- Bottom core with corrected lift opening direction -->
+  <rect class="core" x="420" y="872" width="58" height="70" rx="10" ry="10" />
+  <rect class="core" x="485" y="872" width="58" height="70" rx="10" ry="10" />
+  <rect x="430" y="872" width="38" height="8" fill="#fff" />
+  <rect x="495" y="872" width="38" height="8" fill="#fff" />
+  <text x="449" y="914" class="meta">Lift B</text>
+  <text x="514" y="914" class="meta">Lift A</text>
+  <text x="482" y="966" class="small">电梯门朝上开启，已修正</text>
+
+  <rect class="core" x="548" y="856" width="170" height="94" rx="16" ry="16" />
+  <text x="633" y="910" class="label">楼梯 1</text>
+
+  <rect class="core" x="730" y="888" width="70" height="62" rx="14" ry="14" />
+  <text x="765" y="926" class="meta">前室</text>
+
+  <rect class="core" x="810" y="872" width="165" height="78" rx="16" ry="16" />
+  <text x="892" y="918" class="dim">女厕</text>
+
+  <rect class="core" x="985" y="856" width="175" height="94" rx="16" ry="16" />
+  <text x="1072" y="910" class="label">男厕</text>
+
+  <rect class="core" x="1118" y="456" width="114" height="72" rx="14" ry="14" />
+  <text x="1175" y="500" class="meta">设备 / 茶水</text>
+
+  <rect class="core" x="1168" y="302" width="188" height="124" rx="16" ry="16" opacity="0"/>
+
+  <rect class="core" x="1138" y="310" width="182" height="110" rx="16" ry="16" opacity="0"/>
+
+  <rect class="core" x="1132" y="452" width="0" height="0" opacity="0"/>
+
+  <rect class="core" x="1160" y="454" width="0" height="0" opacity="0"/>
+
+  <rect class="core" x="1156" y="310" width="0" height="0" opacity="0"/>
+
+  <rect class="core" x="1142" y="310" width="0" height="0" opacity="0"/>
+
+  <rect class="core" x="1132" y="308" width="0" height="0" opacity="0"/>
+
+  <rect class="core" x="1168" y="456" width="0" height="0" opacity="0"/>
+
+  <rect class="core" x="1160" y="310" width="0" height="0" opacity="0"/>
+
+  <rect class="core" x="1174" y="300" width="228" height="150" rx="16" ry="16" fill="#efefef" stroke="#111" stroke-width="3" />
+  <text x="1288" y="350" class="label">楼梯 2 / 后勤核心</text>
+  <text x="1288" y="380" class="meta">保留原位</text>
+  <text x="1288" y="404" class="meta">含后勤、设备与次入口</text>
+
+  <!-- Complete column set -->
+  <rect class="column" x="333" y="258" width="28" height="28" />
+  <text x="347" y="276" class="columnText">C1</text>
+
+  <rect class="column" x="642" y="169" width="28" height="28" />
+  <text x="656" y="187" class="columnText">C2</text>
+
+  <rect class="column" x="897" y="178" width="28" height="28" />
+  <text x="911" y="196" class="columnText">C3</text>
+
+  <rect class="column" x="1150" y="193" width="28" height="28" />
+  <text x="1164" y="211" class="columnText">C4</text>
+
+  <rect class="column" x="378" y="533" width="28" height="28" />
+  <text x="392" y="551" class="columnText">C5</text>
+
+  <rect class="column" x="682" y="524" width="28" height="28" />
+  <text x="696" y="542" class="columnText">C6</text>
+
+  <rect class="column" x="404" y="701" width="28" height="28" />
+  <text x="418" y="719" class="columnText">C7</text>
+
+  <rect class="column" x="694" y="703" width="28" height="28" />
+  <text x="708" y="721" class="columnText">C8</text>
+
+  <rect class="column" x="894" y="704" width="28" height="28" />
+  <text x="908" y="722" class="columnText">C9</text>
+
+  <rect class="column" x="1144" y="706" width="28" height="28" />
+  <text x="1158" y="724" class="columnText">C10</text>
+
+  <rect class="column" x="1363" y="704" width="28" height="28" />
+  <text x="1377" y="722" class="columnText">C11</text>
+
+  <text x="110" y="1110" class="noteTitle">设计调整</text>
+  <text x="110" y="1142" class="note">1. 从上一版 8 个偏满的教室，调整为 7 个常规教室 + 1 个可分合研讨室，换取更大的公共学习街、开放讨论区和学生共享空间。</text>
+  <text x="110" y="1170" class="note">2. 柱位 C1-C11 已完整标注，建议全部结合隔墙、矮柜、白板或展示柜一起包柱处理。</text>
+  <text x="110" y="1198" class="note">3. 电梯门已按你反馈改为朝上开向内侧公共区，避免与上一版方向相反。</text>
+</svg>

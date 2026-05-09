@@ -1,0 +1,248 @@
+/*
+  Spatial tuning layer for the BCI site.
+  This file intentionally sits after the generated bundle CSS so the original
+  app can stay intact while layout rhythm is improved.
+*/
+
+:root {
+  --bci-page-gutter: clamp(18px, 4vw, 56px);
+  --bci-content-width: 1160px;
+  --bci-section-y: clamp(48px, 7vw, 88px);
+  --bci-section-y-tight: clamp(36px, 5vw, 64px);
+  --bci-card-gap: clamp(18px, 2.6vw, 32px);
+}
+
+html {
+  scroll-padding-top: 88px;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+#root {
+  min-width: 0;
+}
+
+#root main,
+#root [data-loc^="client/src/pages/"] {
+  min-width: 0;
+}
+
+#root section {
+  padding-block: var(--bci-section-y) !important;
+}
+
+#root section:first-of-type,
+#root [data-loc*="Hero"],
+#root [data-loc*="hero"] {
+  padding-block: clamp(72px, 10vw, 120px) clamp(52px, 8vw, 92px) !important;
+}
+
+#root section + section {
+  margin-top: 0 !important;
+}
+
+#root section > div,
+#root header > div,
+#root footer > div,
+#root main > div[class*="max-w-"],
+#root [class*="container"] {
+  max-width: var(--bci-content-width) !important;
+}
+
+#root section > div,
+#root header > div,
+#root footer > div {
+  width: min(100% - (var(--bci-page-gutter) * 2), var(--bci-content-width));
+  margin-inline: auto;
+}
+
+#root [class*="min-h-screen"] {
+  min-height: min(760px, 100svh) !important;
+}
+
+#root [class*="py-24"],
+#root [class*="py-20"],
+#root [class*="py-16"] {
+  padding-top: var(--bci-section-y) !important;
+  padding-bottom: var(--bci-section-y) !important;
+}
+
+#root [class*="gap-12"],
+#root [class*="gap-10"],
+#root [class*="gap-8"] {
+  gap: var(--bci-card-gap) !important;
+}
+
+#root [class*="space-y-8"] > :not([hidden]) ~ :not([hidden]),
+#root [class*="space-y-10"] > :not([hidden]) ~ :not([hidden]),
+#root [class*="space-y-12"] > :not([hidden]) ~ :not([hidden]) {
+  margin-top: clamp(22px, 3vw, 36px) !important;
+}
+
+#root h1 {
+  max-width: 13ch;
+  text-wrap: balance;
+  line-height: 0.96 !important;
+}
+
+#root h2,
+#root h3 {
+  text-wrap: balance;
+}
+
+#root p {
+  text-wrap: pretty;
+}
+
+#root img,
+#root video {
+  max-width: 100%;
+  height: auto;
+}
+
+#root header img {
+  width: auto !important;
+  max-width: clamp(92px, 12vw, 148px) !important;
+  max-height: clamp(44px, 6vw, 64px) !important;
+  object-fit: contain !important;
+}
+
+#root header a:has(img) {
+  min-height: 0;
+  align-items: center;
+}
+
+#root header [class*="h-16"],
+#root header [class*="h-20"],
+#root header [class*="h-24"] {
+  height: auto !important;
+  min-height: 72px;
+}
+
+#root [class*="rounded-2xl"],
+#root [class*="rounded-3xl"] {
+  border-radius: 16px !important;
+}
+
+#root [class*="p-10"],
+#root [class*="p-12"] {
+  padding: clamp(24px, 4vw, 40px) !important;
+}
+
+#root [class*="p-8"] {
+  padding: clamp(20px, 3vw, 32px) !important;
+}
+
+#root [class*="grid-cols-3"],
+#root [class*="grid-cols-4"] {
+  align-items: stretch;
+}
+
+#root [class*="grid"] > article,
+#root [class*="grid"] > div {
+  min-width: 0;
+}
+
+#root main a,
+#root main button {
+  min-height: 42px;
+}
+
+#root footer {
+  padding-block: var(--bci-section-y-tight) !important;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --bci-page-gutter: clamp(16px, 5vw, 28px);
+    --bci-section-y: clamp(40px, 8vw, 64px);
+    --bci-card-gap: 20px;
+  }
+
+  #root section:first-of-type,
+  #root [data-loc*="Hero"],
+  #root [data-loc*="hero"] {
+    padding-block: 64px 44px !important;
+  }
+
+  #root [class*="grid-cols-2"],
+  #root [class*="grid-cols-3"],
+  #root [class*="grid-cols-4"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  #root h1 {
+    max-width: 12ch;
+  }
+}
+
+@media (max-width: 640px) {
+  html {
+    scroll-padding-top: 72px;
+  }
+
+  #root section > div,
+  #root header > div,
+  #root footer > div {
+    width: min(100% - 32px, var(--bci-content-width));
+  }
+
+  #root section {
+    padding-block: 40px !important;
+  }
+
+  #root [class*="py-24"],
+  #root [class*="py-20"],
+  #root [class*="py-16"] {
+    padding-top: 44px !important;
+    padding-bottom: 44px !important;
+  }
+
+  #root [class*="px-8"],
+  #root [class*="px-10"],
+  #root [class*="px-12"] {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  #root [class*="gap-6"],
+  #root [class*="gap-8"],
+  #root [class*="gap-10"],
+  #root [class*="gap-12"] {
+    gap: 18px !important;
+  }
+
+  #root h1 {
+    max-width: 100%;
+    font-size: clamp(42px, 13vw, 64px) !important;
+  }
+
+  #root h2 {
+    font-size: clamp(30px, 9vw, 44px) !important;
+  }
+
+  #root header img {
+    max-width: 104px !important;
+    max-height: 48px !important;
+  }
+
+  #root header [class*="h-16"],
+  #root header [class*="h-20"],
+  #root header [class*="h-24"] {
+    min-height: 64px;
+  }
+
+  #root p,
+  #root li {
+    line-height: 1.65 !important;
+  }
+
+  #root a,
+  #root button {
+    width: auto;
+    max-width: 100%;
+    white-space: normal;
+  }
+}

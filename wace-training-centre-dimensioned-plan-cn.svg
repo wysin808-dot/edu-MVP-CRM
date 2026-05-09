@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1220" viewBox="0 0 1800 1220">
+  <defs>
+    <style>
+      .bg { fill: #f7f6f1; }
+      .title { font: 700 34px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #111; }
+      .subtitle { font: 500 16px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #555; }
+      .room { fill: #ffffff; stroke: #111; stroke-width: 4; rx: 16; ry: 16; }
+      .zoneA { fill: #f4efe4; }
+      .zoneB { fill: #edf5fb; }
+      .zoneC { fill: #eef6ef; }
+      .zoneD { fill: #f8f0f2; }
+      .corridor { fill: #eceae3; stroke: #d4d0c3; stroke-width: 2; }
+      .core { fill: #e7e7e7; stroke: #111; stroke-width: 3; rx: 16; ry: 16; }
+      .outline { fill: none; stroke: #111; stroke-width: 8; }
+      .label { font: 700 24px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #111; text-anchor: middle; }
+      .dim { font: 600 16px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #444; text-anchor: middle; }
+      .meta { font: 500 14px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #666; text-anchor: middle; }
+      .noteTitle { font: 700 18px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #111; }
+      .note { font: 500 15px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #444; }
+      .wallNote { font: 600 13px "PingFang SC", "Microsoft YaHei", Arial, sans-serif; fill: #7b5d20; }
+      .column { fill: #9a7731; stroke: #6d531f; stroke-width: 2; rx: 6; ry: 6; }
+      .operable { fill: none; stroke: #2d5e9b; stroke-width: 4; stroke-dasharray: 10 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1800" height="1220" />
+
+  <text x="110" y="78" class="title">WACE 培训中心概念尺寸平面图</text>
+  <text x="110" y="108" class="subtitle">8 间教室 + 2 个灵活活动区 + 精简办公，柱子建议并入隔墙、柜体或展示位</text>
+
+  <path class="outline" d="M160 150 L1485 195 L1555 980 L275 1020 L180 800 L160 150 Z" />
+  <path class="corridor" d="M460 405 L1240 405 L1240 452 L1305 452 L1305 650 L1128 650 L1128 628 L452 628 L452 405 Z" />
+
+  <rect class="room zoneA" x="205" y="190" width="250" height="235" rx="18" ry="18" />
+  <text x="330" y="270" class="label">教务 / 教师区</text>
+  <text x="330" y="302" class="dim">约 9.7m x 9.1m</text>
+  <text x="330" y="328" class="meta">约 88㎡</text>
+
+  <rect class="room zoneA" x="212" y="485" width="235" height="220" rx="18" ry="18" />
+  <text x="329" y="565" class="label">前台接待</text>
+  <text x="329" y="597" class="dim">约 6.3m x 5.9m</text>
+  <text x="329" y="623" class="meta">约 37㎡</text>
+
+  <rect class="room zoneA" x="280" y="750" width="170" height="135" rx="18" ry="18" />
+  <text x="365" y="806" class="label">考试库房</text>
+  <text x="365" y="834" class="dim">约 5.3m x 4.2m</text>
+  <text x="365" y="858" class="meta">约 22㎡</text>
+
+  <rect class="room zoneB" x="488" y="195" width="230" height="210" rx="18" ry="18" />
+  <text x="603" y="262" class="label">教室 1</text>
+  <text x="603" y="292" class="dim">约 4.5m x 6.4m</text>
+  <text x="603" y="318" class="meta">29㎡ / 18-20 人</text>
+
+  <rect class="room zoneB" x="726" y="195" width="215" height="210" rx="18" ry="18" />
+  <text x="833" y="262" class="label">教室 2</text>
+  <text x="833" y="292" class="dim">约 4.4m x 6.1m</text>
+  <text x="833" y="318" class="meta">27㎡ / 16-18 人</text>
+
+  <rect class="room zoneB" x="948" y="195" width="285" height="210" rx="18" ry="18" />
+  <text x="1090" y="262" class="label">教室 3</text>
+  <text x="1090" y="292" class="dim">约 7.7m x 5.7m</text>
+  <text x="1090" y="318" class="meta">44㎡ / 22-24 人</text>
+
+  <rect class="room zoneC" x="1243" y="195" width="175" height="210" rx="18" ry="18" />
+  <text x="1330" y="255" class="label">咨询区</text>
+  <text x="1330" y="285" class="dim">约 5.4m x 6.5m</text>
+  <text x="1330" y="311" class="meta">约 35㎡</text>
+  <text x="1330" y="334" class="meta">2 间咨询室 + 1 间校长室</text>
+
+  <rect class="room zoneB" x="538" y="447" width="180" height="170" rx="18" ry="18" />
+  <text x="628" y="506" class="label">教室 4</text>
+  <text x="628" y="534" class="dim">约 4.5m x 6.0m</text>
+  <text x="628" y="558" class="meta">27㎡ / 12-14 人</text>
+
+  <rect class="room zoneB" x="726" y="447" width="180" height="170" rx="18" ry="18" />
+  <text x="816" y="506" class="label">教室 5</text>
+  <text x="816" y="534" class="dim">约 4.0m x 5.5m</text>
+  <text x="816" y="558" class="meta">22㎡ / 10-12 人</text>
+
+  <rect class="room zoneB" x="914" y="447" width="180" height="170" rx="18" ry="18" />
+  <text x="1004" y="506" class="label">教室 6</text>
+  <text x="1004" y="534" class="dim">约 3.6m x 5.5m</text>
+  <text x="1004" y="558" class="meta">20㎡ / 10-12 人</text>
+
+  <rect class="room zoneC" x="1102" y="447" width="145" height="170" rx="18" ry="18" />
+  <text x="1174" y="500" class="label">一对一室</text>
+  <text x="1174" y="528" class="dim">约 4.0m x 4.7m</text>
+  <text x="1174" y="552" class="meta">约 19㎡</text>
+
+  <rect class="room zoneC" x="1256" y="447" width="182" height="170" rx="18" ry="18" />
+  <text x="1347" y="500" class="label">自习讨论区</text>
+  <text x="1347" y="528" class="dim">约 5.8m x 5.4m</text>
+  <text x="1347" y="552" class="meta">约 31㎡</text>
+
+  <rect class="room zoneB" x="488" y="665" width="220" height="180" rx="18" ry="18" />
+  <text x="598" y="728" class="label">教室 7</text>
+  <text x="598" y="756" class="dim">约 6.1m x 5.0m</text>
+  <text x="598" y="780" class="meta">30㎡ / 12-16 人</text>
+
+  <rect class="room zoneB" x="716" y="665" width="220" height="180" rx="18" ry="18" />
+  <text x="826" y="728" class="label">教室 8</text>
+  <text x="826" y="756" class="dim">约 6.1m x 5.0m</text>
+  <text x="826" y="780" class="meta">30㎡ / 12-16 人</text>
+  <line x1="716" y1="665" x2="716" y2="845" class="operable" />
+  <text x="826" y="870" class="wallNote">可移动隔墙，可合并成大教室</text>
+
+  <rect class="room zoneC" x="944" y="665" width="160" height="180" rx="18" ry="18" />
+  <text x="1024" y="724" class="label">学生活动室</text>
+  <text x="1024" y="752" class="dim">约 6.0m x 6.7m</text>
+  <text x="1024" y="776" class="meta">约 40㎡</text>
+
+  <rect class="room zoneA" x="1112" y="665" width="140" height="180" rx="18" ry="18" />
+  <text x="1182" y="724" class="label">设备库</text>
+  <text x="1182" y="752" class="dim">约 2.3m x 3.0m</text>
+  <text x="1182" y="776" class="meta">约 7㎡</text>
+
+  <rect class="room zoneD" x="1260" y="665" width="205" height="225" rx="18" ry="18" />
+  <text x="1362" y="734" class="label">多功能活动厅</text>
+  <text x="1362" y="764" class="dim">约 7.8m x 8.6m</text>
+  <text x="1362" y="790" class="meta">约 67㎡</text>
+  <text x="1362" y="814" class="meta">公开课 / 家长会 / workshop</text>
+
+  <rect class="core" x="520" y="872" width="185" height="78" rx="18" ry="18" />
+  <text x="612" y="918" class="dim">电梯 / 楼梯</text>
+
+  <rect class="core" x="716" y="872" width="168" height="78" rx="18" ry="18" />
+  <text x="800" y="918" class="dim">前室</text>
+
+  <rect class="core" x="896" y="872" width="160" height="78" rx="18" ry="18" />
+  <text x="976" y="918" class="dim">女厕</text>
+
+  <rect class="core" x="1068" y="872" width="168" height="78" rx="18" ry="18" />
+  <text x="1152" y="918" class="dim">男厕</text>
+
+  <rect class="column" x="448" y="352" width="28" height="28" />
+  <rect class="column" x="690" y="180" width="28" height="28" />
+  <rect class="column" x="907" y="365" width="28" height="28" />
+  <rect class="column" x="1050" y="362" width="28" height="28" />
+  <rect class="column" x="1210" y="340" width="28" height="28" />
+  <rect class="column" x="760" y="620" width="28" height="28" />
+  <rect class="column" x="990" y="620" width="28" height="28" />
+  <rect class="column" x="1240" y="644" width="28" height="28" />
+
+  <text x="122" y="1082" class="noteTitle">说明</text>
+  <text x="122" y="1114" class="note">1. 本图为概念尺寸图，依据原始平面、现有房间面积和功能重组后的估算尺寸整理。</text>
+  <text x="122" y="1142" class="note">2. 尺寸标注以“约”为准，适合做方案沟通、家具容量判断和初步空间分配。</text>
+  <text x="122" y="1170" class="note">3. 正式施工前仍需现场复尺，并由 CAD / 室内设计师深化隔墙、门位、机电和消防。</text>
+</svg>
