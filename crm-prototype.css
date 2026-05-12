@@ -87,7 +87,20 @@ button {
 
 .nav-list {
   display: grid;
-  gap: 6px;
+  gap: 14px;
+}
+
+.nav-section {
+  display: grid;
+  gap: 5px;
+}
+
+.nav-label {
+  padding: 0 11px;
+  color: #9fafa6;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 .nav-item {
@@ -266,6 +279,13 @@ input {
   margin-bottom: 14px;
 }
 
+.role-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .compact-heading {
   margin-top: 18px;
 }
@@ -312,6 +332,48 @@ input {
   margin-bottom: 14px;
 }
 
+.workflow-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.workflow-step {
+  position: relative;
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.workflow-step span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  margin-bottom: 10px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.workflow-step strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.workflow-step p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .metric-card {
   padding: 14px;
 }
@@ -337,6 +399,10 @@ input {
 
 .today-workflow {
   margin-bottom: 18px;
+}
+
+.secondary-grid {
+  margin-top: 14px;
 }
 
 .panel {
@@ -403,6 +469,60 @@ input {
 .progress-list {
   display: grid;
   gap: 8px;
+}
+
+.quick-links {
+  display: grid;
+  gap: 8px;
+}
+
+.quick-link {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  text-align: left;
+}
+
+.quick-link:hover {
+  border-color: var(--brand);
+  background: #fff;
+}
+
+.quick-link strong,
+.quick-link span {
+  display: block;
+}
+
+.quick-link span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.priority-list {
+  display: grid;
+  gap: 8px;
+}
+
+.priority-list div {
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.priority-list strong,
+.priority-list span {
+  display: block;
+}
+
+.priority-list span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .progress-list div {
@@ -890,6 +1010,7 @@ textarea {
   }
 
   .metric-grid,
+  .workflow-strip,
   .content-cards,
   .knowledge-grid,
   .matrix-grid,
@@ -921,6 +1042,7 @@ textarea {
   }
 
   .metric-grid,
+  .workflow-strip,
   .content-cards,
   .knowledge-grid,
   .matrix-grid,

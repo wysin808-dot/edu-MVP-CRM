@@ -18,16 +18,31 @@
         </div>
 
         <nav class="nav-list" aria-label="主导航">
-          <button class="nav-item active" data-view="dashboard">工作台</button>
-          <button class="nav-item" data-view="publishing">今日发布</button>
-          <button class="nav-item" data-view="content">内容资产库</button>
-          <button class="nav-item" data-view="knowledge">真实资料库</button>
-          <button class="nav-item" data-view="ai">AI 内容库</button>
-          <button class="nav-item" data-view="persona">IP 矩阵</button>
-          <button class="nav-item" data-view="accounts">账号矩阵</button>
-          <button class="nav-item" data-view="crm">招生 CRM</button>
-          <button class="nav-item" data-view="analytics">数据复盘</button>
-          <button class="nav-item" data-view="team">团队与权限</button>
+          <div class="nav-section">
+            <span class="nav-label">今日运营</span>
+            <button class="nav-item active" data-view="dashboard">工作台</button>
+            <button class="nav-item" data-view="publishing">今日发布</button>
+          </div>
+          <div class="nav-section">
+            <span class="nav-label">内容生产</span>
+            <button class="nav-item" data-view="content">内容资产库</button>
+            <button class="nav-item" data-view="knowledge">真实资料库</button>
+            <button class="nav-item" data-view="ai">AI 内容库</button>
+          </div>
+          <div class="nav-section">
+            <span class="nav-label">矩阵资产</span>
+            <button class="nav-item" data-view="persona">IP 矩阵</button>
+            <button class="nav-item" data-view="accounts">账号矩阵</button>
+          </div>
+          <div class="nav-section">
+            <span class="nav-label">转化复盘</span>
+            <button class="nav-item" data-view="crm">招生 CRM</button>
+            <button class="nav-item" data-view="analytics">数据复盘</button>
+          </div>
+          <div class="nav-section">
+            <span class="nav-label">系统</span>
+            <button class="nav-item" data-view="team">团队与权限</button>
+          </div>
         </nav>
 
         <div class="sidebar-note">
@@ -65,8 +80,39 @@
               <h2 id="role-title">运营人员工作台</h2>
               <p id="role-summary">负责账号内容生产、提交审核、发布归档和数据回填。</p>
             </div>
-            <button class="primary-button action-button" type="button" data-action="new-content">新建内容</button>
+            <div class="role-actions">
+              <button class="ghost-button action-button" type="button" data-action="upload-post">上传发布</button>
+              <button class="primary-button action-button" type="button" data-action="new-content">新建内容</button>
+            </div>
           </div>
+
+          <section class="workflow-strip" aria-label="系统主流程">
+            <article class="workflow-step">
+              <span>01</span>
+              <strong>真实资料</strong>
+              <p>WACE、录取、签证、学费和案例。</p>
+            </article>
+            <article class="workflow-step">
+              <span>02</span>
+              <strong>AI 生成</strong>
+              <p>Prompt、标题、脚本和改写版本。</p>
+            </article>
+            <article class="workflow-step">
+              <span>03</span>
+              <strong>内容资产</strong>
+              <p>最终文案、素材、CTA 和审核状态。</p>
+            </article>
+            <article class="workflow-step">
+              <span>04</span>
+              <strong>矩阵发布</strong>
+              <p>按 IP、账号、平台归档实际发布。</p>
+            </article>
+            <article class="workflow-step">
+              <span>05</span>
+              <strong>招生转化</strong>
+              <p>线索来源、跟进阶段和月度复盘。</p>
+            </article>
+          </section>
 
           <div class="metric-grid">
             <article class="metric-card">
@@ -95,7 +141,7 @@
             <section class="panel wide">
               <div class="panel-header">
                 <div>
-                  <h3>今日任务</h3>
+                  <h3>今日优先队列</h3>
                   <p>运营、审核、发布和回填一屏处理。</p>
                 </div>
                 <button class="ghost-button action-button" type="button" data-action="all-tasks">查看全部</button>
@@ -103,6 +149,23 @@
               <div class="task-list" id="task-list"></div>
             </section>
 
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>快捷入口</h3>
+                  <p>团队最常用的 4 个动作。</p>
+                </div>
+              </div>
+              <div class="quick-links">
+                <button class="quick-link nav-shortcut" type="button" data-target-view="publishing"><strong>查某天发布</strong><span>按日期 / 平台 / 账号回看</span></button>
+                <button class="quick-link nav-shortcut" type="button" data-target-view="persona"><strong>看 IP 时间线</strong><span>每个 IP 发过什么内容</span></button>
+                <button class="quick-link nav-shortcut" type="button" data-target-view="knowledge"><strong>找真实资料</strong><span>官方资料和内部案例</span></button>
+                <button class="quick-link nav-shortcut" type="button" data-target-view="crm"><strong>查线索来源</strong><span>内容到招生的转化</span></button>
+              </div>
+            </section>
+          </div>
+
+          <div class="dashboard-grid secondary-grid">
             <section class="panel">
               <div class="panel-header">
                 <div>
@@ -115,6 +178,19 @@
                 <div><span>AI 初稿生成</span><strong>31 条</strong></div>
                 <div><span>转内容资产</span><strong>19 条</strong></div>
                 <div><span>已发布归档</span><strong>12 条</strong></div>
+              </div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>本周管理重点</h3>
+                  <p>部门负责人每天检查这三件事。</p>
+                </div>
+              </div>
+              <div class="priority-list">
+                <div><strong>内容审核</strong><span>18 条待审核，优先检查 WACE 录取事实。</span></div>
+                <div><strong>发布归档</strong><span>12 条今日发布必须回填正文、图、链接。</span></div>
+                <div><strong>线索归因</strong><span>43 条新线索需绑定来源内容和账号。</span></div>
               </div>
             </section>
           </div>

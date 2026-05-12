@@ -1623,6 +1623,12 @@ function wireActions() {
       return;
     }
 
+    const navShortcut = event.target.closest(".nav-shortcut");
+    if (navShortcut) {
+      switchToView(navShortcut.dataset.targetView);
+      return;
+    }
+
     const actionButton = event.target.closest(".action-button");
     if (actionButton) {
       openModal(actionButton.dataset.action);
