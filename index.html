@@ -18,31 +18,20 @@
         </div>
 
         <nav class="nav-list" aria-label="主导航">
-          <div class="nav-section">
-            <span class="nav-label">今日运营</span>
-            <button class="nav-item active" data-view="dashboard">工作台</button>
-            <button class="nav-item" data-view="publishing">今日发布</button>
-          </div>
-          <div class="nav-section">
-            <span class="nav-label">内容生产</span>
-            <button class="nav-item" data-view="content">内容资产库</button>
-            <button class="nav-item" data-view="knowledge">真实资料库</button>
-            <button class="nav-item" data-view="ai">AI 内容库</button>
-          </div>
-          <div class="nav-section">
-            <span class="nav-label">矩阵资产</span>
-            <button class="nav-item" data-view="persona">IP 矩阵</button>
-            <button class="nav-item" data-view="accounts">账号矩阵</button>
-          </div>
-          <div class="nav-section">
-            <span class="nav-label">转化复盘</span>
-            <button class="nav-item" data-view="crm">招生 CRM</button>
-            <button class="nav-item" data-view="analytics">数据复盘</button>
-          </div>
-          <div class="nav-section">
-            <span class="nav-label">系统</span>
-            <button class="nav-item" data-view="team">团队与权限</button>
-          </div>
+          <button class="nav-item active" data-view="dashboard"><span class="nav-icon">⚡</span>工作台</button>
+          <button class="nav-item" data-view="publishing"><span class="nav-icon">📋</span>今日发布</button>
+          <div class="nav-divider"></div>
+          <button class="nav-item" data-view="content"><span class="nav-icon">📝</span>内容库</button>
+          <button class="nav-item" data-view="knowledge"><span class="nav-icon">📚</span>资料库</button>
+          <button class="nav-item" data-view="ai"><span class="nav-icon">🤖</span>AI 内容</button>
+          <div class="nav-divider"></div>
+          <button class="nav-item" data-view="persona"><span class="nav-icon">👤</span>IP 矩阵</button>
+          <button class="nav-item" data-view="accounts"><span class="nav-icon">📱</span>账号矩阵</button>
+          <button class="nav-item" data-view="calendar"><span class="nav-icon">📅</span>内容日历</button>
+          <div class="nav-divider"></div>
+          <button class="nav-item" data-view="crm"><span class="nav-icon">🎯</span>招生 CRM</button>
+          <button class="nav-item" data-view="analytics"><span class="nav-icon">📈</span>数据复盘</button>
+          <button class="nav-item" data-view="team"><span class="nav-icon">⚙️</span>权限</button>
         </nav>
 
         <div class="sidebar-note">
@@ -209,11 +198,39 @@
             <input id="content-search" type="search" placeholder="搜索标题、账号、受众、CTA、关键词、主题簇" />
             <button class="primary-button library-search-button" type="button" data-library="content">搜索</button>
           </div>
+          <div class="strategy-filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">漏斗阶段</span>
+              <button class="strat-filter active" data-filter="funnel" data-value="">全部</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Awareness">Awareness</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Consideration">Consideration</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Trust">Trust</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Visit">Visit</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Enroll">Enroll</button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">情绪钩子</span>
+              <button class="strat-filter active" data-filter="emotion" data-value="">全部</button>
+              <button class="strat-filter" data-filter="emotion" data-value="反常识">反常识</button>
+              <button class="strat-filter" data-filter="emotion" data-value="焦虑共鸣">焦虑共鸣</button>
+              <button class="strat-filter" data-filter="emotion" data-value="痛点">痛点</button>
+              <button class="strat-filter" data-filter="emotion" data-value="数字震撼">数字震撼</button>
+              <button class="strat-filter" data-filter="emotion" data-value="案例代入">案例代入</button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">复用状态</span>
+              <button class="strat-filter active" data-filter="repurpose" data-value="">全部</button>
+              <button class="strat-filter" data-filter="repurpose" data-value="可二改">可二改</button>
+              <button class="strat-filter" data-filter="repurpose" data-value="可转">可转</button>
+              <button class="strat-filter" data-filter="repurpose" data-value="已">已复用</button>
+            </div>
+          </div>
           <div class="asset-layout">
             <div class="panel">
-              <h3>筛选</h3>
+              <h3>主题簇</h3>
               <div class="filter-list">
-                <button class="filter active" type="button">WACE</button>
+                <button class="filter active" type="button">全部</button>
+                <button class="filter" type="button">WACE</button>
                 <button class="filter" type="button">NUS / NTU</button>
                 <button class="filter" type="button">学费</button>
                 <button class="filter" type="button">签证</button>
@@ -322,6 +339,29 @@
           </div>
         </section>
 
+        <section class="view" id="calendar-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Content Calendar</p>
+              <h2>内容日历</h2>
+            </div>
+            <div class="calendar-controls">
+              <button class="ghost-button" id="cal-prev" type="button">&larr;</button>
+              <strong id="cal-month-label">2026 年 5 月</strong>
+              <button class="ghost-button" id="cal-next" type="button">&rarr;</button>
+            </div>
+          </div>
+          <div class="calendar-legend">
+            <span><i class="dot dot-awareness"></i>Awareness</span>
+            <span><i class="dot dot-consideration"></i>Consideration</span>
+            <span><i class="dot dot-trust"></i>Trust</span>
+            <span><i class="dot dot-visit"></i>Visit</span>
+            <span><i class="dot dot-enroll"></i>Enroll</span>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+          <div class="calendar-summary" id="calendar-summary"></div>
+        </section>
+
         <section class="view" id="crm-view">
           <div class="section-heading">
             <div>
@@ -357,6 +397,69 @@
               </div>
             </section>
           </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Content Strategy Health</p>
+              <h2>内容策略体检</h2>
+            </div>
+          </div>
+          <div class="analytics-grid strategy-health-grid">
+            <section class="panel">
+              <h3>漏斗阶段分布</h3>
+              <p>内容是否覆盖了全漏斗？避免"头重脚轻"。</p>
+              <div class="bar-chart" id="funnel-dist-bars"></div>
+            </section>
+            <section class="panel">
+              <h3>情绪钩子分布</h3>
+              <p>哪种情绪钩子在用？避免单一打法。</p>
+              <div class="bar-chart" id="emotion-dist-bars"></div>
+            </section>
+            <section class="panel">
+              <h3>复用效率</h3>
+              <p>多少内容只在单平台发了？</p>
+              <div class="bar-chart" id="repurpose-dist-bars"></div>
+            </section>
+            <section class="panel">
+              <h3>WACE 内容追踪</h3>
+              <p>本周 WACE Focus 内容是否 ≥ 2 条？</p>
+              <div id="wace-tracker"></div>
+            </section>
+          </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Top Content</p>
+              <h2>内容表现排行</h2>
+            </div>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr><th>#</th><th>内容标题</th><th>账号</th><th>阅读</th><th>赞</th><th>评论</th><th>私信</th><th>线索</th><th>综合分</th></tr>
+              </thead>
+              <tbody id="top-content-table"></tbody>
+            </table>
+          </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">SEO Tracking</p>
+              <h2>关键词表现追踪</h2>
+            </div>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr><th>关键词</th><th>内容数</th><th>总阅读</th><th>总线索</th><th>平均综合分</th><th>覆盖漏斗</th></tr>
+              </thead>
+              <tbody id="keyword-table"></tbody>
+            </table>
+          </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">A/B Testing</p>
+              <h2>内容 A/B 测试</h2>
+            </div>
+          </div>
+          <div id="ab-test-panel"></div>
         </section>
 
         <section class="view" id="team-view">
@@ -371,6 +474,15 @@
         </section>
       </main>
     </div>
+
+    <div class="notification-panel" id="notification-panel" aria-hidden="true">
+      <div class="notif-header">
+        <h3>通知与提醒</h3>
+        <button class="ghost-button" id="notif-close" type="button">关闭</button>
+      </div>
+      <div class="notif-list" id="notif-list"></div>
+    </div>
+    <div class="notification-overlay" id="notification-overlay"></div>
 
     <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true">
       <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">

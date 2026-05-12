@@ -60,9 +60,16 @@ const contents = [
     publishDate: "2026-05-08",
     references: "新加坡国际高中学费区间 / BCI 课程资料",
     repurposeStatus: "可二改",
+    repurposeSourceTitle: null,
+    repurposeChildren: [],
     status: "Posted",
     topicCluster: "国际学校择校",
     waceFocus: false,
+    metrics: { reads: 3420, likes: 156, comments: 47, shares: 28, privateMessages: 12, leads: 4 },
+    reviewHistory: [
+      { reviewer: "部门负责人", action: "revise", comment: "第 2 张配图数据需更新为 2026 年版本。", timestamp: "2026-05-07 10:30" },
+      { reviewer: "部门负责人", action: "approve", comment: "已更新，准予发布。", timestamp: "2026-05-07 16:00" },
+    ],
   },
   {
     title: "WACE 可以申请 NUS 吗？家长最容易误解这一点",
@@ -81,9 +88,15 @@ const contents = [
     publishDate: "2026-05-11",
     references: "NTU 录取 WACE ATAR 要求 / WACE 课程结构",
     repurposeStatus: "可转视频号",
+    repurposeSourceTitle: null,
+    repurposeChildren: ["ATAR 90 不一定上 NUS，关键看这一步"],
     status: "待审核",
     topicCluster: "WACE升学",
     waceFocus: true,
+    metrics: { reads: 0, likes: 0, comments: 0, shares: 0, privateMessages: 0, leads: 0 },
+    reviewHistory: [
+      { reviewer: "部门负责人", action: "revise", comment: "ATAR 数据需要核实最新年份，建议补充 2025-2026 年录取区间。标题可以更吸引眼球。", timestamp: "2026-05-10 14:30" },
+    ],
   },
   {
     title: "ATAR 90 不一定上 NUS，关键看这一步",
@@ -102,9 +115,15 @@ const contents = [
     publishDate: "2026-05-11",
     references: "ATAR 评分体系 / NUS 录取要求",
     repurposeStatus: "已转小红书标题",
+    repurposeSourceTitle: "WACE 可以申请 NUS 吗？家长最容易误解这一点",
+    repurposeChildren: [],
     status: "审核通过",
     topicCluster: "WACE升学",
     waceFocus: true,
+    metrics: { reads: 8760, likes: 312, comments: 89, shares: 67, privateMessages: 31, leads: 7 },
+    reviewHistory: [
+      { reviewer: "部门负责人", action: "approve", comment: "数据准确，口播节奏好，可以发布。", timestamp: "2026-05-11 09:15" },
+    ],
   },
   {
     title: "新加坡陪读签证 DP，家长最该先确认什么？",
@@ -123,9 +142,15 @@ const contents = [
     publishDate: "2026-05-10",
     references: "新加坡陪读签证 DP 规则",
     repurposeStatus: "可二改",
+    repurposeSourceTitle: null,
+    repurposeChildren: [],
     status: "已发布",
     topicCluster: "陪读签证",
     waceFocus: false,
+    metrics: { reads: 2180, likes: 94, comments: 31, shares: 18, privateMessages: 9, leads: 2 },
+    reviewHistory: [
+      { reviewer: "部门负责人", action: "approve", comment: "内容合规，注意不承诺签证结果。", timestamp: "2026-05-09 11:20" },
+    ],
   },
 ];
 
@@ -430,7 +455,12 @@ function loadSavedState() {
 
   try {
     const saved = JSON.parse(raw);
-    (saved.contents || []).forEach((item) => contents.unshift(item));
+    // Apply content updates (status, reviewHistory, etc.) to hardcoded items
+    (saved._contentUpdates || []).forEach((upd) => {
+      const existing = contents.find((c) => c.title === upd.title);
+      if (existing) Object.assign(existing, upd);
+    });
+    (saved.contents || []).filter((item) => item && typeof item === "object" && !Array.isArray(item) && item.title).forEach((item) => contents.unshift(item));
     (saved.knowledge || []).forEach((item) => knowledge.unshift(item));
     (saved.personas || []).forEach((item) => personas.unshift(item));
     (saved.accounts || []).forEach((item) => accounts.unshift(item));
@@ -452,6 +482,17 @@ function persistRecord(collection, record) {
   const saved = readSavedState();
   saved[collection] = saved[collection] || [];
   saved[collection].unshift(record);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+}
+
+function persistContentUpdate(item) {
+  const saved = readSavedState();
+  saved._contentUpdates = saved._contentUpdates || [];
+  // Replace existing update for this title, or add new
+  const idx = saved._contentUpdates.findIndex((u) => u.title === item.title);
+  const snapshot = { title: item.title, status: item.status, reviewHistory: item.reviewHistory, metrics: item.metrics };
+  if (idx >= 0) saved._contentUpdates[idx] = snapshot;
+  else saved._contentUpdates.push(snapshot);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
 }
 
@@ -876,25 +917,31 @@ const modalTemplates = {
     title: "新建内容资产",
     body: `
       <div class="form-grid">
-        <label>标题<input value="新加坡高中不是越贵越好，真正要看这 3 点" /></label>
+        <label>标题<input placeholder="输入内容标题" /></label>
         <label>AI Search Ready<select><option>否</option><option>是</option></select></label>
-        <label>Account<select><option>新加坡初高中留学-新闻·小红书</option><option>BCI升学顾问号</option><option>BCI官方视频号</option></select></label>
-        <label>Audience Persona<input value="P1 陪读妈妈, P2 国内待留学, P3 转学家长" /></label>
-        <label>Author<select><option>Ocean Wang</option><option>AI 编辑</option><option>内容组</option><option>招生组</option></select></label>
-        <label>Content Type<select><option>干货</option><option>升学科普</option><option>视频口播</option><option>FAQ</option></select></label>
-        <label>Emotional Trigger<input value="理性避坑" /></label>
-        <label>Funnel Stage<select><option>Awareness</option><option>Consideration</option><option>Conversion</option><option>Retention</option></select></label>
-        <label>Lead Magnet<input value="新加坡高中路径选择表" /></label>
-        <label>Primary Keyword<input value="新加坡高中择校" /></label>
-        <label>Prompts Used<input value="标题改写·反常识公式 5 候选" /></label>
-        <label>Publish Date<input type="date" value="2026-05-08" /></label>
-        <label>Repurpose Status<select><option>可二改</option><option>已二改</option><option>不可复用</option></select></label>
+        <label>Account<select><option value="">选择账号</option><option>新加坡初高中留学-新闻·小红书</option><option>BCI升学顾问号</option><option>BCI官方视频号</option><option>BCI招生老师号</option></select></label>
+        <label>Audience Persona<input placeholder="如：P1 陪读妈妈, P2 国内待留学" /></label>
+        <label>Author<select><option value="">选择作者</option><option>Ocean Wang</option><option>AI 编辑</option><option>内容组</option><option>招生组</option></select></label>
+        <label>Content Type<select><option value="">选择类型</option><option>干货</option><option>升学科普</option><option>视频口播</option><option>FAQ</option><option>情绪</option><option>案例</option><option>校园</option><option>对比</option><option>政策</option></select></label>
+        <label>Emotional Trigger<select><option value="">选择情绪钩子</option><option>反常识</option><option>焦虑共鸣</option><option>向往</option><option>痛点直击</option><option>好奇驱动</option><option>数字震撼</option><option>案例代入</option><option>理性避坑</option><option>痛点反问</option></select></label>
+        <label>Funnel Stage<select><option value="">选择漏斗阶段</option><option>Awareness</option><option>Consideration</option><option>Trust</option><option>Visit</option><option>Enroll</option></select></label>
+        <label>Lead Magnet<select><option value="">选择钩子资料</option><option>路径选择表</option><option>评估表</option><option>学费明细</option><option>选课指南</option><option>升学路径清单</option><option>签证材料清单</option><option>科目组合建议</option></select></label>
+        <label>Primary Keyword<input placeholder="输入主关键词" /></label>
+        <label>Prompts Used<input placeholder="使用的 AI 模板" /></label>
+        <label>Publish Date<input type="date" /></label>
+        <label>Repurpose Status<select><option value="">选择复用状态</option><option>原稿</option><option>可二改</option><option>可转视频号</option><option>可转小红书</option><option>已转小红书标题</option><option>已复用多平台</option><option>归档</option></select></label>
         <label>Status<select><option>草稿</option><option>待审核</option><option>审核通过</option><option>Posted</option></select></label>
-        <label>Topic Cluster<input value="国际学校择校" /></label>
+        <label>Topic Cluster<select><option value="">选择主题簇</option><option>WACE</option><option>A-Level</option><option>IB</option><option>升学</option><option>择校</option><option>陪读</option><option>校园</option><option>签证</option><option>学费</option><option>NUS / NTU</option><option>毕业生案例</option></select></label>
         <label>WACE Focus<select><option>否</option><option>是</option></select></label>
-        <label class="full-field">CTA<input value="评论「择校」，我私信你《新加坡高中路径选择表》" /></label>
-        <label class="full-field">References<input value="新加坡国际高中学费区间 / BCI 课程资料" /></label>
-        <label class="full-field">Notes<textarea>W2 周计划内容。文案 + 6 张配图均已就位。待发布检查：PDF / 发布时间 / 「择校」微信自动回复。</textarea></label>
+        <label class="full-field">CTA<input placeholder="如：评论「关键词」，获取XXX" /></label>
+        <label class="full-field">References<input placeholder="引用的知识库资料，用 / 分隔" /></label>
+        <label class="full-field">Notes<textarea placeholder="备注信息"></textarea></label>
+        <label>阅读数<input type="number" placeholder="0" /></label>
+        <label>点赞数<input type="number" placeholder="0" /></label>
+        <label>评论数<input type="number" placeholder="0" /></label>
+        <label>转发数<input type="number" placeholder="0" /></label>
+        <label>私信数<input type="number" placeholder="0" /></label>
+        <label>线索数<input type="number" placeholder="0" /></label>
       </div>
     `,
   },
@@ -1228,13 +1275,24 @@ async function saveModalRecord() {
       primaryKeyword: values[9] || "待定",
       promptsUsed: values[10] || "未使用",
       publishDate: values[11] || new Date().toISOString().slice(0, 10),
-      repurposeStatus: values[12] || "可二改",
+      repurposeStatus: values[12] || "原稿",
       status: values[13] || "草稿",
       topicCluster: values[14] || "未分类",
       waceFocus: values[15] === "是",
       cta: values[16] || "待补充 CTA",
       references: values[17] || "待补充引用",
       notes: values[18] || "待补充备注",
+      metrics: {
+        reads: parseInt(values[19]) || 0,
+        likes: parseInt(values[20]) || 0,
+        comments: parseInt(values[21]) || 0,
+        shares: parseInt(values[22]) || 0,
+        privateMessages: parseInt(values[23]) || 0,
+        leads: parseInt(values[24]) || 0,
+      },
+      reviewHistory: [],
+      repurposeSourceTitle: null,
+      repurposeChildren: [],
     };
     contents.unshift(record);
     const mode = await persistRecordOnline("contents", record);
@@ -1270,6 +1328,55 @@ async function saveModalRecord() {
     return true;
   }
 
+  if (currentModalAction === "review-action") {
+    const actionSelect = document.querySelector("#review-action-select");
+    const reviewerSelect = document.querySelector("#review-reviewer-select");
+    const commentInput = document.querySelector("#review-comment-input");
+    if (!actionSelect || !commentInput) return false;
+    const action = actionSelect.value;
+    const reviewer = reviewerSelect?.value || "部门负责人";
+    const comment = commentInput.value.trim() || "无备注";
+    const timestamp = new Date().toISOString().slice(0, 16).replace("T", " ");
+    const modalTitle = document.querySelector("#modal-title")?.textContent || "";
+    const cleanTitle = modalTitle.replace("审核：", "");
+    const item = contents.find((c) => cleanTitle.includes(c.title.slice(0, 20)));
+    if (item) {
+      item.reviewHistory = item.reviewHistory || [];
+      item.reviewHistory.push({ reviewer, action, comment, timestamp });
+      if (action === "approve") item.status = "审核通过";
+      else if (action === "reject") item.status = "已驳回";
+      persistContentUpdate(item);
+      renderContent();
+      renderApp();
+    }
+    const actionLabel = action === "approve" ? "审核通过" : action === "reject" ? "已驳回" : "修改意见已记录";
+    showToast(`${actionLabel}：${comment.slice(0, 30)}`);
+    return true;
+  }
+
+  if (currentModalAction === "metrics-backfill") {
+    const reads = parseInt(document.querySelector("#bf-reads")?.value) || 0;
+    const likes = parseInt(document.querySelector("#bf-likes")?.value) || 0;
+    const comments = parseInt(document.querySelector("#bf-comments")?.value) || 0;
+    const shares = parseInt(document.querySelector("#bf-shares")?.value) || 0;
+    const privateMessages = parseInt(document.querySelector("#bf-messages")?.value) || 0;
+    const leads = parseInt(document.querySelector("#bf-leads")?.value) || 0;
+    const modalTitle = document.querySelector("#modal-title")?.textContent || "";
+    const cleanTitle = modalTitle.replace("数据回填：", "");
+    const item = contents.find((c) => cleanTitle.includes(c.title.slice(0, 15)));
+    if (item) {
+      item.metrics = { reads, likes, comments, shares, privateMessages, leads };
+      if (reads > 0 || leads > 0) item.status = "已复盘";
+      persistContentUpdate(item);
+      renderContent();
+      renderApp();
+      renderTopContent();
+    }
+    const score = contentScore({ reads, likes, comments, shares, privateMessages, leads });
+    showToast(`数据已保存，综合分：${Math.round(score)}`);
+    return true;
+  }
+
   if (currentModalAction === "upload-post") {
     const uploads = getUploadSummary();
     const media = {
@@ -1300,18 +1407,29 @@ async function saveModalRecord() {
   return false;
 }
 
+function statusColor(s) {
+  const map = { "待审核": "red", "已驳回": "red", "草稿": "blue", "待回填": "amber", "可发布": "green", "审核通过": "green", "Posted": "green", "已发布": "green" };
+  return map[s] || "blue";
+}
+
 function renderTasks() {
   const target = document.querySelector("#task-list");
   target.innerHTML = tasks
     .map(
-      ([account, title, status, color]) => `
+      ([account, title, status, color]) => {
+        // Sync status from contents if a matching item exists
+        const match = contents.find((c) => title.includes(c.title?.slice(0, 8)) || c.title?.includes(title.slice(0, 8)));
+        const liveStatus = match ? match.status : status;
+        const liveColor = match ? statusColor(match.status) : color;
+        return `
         <div class="task-row">
           <strong>${account}</strong>
           <span>${title}</span>
-          ${badge(status, color)}
+          ${badge(liveStatus, liveColor)}
           <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">处理</button>
         </div>
-      `,
+      `;
+      },
     )
     .join("");
 }
@@ -1398,27 +1516,204 @@ function queryArchive() {
   showToast(`已查询：${result.length} 条发布记录`);
 }
 
+function buildRefLinks(refsText) {
+  if (!refsText || refsText === "待补充引用") return "";
+  return refsText
+    .split(/[/／]/)
+    .map((ref) => ref.trim())
+    .filter(Boolean)
+    .map((ref) => {
+      const matched = knowledge.find((k) => k.title.includes(ref) || ref.includes(k.title));
+      if (matched) return `<button class="ref-link knowledge-detail" type="button" data-title="${escapeHtml(matched.title)}">${escapeHtml(ref)}</button>`;
+      return `<span style="font-size:12px;color:var(--muted)">${escapeHtml(ref)}</span>`;
+    })
+    .join(" · ");
+}
+
+/* ── P1: Metrics helpers ── */
+function fmtNum(n) {
+  if (!n && n !== 0) return "—";
+  if (n >= 10000) return (n / 10000).toFixed(1) + "w";
+  if (n >= 1000) return (n / 1000).toFixed(1) + "k";
+  return String(n);
+}
+
+function renderMetricsBadges(m) {
+  if (!m) return "";
+  const items = [
+    ["阅读", m.reads], ["赞", m.likes], ["评论", m.comments],
+    ["转发", m.shares], ["私信", m.privateMessages], ["线索", m.leads],
+  ];
+  return `<div class="content-metrics">${items.map(([l, v]) => `<span class="metric-item"><span class="metric-label">${l}</span> ${fmtNum(v)}</span>`).join("")}</div>`;
+}
+
+function renderMetricsDetail(m) {
+  if (!m) return '<p style="color:var(--muted)">暂无数据，待回填。</p>';
+  const items = [
+    ["阅读", m.reads], ["点赞", m.likes], ["评论", m.comments],
+    ["转发", m.shares], ["私信", m.privateMessages], ["线索", m.leads],
+  ];
+  return `<div class="metrics-detail-grid">${items.map(([l, v]) => `<div class="metric-detail-card"><span class="metric-detail-label">${l}</span><strong class="metric-detail-value">${(v || 0).toLocaleString()}</strong></div>`).join("")}</div>`;
+}
+
+function contentScore(m) {
+  if (!m) return 0;
+  return (m.reads || 0) * 0.01 + (m.likes || 0) * 1 + (m.comments || 0) * 2 + (m.shares || 0) * 1.5 + (m.privateMessages || 0) * 5 + (m.leads || 0) * 20;
+}
+
+/* ── P1: Repurpose chain helpers ── */
+function buildRepurposeChainHtml(item) {
+  const chain = [];
+  // Walk up to find root
+  let root = item;
+  while (root.repurposeSourceTitle) {
+    const parent = contents.find((c) => c.title === root.repurposeSourceTitle);
+    if (!parent) break;
+    root = parent;
+  }
+  chain.push(root);
+  // Collect children recursively
+  function addChildren(node) {
+    (node.repurposeChildren || []).forEach((childTitle) => {
+      const child = contents.find((c) => c.title === childTitle);
+      if (child) { chain.push(child); addChildren(child); }
+    });
+  }
+  addChildren(root);
+  if (chain.length <= 1) return "";
+  const acctShort = (c) => { const p = (c.account || "").split("·"); return p.length > 1 ? p[1] : p[0].slice(0, 6); };
+  return `<div class="repurpose-chain">${chain.map((c, i) => {
+    const isActive = c.title === item.title;
+    const nodeClass = i === 0 ? "chain-node original" : "chain-node adapted";
+    return (i > 0 ? '<span class="chain-arrow">→</span>' : "") +
+      `<span class="${nodeClass}${isActive ? " active" : ""}" title="${escapeHtml(c.title)}">${escapeHtml(acctShort(c))} · ${escapeHtml(c.title).slice(0, 10)}</span>`;
+  }).join("")}</div>`;
+}
+
+function buildRepurposeChainMini(item) {
+  if (!item.repurposeSourceTitle && (!item.repurposeChildren || item.repurposeChildren.length === 0)) return "";
+  const chain = buildRepurposeChainHtml(item);
+  return chain ? `<div class="repurpose-chain-mini">${chain}</div>` : "";
+}
+
+/* ── P1: Review helpers ── */
+function buildReviewTimeline(history) {
+  if (!history || history.length === 0) return '<p style="color:var(--muted)">暂无审核记录。</p>';
+  const actionMap = { approve: ["审核通过", "green"], reject: ["已驳回", "red"], revise: ["修改意见", "amber"] };
+  return `<div class="review-timeline">${[...history].reverse().map((entry) => {
+    const [label, color] = actionMap[entry.action] || ["操作", "blue"];
+    return `<div class="review-entry">
+      <div class="review-header">
+        <span class="badge ${color}">${label}</span>
+        <span class="review-reviewer">${escapeHtml(entry.reviewer)}</span>
+        <span class="review-time">${entry.timestamp}</span>
+      </div>
+      <p class="review-comment">${escapeHtml(entry.comment)}</p>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function buildReviewForm(item) {
+  return `
+    <div class="detail-list">
+      <div><strong>内容标题</strong><span>${escapeHtml(item.title)}</span></div>
+      <div><strong>当前状态</strong><span>${item.status}</span></div>
+      <div><strong>账号</strong><span>${item.account}</span></div>
+      <div><strong>漏斗阶段</strong><span>${item.funnelStage}</span></div>
+    </div>
+    <div class="modal-section">
+      <h3>审核历史</h3>
+      ${buildReviewTimeline(item.reviewHistory)}
+    </div>
+    <div class="modal-section">
+      <h3>审核操作</h3>
+      <div class="form-grid">
+        <label>审核结果<select id="review-action-select">
+          <option value="approve">审核通过</option>
+          <option value="revise">修改意见</option>
+          <option value="reject">驳回</option>
+        </select></label>
+        <label>审核人<select id="review-reviewer-select">
+          <option>部门负责人</option>
+          <option>超级管理员</option>
+        </select></label>
+        <label class="full-field">审核意见<textarea id="review-comment-input" rows="3" placeholder="输入审核意见或修改建议..."></textarea></label>
+      </div>
+    </div>
+  `;
+}
+
+function buildMetricsForm(item) {
+  const m = item.metrics || {};
+  const score = contentScore(m);
+  return `
+    <div class="detail-list">
+      <div><strong>内容标题</strong><span>${escapeHtml(item.title)}</span></div>
+      <div><strong>账号</strong><span>${item.account}</span></div>
+      <div><strong>发布日期</strong><span>${item.publishDate || "—"}</span></div>
+      <div><strong>当前状态</strong><span>${item.status}</span></div>
+    </div>
+    ${score > 0 ? `<div class="modal-section"><h3>现有数据</h3>${renderMetricsDetail(m)}<p style="color:var(--muted);margin-top:8px">当前综合分：<strong>${Math.round(score)}</strong></p></div>` : ""}
+    <div class="modal-section">
+      <h3>数据回填</h3>
+      <p style="color:var(--muted);margin-bottom:12px">从各平台后台抄入以下数据，保存后自动计算综合分。</p>
+      <div class="metrics-form-grid">
+        <label>阅读量<input type="number" id="bf-reads" value="${m.reads || 0}" min="0"></label>
+        <label>点赞数<input type="number" id="bf-likes" value="${m.likes || 0}" min="0"></label>
+        <label>评论数<input type="number" id="bf-comments" value="${m.comments || 0}" min="0"></label>
+        <label>转发数<input type="number" id="bf-shares" value="${m.shares || 0}" min="0"></label>
+        <label>私信数<input type="number" id="bf-messages" value="${m.privateMessages || 0}" min="0"></label>
+        <label>线索数<input type="number" id="bf-leads" value="${m.leads || 0}" min="0"></label>
+      </div>
+      <label style="margin-top:12px;display:block">数据采集周期<select id="bf-period">
+        <option>当日数据</option>
+        <option>3日数据</option>
+        <option selected>7日数据</option>
+        <option>30日数据</option>
+      </select></label>
+    </div>
+  `;
+}
+
 function renderContent(items = contents) {
   const target = document.querySelector("#content-cards");
   target.innerHTML = items
     .map(
-      (item) => `
+      (item) => {
+        const latestReview = (item.reviewHistory || []).slice(-1)[0];
+        const reviewSnippet = latestReview && (item.status === "待审核" || item.status === "审核通过")
+          ? `<div class="review-snippet">
+               <span class="badge ${latestReview.action === "approve" ? "green" : latestReview.action === "reject" ? "red" : "amber"}">${latestReview.action === "approve" ? "通过" : latestReview.action === "reject" ? "驳回" : "修改意见"}</span>
+               <span class="review-snippet-text">${escapeHtml(latestReview.comment).slice(0, 40)}${latestReview.comment.length > 40 ? "…" : ""}</span>
+             </div>` : "";
+        return `
         <article class="content-card">
-          <h3>${item.title}</h3>
+          <h3>${escapeHtml(item.title)}</h3>
           <div class="card-meta">
             ${badge(item.contentType, "blue")}
             ${badge(item.status, item.status === "Posted" || item.status === "已发布" ? "green" : "amber")}
             ${item.waceFocus ? badge("WACE Focus", "green") : ""}
           </div>
-          <p>${item.account} · ${item.funnelStage} · ${item.topicCluster}</p>
+          <div class="strategy-row">
+            <span class="strat-badge funnel">${item.funnelStage}</span>
+            <span class="strat-badge emotion">${item.emotionalTrigger}</span>
+            ${item.repurposeStatus ? `<span class="strat-badge repurpose">${item.repurposeStatus}</span>` : ""}
+            ${item.leadMagnet && item.leadMagnet !== "待定" ? `<span class="strat-badge magnet">${item.leadMagnet}</span>` : ""}
+          </div>
+          ${buildRepurposeChainMini(item)}
+          ${reviewSnippet}
+          ${item.metrics && item.status !== "草稿" ? renderMetricsBadges(item.metrics) : ""}
+          <p>${item.account} · ${item.topicCluster}</p>
           <div class="knowledge-meta">
-            <span>人群：${item.audiencePersona.join(" / ")}</span>
+            <span>人群：${(item.audiencePersona || []).join(" / ")}</span>
             <span>发布日期：${item.publishDate}</span>
             <span>CTA：${item.cta}</span>
+            ${item.primaryKeyword && item.primaryKeyword !== "待定" ? `<span>关键词：<span class="strat-badge keyword">${escapeHtml(item.primaryKeyword)}</span></span>` : ""}
+            <span>引用资料：${buildRefLinks(item.references)}</span>
           </div>
-          <div class="card-footer"><span>${item.author}</span><button class="ghost-button content-detail" type="button" data-title="${item.title}">查看详情</button></div>
+          <div class="card-footer"><span>${item.author}</span><button class="ghost-button content-detail" type="button" data-title="${escapeHtml(item.title)}">查看详情</button></div>
         </article>
-      `,
+      `;},
     )
     .join("") || `<div class="empty-state">没有找到匹配的内容资产。</div>`;
 }
@@ -1611,29 +1906,36 @@ function wireActions() {
     if (contentButton) {
       const item = contents.find((entry) => entry.title === contentButton.dataset.title);
       if (item) {
+        const chainHtml = buildRepurposeChainHtml(item);
         openModal(
           "content-detail",
           item.title,
           `
             <div class="detail-list">
-              <div><strong>AI Search Ready</strong><span>${item.aiSearchReady ? "是" : "否"}</span></div>
               <div><strong>Account</strong><span>${item.account}</span></div>
-              <div><strong>Audience Persona</strong><span>${item.audiencePersona.join(" / ")}</span></div>
-              <div><strong>Author</strong><span>${item.author}</span></div>
-              <div><strong>CTA</strong><span>${item.cta}</span></div>
-              <div><strong>Content Type</strong><span>${item.contentType}</span></div>
-              <div><strong>Emotional Trigger</strong><span>${item.emotionalTrigger}</span></div>
-              <div><strong>Funnel Stage</strong><span>${item.funnelStage}</span></div>
-              <div><strong>Lead Magnet</strong><span>${item.leadMagnet}</span></div>
-              <div><strong>Notes</strong><span>${item.notes}</span></div>
-              <div><strong>Primary Keyword</strong><span>${item.primaryKeyword}</span></div>
-              <div><strong>Prompts Used</strong><span>${item.promptsUsed}</span></div>
-              <div><strong>Publish Date</strong><span>${item.publishDate}</span></div>
-              <div><strong>References</strong><span>${item.references}</span></div>
-              <div><strong>Repurpose Status</strong><span>${item.repurposeStatus}</span></div>
               <div><strong>Status</strong><span>${item.status}</span></div>
+              <div><strong>Funnel Stage</strong><span>${item.funnelStage}</span></div>
+              <div><strong>Emotional Trigger</strong><span>${item.emotionalTrigger}</span></div>
+              <div><strong>Content Type</strong><span>${item.contentType}</span></div>
+              <div><strong>Lead Magnet</strong><span>${item.leadMagnet}</span></div>
+              <div><strong>Audience Persona</strong><span>${item.audiencePersona.join(" / ")}</span></div>
+              <div><strong>CTA</strong><span>${item.cta}</span></div>
+              <div><strong>Publish Date</strong><span>${item.publishDate}</span></div>
+              <div><strong>Primary Keyword</strong><span>${item.primaryKeyword}</span></div>
               <div><strong>Topic Cluster</strong><span>${item.topicCluster}</span></div>
+              <div><strong>Repurpose Status</strong><span>${item.repurposeStatus}</span></div>
+              <div><strong>References</strong><span>${item.references}</span></div>
               <div><strong>WACE Focus</strong><span>${item.waceFocus ? "是" : "否"}</span></div>
+              <div><strong>Notes</strong><span>${item.notes}</span></div>
+            </div>
+            <div class="modal-section">
+              <h3>内容表现</h3>
+              ${renderMetricsDetail(item.metrics)}
+            </div>
+            ${chainHtml ? `<div class="modal-section"><h3>复用链</h3>${chainHtml}</div>` : ""}
+            <div class="modal-section">
+              <h3>审核记录</h3>
+              ${buildReviewTimeline(item.reviewHistory)}
             </div>
           `,
         );
@@ -1746,6 +2048,7 @@ function wireActions() {
 
     const actionButton = event.target.closest(".action-button");
     if (actionButton) {
+      if (actionButton.dataset.action === "notifications") return; // handled by wireNotifications
       openModal(actionButton.dataset.action);
       return;
     }
@@ -1758,6 +2061,18 @@ function wireActions() {
         const post = posts.find((entry) => entry[4] === title);
         if (post) {
           openModal("record-detail", "发布记录", buildPostDetail(post));
+          return;
+        }
+      }
+      /* P1: intercept review & backfill tasks */
+      if (kind === "任务处理") {
+        const contentItem = contents.find((c) => c.title === title || title.includes(c.title?.slice(0, 8)));
+        if (contentItem && (contentItem.status === "待审核" || contentItem.status === "草稿")) {
+          openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
+          return;
+        }
+        if (contentItem && (contentItem.status === "已发布" || contentItem.status === "Posted" || contentItem.status === "审核通过" || contentItem.status === "已复盘")) {
+          openModal("metrics-backfill", `数据回填：${contentItem.title.slice(0, 15)}`, buildMetricsForm(contentItem));
           return;
         }
       }
@@ -1850,6 +2165,393 @@ function runLibrarySearch(library) {
   showToast(keyword ? `${config.label}搜索：找到 ${results.length} 条` : `已重置${config.label}列表`);
 }
 
+/* ── Strategy filtering ── */
+const activeFilters = { funnel: "", emotion: "", repurpose: "", topic: "" };
+
+function applyStrategyFilters() {
+  const keyword = (document.querySelector("#content-search")?.value || "").trim();
+  const filtered = contents.filter((item) => {
+    if (activeFilters.funnel && item.funnelStage !== activeFilters.funnel) return false;
+    if (activeFilters.emotion && !includesKeyword(item.emotionalTrigger, activeFilters.emotion)) return false;
+    if (activeFilters.repurpose && !includesKeyword(item.repurposeStatus, activeFilters.repurpose)) return false;
+    if (activeFilters.topic && activeFilters.topic !== "全部" && !includesKeyword(JSON.stringify(item), activeFilters.topic)) return false;
+    if (keyword && !recordMatches(item, keyword)) return false;
+    return true;
+  });
+  renderContent(filtered);
+  showToast(`筛选结果：${filtered.length} 条内容`);
+}
+
+function wireStrategyFilters() {
+  document.querySelectorAll(".strat-filter").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const group = btn.dataset.filter;
+      document.querySelectorAll(`.strat-filter[data-filter="${group}"]`).forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeFilters[group] = btn.dataset.value;
+      applyStrategyFilters();
+    });
+  });
+
+  document.querySelectorAll(".filter-list .filter").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-list .filter").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeFilters.topic = btn.textContent.trim();
+      applyStrategyFilters();
+    });
+  });
+}
+
+/* ── Content calendar ── */
+let calYear = 2026;
+let calMonth = 4; // 0-indexed, May = 4
+
+function renderCalendar() {
+  const grid = document.querySelector("#calendar-grid");
+  const label = document.querySelector("#cal-month-label");
+  const summary = document.querySelector("#calendar-summary");
+  if (!grid) return;
+
+  const year = calYear;
+  const month = calMonth;
+  label.textContent = `${year} 年 ${month + 1} 月`;
+
+  const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+
+  const headers = ["日", "一", "二", "三", "四", "五", "六"];
+  let html = headers.map((d) => `<div class="cal-header">${d}</div>`).join("");
+
+  const monthContents = contents.filter((item) => {
+    if (!item.publishDate) return false;
+    const d = new Date(item.publishDate);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+
+  const contentsByDay = {};
+  monthContents.forEach((item) => {
+    const day = new Date(item.publishDate).getDate();
+    (contentsByDay[day] = contentsByDay[day] || []).push(item);
+  });
+
+  // padding days before first day
+  const prevMonthDays = new Date(year, month, 0).getDate();
+  for (let i = firstDay - 1; i >= 0; i--) {
+    html += `<div class="cal-cell other-month"><div class="cal-date">${prevMonthDays - i}</div></div>`;
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const isToday = dateStr === todayStr;
+    const dayItems = contentsByDay[day] || [];
+    const itemsHtml = dayItems
+      .slice(0, 3)
+      .map((item) => {
+        const cls = (item.funnelStage || "awareness").toLowerCase();
+        const acctParts = (item.account || "").split("·");
+        const acctShort = acctParts.length > 1 ? acctParts[1] : (acctParts[0] || "").slice(0, 4);
+        return `<button class="cal-item ${cls} content-detail" type="button" data-title="${escapeHtml(item.title)}" title="${escapeHtml(item.title)} · ${item.account}">${escapeHtml(acctShort)} ${escapeHtml(item.title).slice(0, 6)}</button>`;
+      })
+      .join("");
+    const more = dayItems.length > 3 ? `<span style="font-size:10px;color:var(--muted)">+${dayItems.length - 3} 条</span>` : "";
+    html += `<div class="cal-cell${isToday ? " today" : ""}"><div class="cal-date">${day}</div>${itemsHtml}${more}</div>`;
+  }
+
+  // padding days after last day
+  const totalCells = firstDay + daysInMonth;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-cell other-month"><div class="cal-date">${i}</div></div>`;
+  }
+
+  grid.innerHTML = html;
+
+  // summary stats
+  const funnelCounts = {};
+  monthContents.forEach((item) => { funnelCounts[item.funnelStage] = (funnelCounts[item.funnelStage] || 0) + 1; });
+  const platformCounts = {};
+  monthContents.forEach((item) => {
+    const p = (item.account || "").includes("小红书") ? "小红书" : (item.account || "").includes("视频号") ? "视频号" : (item.account || "").includes("公众号") ? "公众号" : "其他";
+    platformCounts[p] = (platformCounts[p] || 0) + 1;
+  });
+  const waceCount = monthContents.filter((item) => item.waceFocus).length;
+
+  summary.innerHTML = `
+    <div class="cal-stat"><span>本月内容</span><strong>${monthContents.length}</strong><small>条已排期</small></div>
+    <div class="cal-stat"><span>WACE Focus</span><strong>${waceCount}</strong><small>条（目标 ≥ 8）</small></div>
+    <div class="cal-stat"><span>漏斗覆盖</span><strong>${Object.keys(funnelCounts).length}/5</strong><small>${Object.entries(funnelCounts).map(([k, v]) => `${k}:${v}`).join(" · ")}</small></div>
+    <div class="cal-stat"><span>平台覆盖</span><strong>${Object.keys(platformCounts).length}</strong><small>${Object.entries(platformCounts).map(([k, v]) => `${k}:${v}`).join(" · ")}</small></div>
+  `;
+}
+
+function wireCalendar() {
+  const prev = document.querySelector("#cal-prev");
+  const next = document.querySelector("#cal-next");
+  if (!prev) return;
+  prev.addEventListener("click", () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  next.addEventListener("click", () => {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+}
+
+/* ── Strategy health dashboard ── */
+function renderStrategyHealth() {
+  renderDistBars("funnel-dist-bars", contents, "funnelStage", "funnel");
+  renderDistBars("emotion-dist-bars", contents, "emotionalTrigger", "emotion");
+  renderDistBars("repurpose-dist-bars", contents, "repurposeStatus", "repurpose");
+  renderWaceTracker();
+}
+
+function renderDistBars(targetId, items, field, colorClass) {
+  const target = document.querySelector(`#${targetId}`);
+  if (!target) return;
+  const counts = {};
+  items.forEach((item) => { const v = item[field] || "未设置"; counts[v] = (counts[v] || 0) + 1; });
+  const max = Math.max(...Object.values(counts), 1);
+  target.innerHTML = Object.entries(counts)
+    .sort(([, a], [, b]) => b - a)
+    .map(([label, count]) => `
+      <div class="health-meter">
+        <span class="health-meter-label">${label}</span>
+        <div class="health-meter-bar"><div class="health-meter-fill ${colorClass}" style="width:${Math.round((count / max) * 100)}%"></div></div>
+        <span class="health-meter-count">${count}</span>
+      </div>
+    `).join("");
+}
+
+function renderWaceTracker() {
+  const target = document.querySelector("#wace-tracker");
+  if (!target) return;
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+  const waceThisWeek = contents.filter((item) => item.waceFocus && item.publishDate >= weekStartStr).length;
+  const statusClass = waceThisWeek >= 2 ? "ok" : waceThisWeek >= 1 ? "warn" : "fail";
+  target.innerHTML = `
+    <div class="wace-status ${statusClass}">
+      <div class="big-number">${waceThisWeek}</div>
+      <div class="target">本周 WACE Focus / 目标 ≥ 2</div>
+    </div>
+  `;
+}
+
+function renderTopContent() {
+  const target = document.querySelector("#top-content-table");
+  if (!target) return;
+  const ranked = contents
+    .filter((c) => c.metrics && (c.metrics.reads > 0 || c.metrics.leads > 0))
+    .map((c) => ({ ...c, score: contentScore(c.metrics) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10);
+  if (ranked.length === 0) { target.innerHTML = '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">暂无数据</td></tr>'; return; }
+  const acctShort = (a) => { const p = (a || "").split("·"); return p.length > 1 ? p[1] : p[0].slice(0, 8); };
+  target.innerHTML = ranked.map((c, i) => `
+    <tr class="clickable-row content-detail" data-title="${escapeHtml(c.title)}">
+      <td><strong>${i + 1}</strong></td>
+      <td>${escapeHtml(c.title).slice(0, 20)}${c.title.length > 20 ? "…" : ""}</td>
+      <td>${acctShort(c.account)}</td>
+      <td>${fmtNum(c.metrics.reads)}</td>
+      <td>${fmtNum(c.metrics.likes)}</td>
+      <td>${fmtNum(c.metrics.comments)}</td>
+      <td>${fmtNum(c.metrics.privateMessages)}</td>
+      <td>${fmtNum(c.metrics.leads)}</td>
+      <td><strong>${Math.round(c.score)}</strong></td>
+    </tr>
+  `).join("");
+}
+
+/* ── P2: Keyword / SEO Tracking ── */
+function renderKeywordTable() {
+  const target = document.querySelector("#keyword-table");
+  if (!target) return;
+  const kwMap = {};
+  contents.forEach((c) => {
+    const kw = c.primaryKeyword;
+    if (!kw || kw === "待定") return;
+    if (!kwMap[kw]) kwMap[kw] = { count: 0, reads: 0, leads: 0, scores: [], funnels: new Set() };
+    const entry = kwMap[kw];
+    entry.count++;
+    if (c.metrics) {
+      entry.reads += c.metrics.reads || 0;
+      entry.leads += c.metrics.leads || 0;
+      entry.scores.push(contentScore(c.metrics));
+    }
+    if (c.funnelStage) entry.funnels.add(c.funnelStage);
+  });
+  const rows = Object.entries(kwMap).sort(([, a], [, b]) => b.reads - a.reads);
+  if (rows.length === 0) { target.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">暂无关键词数据</td></tr>'; return; }
+  target.innerHTML = rows.map(([kw, d]) => {
+    const avg = d.scores.length > 0 ? Math.round(d.scores.reduce((a, b) => a + b, 0) / d.scores.length) : 0;
+    const funnelBadges = [...d.funnels].map((f) => `<span class="strat-badge funnel" style="font-size:11px">${f}</span>`).join(" ");
+    return `<tr>
+      <td><span class="strat-badge keyword">${escapeHtml(kw)}</span></td>
+      <td>${d.count}</td>
+      <td>${fmtNum(d.reads)}</td>
+      <td>${d.leads}</td>
+      <td><strong>${avg}</strong></td>
+      <td>${funnelBadges}</td>
+    </tr>`;
+  }).join("");
+}
+
+/* ── P2: A/B Test Panel ── */
+function renderAbTestPanel() {
+  const target = document.querySelector("#ab-test-panel");
+  if (!target) return;
+  // Find content pairs with same topic cluster + similar publish dates as potential A/B tests
+  const groups = {};
+  contents.forEach((c) => {
+    if (!c.topicCluster || !c.metrics) return;
+    const key = c.topicCluster;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(c);
+  });
+  const tests = Object.entries(groups)
+    .filter(([, items]) => items.length >= 2)
+    .map(([cluster, items]) => {
+      const sorted = items.sort((a, b) => contentScore(b.metrics) - contentScore(a.metrics));
+      return { cluster, items: sorted.slice(0, 2) };
+    });
+  if (tests.length === 0) {
+    target.innerHTML = '<div class="empty-state">同一主题下需要 2 条以上内容才能进行 A/B 对比。</div>';
+    return;
+  }
+  target.innerHTML = tests.map((test) => {
+    const [a, b] = test.items;
+    const scoreA = Math.round(contentScore(a.metrics));
+    const scoreB = Math.round(contentScore(b.metrics));
+    const winner = scoreA >= scoreB ? 0 : 1;
+    return `
+    <div class="ab-test-card">
+      <div class="ab-test-header">
+        <span class="strat-badge funnel">${test.cluster}</span>
+        <span style="color:var(--muted);font-size:13px">同主题对比</span>
+      </div>
+      <div class="ab-test-row">
+        <div class="ab-variant ${winner === 0 ? "winner" : ""}">
+          <div class="ab-variant-label">A ${winner === 0 ? "🏆" : ""}</div>
+          <h4>${escapeHtml(a.title).slice(0, 25)}${a.title.length > 25 ? "…" : ""}</h4>
+          <p class="ab-meta">${a.account} · ${a.emotionalTrigger || ""}</p>
+          <div class="ab-metrics">
+            <span>阅读 ${fmtNum(a.metrics.reads)}</span>
+            <span>线索 ${a.metrics.leads}</span>
+            <span>综合分 <strong>${scoreA}</strong></span>
+          </div>
+        </div>
+        <div class="ab-vs">VS</div>
+        <div class="ab-variant ${winner === 1 ? "winner" : ""}">
+          <div class="ab-variant-label">B ${winner === 1 ? "🏆" : ""}</div>
+          <h4>${escapeHtml(b.title).slice(0, 25)}${b.title.length > 25 ? "…" : ""}</h4>
+          <p class="ab-meta">${b.account} · ${b.emotionalTrigger || ""}</p>
+          <div class="ab-metrics">
+            <span>阅读 ${fmtNum(b.metrics.reads)}</span>
+            <span>线索 ${b.metrics.leads}</span>
+            <span>综合分 <strong>${scoreB}</strong></span>
+          </div>
+        </div>
+      </div>
+      <p class="ab-insight">💡 ${winner === 0 ? "A" : "B"} 版综合分高出 <strong>${Math.abs(scoreA - scoreB)}</strong> 分，情绪钩子「${(winner === 0 ? a : b).emotionalTrigger}」在该主题下表现更好。</p>
+    </div>`;
+  }).join("");
+}
+
+/* ── P2: Notification System ── */
+function generateNotifications() {
+  const notifs = [];
+  const now = new Date();
+  // 1. WACE weekly check
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  const weekStartStr = weekStart.toISOString().slice(0, 10);
+  const waceCount = contents.filter((c) => c.waceFocus && c.publishDate >= weekStartStr).length;
+  if (waceCount < 2) {
+    notifs.push({ type: "warn", icon: "⚠️", title: `WACE 内容本周仅 ${waceCount} 条`, desc: `铁律要求每周 ≥ 2 条，还差 ${2 - waceCount} 条。`, time: "实时" });
+  }
+  // 2. Pending review count
+  const pendingReview = contents.filter((c) => c.status === "待审核").length;
+  if (pendingReview > 0) {
+    notifs.push({ type: "action", icon: "📋", title: `${pendingReview} 条内容待审核`, desc: "部门负责人请及时处理审核队列。", time: "实时" });
+  }
+  // 3. Metrics backfill needed
+  const needBackfill = contents.filter((c) => (c.status === "已发布" || c.status === "Posted") && c.metrics && c.metrics.reads === 0).length;
+  if (needBackfill > 0) {
+    notifs.push({ type: "action", icon: "📊", title: `${needBackfill} 条内容待回填数据`, desc: "已发布但未录入表现数据，影响复盘准确性。", time: "实时" });
+  }
+  // 4. Funnel imbalance
+  const funnelCounts = {};
+  contents.forEach((c) => { if (c.funnelStage) funnelCounts[c.funnelStage] = (funnelCounts[c.funnelStage] || 0) + 1; });
+  const trustCount = funnelCounts["Trust"] || 0;
+  const visitCount = funnelCounts["Visit"] || 0;
+  if (trustCount === 0 && visitCount === 0) {
+    notifs.push({ type: "warn", icon: "🔻", title: "漏斗中段缺失", desc: "Trust 和 Visit 阶段内容为 0，容易导致线索转化断层。", time: "策略建议" });
+  }
+  // 5. Top content congratulation
+  const topItem = contents.filter((c) => c.metrics).sort((a, b) => contentScore(b.metrics) - contentScore(a.metrics))[0];
+  if (topItem && contentScore(topItem.metrics) > 500) {
+    notifs.push({ type: "info", icon: "🎉", title: `爆款预警：${topItem.title.slice(0, 15)}…`, desc: `综合分 ${Math.round(contentScore(topItem.metrics))}，建议复用到更多平台。`, time: "今日" });
+  }
+  // 6. Repurpose reminder
+  const canRepurpose = contents.filter((c) => c.repurposeStatus && c.repurposeStatus.includes("可") && (!c.repurposeChildren || c.repurposeChildren.length === 0)).length;
+  if (canRepurpose > 0) {
+    notifs.push({ type: "info", icon: "🔄", title: `${canRepurpose} 条内容可跨平台复用`, desc: "已标记可复用但尚未衍生新内容，建议安排改写。", time: "本周" });
+  }
+  return notifs;
+}
+
+function renderNotifications() {
+  const list = document.querySelector("#notif-list");
+  if (!list) return;
+  const notifs = generateNotifications();
+  const btn = document.querySelector('[data-action="notifications"]');
+  // Show badge dot if there are warn/action notifications
+  const urgent = notifs.filter((n) => n.type === "warn" || n.type === "action").length;
+  if (btn) {
+    btn.textContent = urgent > 0 ? urgent : "!";
+    btn.classList.toggle("has-notif", urgent > 0);
+  }
+  if (notifs.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:32px">暂无新通知，一切正常。</div>';
+    return;
+  }
+  list.innerHTML = notifs.map((n) => `
+    <div class="notif-item notif-${n.type}">
+      <span class="notif-icon">${n.icon}</span>
+      <div class="notif-body">
+        <strong>${n.title}</strong>
+        <p>${n.desc}</p>
+      </div>
+      <span class="notif-time">${n.time}</span>
+    </div>
+  `).join("");
+}
+
+function wireNotifications() {
+  const btn = document.querySelector('[data-action="notifications"]');
+  const panel = document.querySelector("#notification-panel");
+  const overlay = document.querySelector("#notification-overlay");
+  const closeBtn = document.querySelector("#notif-close");
+  if (!btn || !panel) return;
+  function toggle() {
+    const open = panel.getAttribute("aria-hidden") !== "false";
+    panel.setAttribute("aria-hidden", !open);
+    overlay.classList.toggle("active", open);
+    if (open) renderNotifications();
+  }
+  btn.addEventListener("click", toggle);
+  if (closeBtn) closeBtn.addEventListener("click", toggle);
+  if (overlay) overlay.addEventListener("click", toggle);
+}
+
 function renderApp() {
   renderTasks();
   renderPublishing();
@@ -1863,6 +2565,12 @@ function renderApp() {
   renderAiLibrary();
   renderPermissions();
   queryArchive();
+  renderCalendar();
+  renderStrategyHealth();
+  renderTopContent();
+  renderKeywordTable();
+  renderAbTestPanel();
+  renderNotifications();
 }
 
 async function bootstrap() {
@@ -1872,6 +2580,9 @@ async function bootstrap() {
   wireNavigation();
   wireRoleSwitch();
   wireActions();
+  wireStrategyFilters();
+  wireCalendar();
+  wireNotifications();
   const status = getCloudStatus();
   if (status.message) {
     showToast(status.message);
