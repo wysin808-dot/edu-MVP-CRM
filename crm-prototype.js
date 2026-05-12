@@ -436,7 +436,7 @@ function loadSavedState() {
     (saved.accounts || []).forEach((item) => accounts.unshift(item));
     (saved.posts || []).forEach((item) => posts.unshift(item));
   } catch (error) {
-    console.warn("Could not load prototype data", error);
+    console.warn("Could not load system data", error);
   }
 }
 
@@ -1016,7 +1016,7 @@ const modalTemplates = {
     body: `
       <div class="detail-list">
         <div><strong>导出范围</strong><span>2026 年 5 月：平台表现、账号表现、IP 表现、内容 Top 10、招生漏斗。</span></div>
-        <div><strong>原型说明</strong><span>真实系统里这里会生成 Excel 或 PDF 月报。</span></div>
+        <div><strong>系统说明</strong><span>这里会生成 Excel 或 PDF 月报。</span></div>
       </div>
     `,
   },
@@ -1056,11 +1056,11 @@ function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
   currentModalAction = action;
   const template =
     modalTemplates[action] || {
-      kicker: "Prototype Detail",
+      kicker: "Record Detail",
       title: fallbackTitle,
       body:
         fallbackBody ||
-        `<div class="detail-list"><div><strong>${fallbackTitle}</strong><span>这是原型详情面板，真实系统里会打开对应记录。</span></div></div>`,
+        `<div class="detail-list"><div><strong>${fallbackTitle}</strong><span>这里会打开对应记录的完整信息。</span></div></div>`,
     };
   document.querySelector("#modal-kicker").textContent = template.kicker;
   document.querySelector("#modal-title").textContent = template.title;
@@ -1691,7 +1691,7 @@ function wireActions() {
   document.querySelector("#modal-confirm").addEventListener("click", async () => {
     closeModal();
     if (!(await saveModalRecord())) {
-      showToast("已保存到原型。真实系统会写入数据库并记录操作人。");
+      showToast("已保存到系统，并记录本次操作。");
     }
   });
 
