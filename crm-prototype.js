@@ -586,6 +586,15 @@ function fromCloudPost(row) {
     row.title || "未命名发布内容",
     row.status_label || "已发布",
     row.metric_label || "待回填",
+    {
+      postUrl: row.post_url || "",
+      publishedCopy: row.published_copy || "",
+      mediaNote: row.media_note || "",
+      cover: [],
+      images: [],
+      video: [],
+      screenshots: [],
+    },
   ];
 }
 
@@ -670,6 +679,7 @@ function toCloudRow(collection, record) {
   }
 
   if (collection === "posts") {
+    const media = record[7] || {};
     return {
       id: createId(),
       publish_date: record[0],
@@ -679,6 +689,9 @@ function toCloudRow(collection, record) {
       title: record[4],
       status_label: record[5],
       metric_label: record[6],
+      post_url: media.postUrl,
+      published_copy: media.publishedCopy,
+      media_note: buildPostMediaNote(media),
     };
   }
 
@@ -899,19 +912,19 @@ const modalTemplates = {
         <label class="full-field">发布链接<input value="https://example.com/post/..." /></label>
         <div class="full-field upload-section">
           <span>封面图</span>
-          <label class="upload-box">点击上传封面图<input type="file" accept="image/*" /></label>
+          <label class="upload-box">点击上传封面图<span class="upload-status">未选择文件</span><input type="file" accept="image/*" data-upload-field="cover" /></label>
         </div>
         <div class="full-field upload-section">
           <span>正文图片 / 配图</span>
-          <label class="upload-box">上传 1-9 张小红书配图<input type="file" accept="image/*" multiple /></label>
+          <label class="upload-box">上传 1-9 张小红书配图<span class="upload-status">未选择文件</span><input type="file" accept="image/*" multiple data-upload-field="images" /></label>
         </div>
         <div class="full-field upload-section">
           <span>视频文件</span>
-          <label class="upload-box">上传视频号 / 抖音视频<input type="file" accept="video/*" /></label>
+          <label class="upload-box">上传视频号 / 抖音视频<span class="upload-status">未选择文件</span><input type="file" accept="video/*" data-upload-field="video" /></label>
         </div>
         <div class="full-field upload-section">
           <span>发布截图</span>
-          <label class="upload-box">上传发布成功截图 / 数据截图<input type="file" accept="image/*" multiple /></label>
+          <label class="upload-box">上传发布成功截图 / 数据截图<span class="upload-status">未选择文件</span><input type="file" accept="image/*" multiple data-upload-field="screenshots" /></label>
         </div>
         <label class="full-field">实际发布正文<textarea>这里保存外部平台实际发出去的正文，方便一年后回看。</textarea></label>
       </div>
@@ -1052,6 +1065,73 @@ function showToast(message) {
   showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
 }
 
+function formatFileSize(bytes) {
+  if (!bytes) return "0 KB";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function getUploadFiles(fieldName) {
+  const input = document.querySelector(`#modal-body input[data-upload-field="${fieldName}"]`);
+  return Array.from(input?.files || []).map((file) => `${file.name} (${formatFileSize(file.size)})`);
+}
+
+function getUploadSummary() {
+  return {
+    cover: getUploadFiles("cover"),
+    images: getUploadFiles("images"),
+    video: getUploadFiles("video"),
+    screenshots: getUploadFiles("screenshots"),
+  };
+}
+
+function uploadFilesLabel(files) {
+  if (!files.length) return "未上传";
+  return files.join(" / ");
+}
+
+function buildPostMediaNote(media = {}) {
+  return [
+    `封面：${uploadFilesLabel(media.cover || [])}`,
+    `配图：${uploadFilesLabel(media.images || [])}`,
+    `视频：${uploadFilesLabel(media.video || [])}`,
+    `截图：${uploadFilesLabel(media.screenshots || [])}`,
+  ].join("\n");
+}
+
+function buildPostDetail(post) {
+  const [date, platform, account, persona, title, status, metric, media = {}] = post;
+  return `
+    <div class="detail-list">
+      <div><strong>标题</strong><span>${title}</span></div>
+      <div><strong>发布日期</strong><span>${date}</span></div>
+      <div><strong>平台 / 账号</strong><span>${platform} · ${account}</span></div>
+      <div><strong>绑定 IP</strong><span>${persona}</span></div>
+      <div><strong>状态 / 数据</strong><span>${status} · ${metric}</span></div>
+      <div><strong>发布链接</strong><span>${media.postUrl || "未填写"}</span></div>
+      <div><strong>封面图</strong><span>${uploadFilesLabel(media.cover || [])}</span></div>
+      <div><strong>正文图片 / 配图</strong><span>${uploadFilesLabel(media.images || [])}</span></div>
+      <div><strong>视频文件</strong><span>${uploadFilesLabel(media.video || [])}</span></div>
+      <div><strong>发布截图</strong><span>${uploadFilesLabel(media.screenshots || [])}</span></div>
+      ${media.mediaNote ? `<div><strong>附件记录</strong><span>${media.mediaNote}</span></div>` : ""}
+      <div><strong>实际发布正文</strong><span>${media.publishedCopy || "未填写"}</span></div>
+    </div>
+  `;
+}
+
+function wireUploadInputs() {
+  document.querySelectorAll("#modal-body input[type='file']").forEach((input) => {
+    input.addEventListener("change", () => {
+      const files = Array.from(input.files || []);
+      const box = input.closest(".upload-box");
+      const status = box?.querySelector(".upload-status");
+      if (!status) return;
+      status.textContent = files.length ? `已选择 ${files.length} 个：${files.map((file) => file.name).join(" / ")}` : "未选择文件";
+      box.classList.toggle("has-files", files.length > 0);
+    });
+  });
+}
+
 function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
   currentModalAction = action;
   const template =
@@ -1065,6 +1145,7 @@ function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
   document.querySelector("#modal-kicker").textContent = template.kicker;
   document.querySelector("#modal-title").textContent = template.title;
   document.querySelector("#modal-body").innerHTML = typeof template.body === "function" ? template.body() : template.body;
+  wireUploadInputs();
   const backdrop = document.querySelector("#modal-backdrop");
   backdrop.classList.add("open");
   backdrop.setAttribute("aria-hidden", "false");
@@ -1190,6 +1271,13 @@ async function saveModalRecord() {
   }
 
   if (currentModalAction === "upload-post") {
+    const uploads = getUploadSummary();
+    const media = {
+      mediaType: values[5] || "图文",
+      postUrl: values[6] || "",
+      ...uploads,
+      publishedCopy: values[11] || "待补充正文",
+    };
     const record = [
       values[0] || new Date().toISOString().slice(0, 10),
       values[1] || "平台",
@@ -1197,7 +1285,8 @@ async function saveModalRecord() {
       values[3] || "绑定 IP",
       values[4] || "未命名发布内容",
       "已发布",
-      "待回填",
+      `${Object.values(uploads).flat().length} 个附件 · 待回填`,
+      media,
     ];
     posts.unshift(record);
     const mode = await persistRecordOnline("posts", record);
@@ -1665,6 +1754,13 @@ function wireActions() {
     if (rowAction) {
       const title = rowAction.dataset.title || "记录";
       const kind = rowAction.dataset.kind || "详情";
+      if (kind === "发布记录") {
+        const post = posts.find((entry) => entry[4] === title);
+        if (post) {
+          openModal("record-detail", "发布记录", buildPostDetail(post));
+          return;
+        }
+      }
       openModal(
         "record-detail",
         kind,

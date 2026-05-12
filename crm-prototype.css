@@ -894,6 +894,7 @@ textarea {
 
 .upload-box {
   display: grid;
+  gap: 7px;
   min-height: 84px;
   place-items: center;
   border: 1px dashed #bdbdbd;
@@ -901,6 +902,28 @@ textarea {
   background: var(--surface-soft);
   color: var(--muted);
   font-weight: 700;
+  padding: 12px;
+  text-align: center;
+}
+
+.upload-box.has-files {
+  border-style: solid;
+  border-color: #18241f;
+  background: #f3f6f4;
+  color: #18241f;
+}
+
+.upload-status {
+  display: block;
+  max-width: 100%;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.upload-box.has-files .upload-status {
+  color: #18241f;
 }
 
 .upload-box input {
