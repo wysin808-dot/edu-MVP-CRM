@@ -394,7 +394,35 @@ const aiPromptLibrary = [
 ];
 
 const STORAGE_KEY = "bci-media-crm-prototype-v1";
+const CLOUD_STATUS_KEY = "bci-cloud-status";
+const CLOUD_COLLECTIONS = ["contents", "knowledge", "personas", "accounts", "posts"];
 let currentModalAction = "";
+let cloudClient = null;
+let cloudReady = false;
+
+function setCloudStatus(message, mode = "local") {
+  window.sessionStorage.setItem(CLOUD_STATUS_KEY, JSON.stringify({ message, mode }));
+}
+
+function getCloudStatus() {
+  try {
+    return JSON.parse(window.sessionStorage.getItem(CLOUD_STATUS_KEY)) || {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function createId() {
+  if (window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function replaceRecords(target, records) {
+  if (!records.length) return;
+  target.splice(0, 0, ...records);
+}
 
 function loadSavedState() {
   const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -425,6 +453,262 @@ function persistRecord(collection, record) {
   saved[collection] = saved[collection] || [];
   saved[collection].unshift(record);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+}
+
+async function initCloudDatabase() {
+  try {
+    const response = await fetch("/api/config", { cache: "no-store" });
+    if (!response.ok) throw new Error("config unavailable");
+    const config = await response.json();
+    if (!config.supabaseUrl || !config.supabaseAnonKey || !window.supabase) {
+      setCloudStatus("本地模式：还没有配置 Supabase。", "local");
+      return;
+    }
+
+    cloudClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+    await loadCloudState();
+    cloudReady = true;
+    setCloudStatus("云端数据库已连接。", "cloud");
+  } catch (error) {
+    console.warn("Cloud database is not ready, falling back to local storage.", error);
+    setCloudStatus("本地模式：云端数据库暂不可用。", "local");
+  }
+}
+
+async function loadCloudState() {
+  const [contentRows, knowledgeRows, personaRows, accountRows, postRows] = await Promise.all([
+    selectCloudRows("content_items"),
+    selectCloudRows("knowledge_items"),
+    selectCloudRows("ip_personas"),
+    selectCloudRows("social_accounts"),
+    selectCloudRows("published_posts"),
+  ]);
+
+  replaceRecords(contents, contentRows.map(fromCloudContent));
+  replaceRecords(knowledge, knowledgeRows.map(fromCloudKnowledge));
+  replaceRecords(personas, personaRows.map(fromCloudPersona));
+  replaceRecords(accounts, accountRows.map(fromCloudAccount));
+  replaceRecords(posts, postRows.map(fromCloudPost));
+}
+
+async function selectCloudRows(table) {
+  const { data, error } = await cloudClient.from(table).select("*").order("created_at", { ascending: false }).limit(100);
+  if (error) throw error;
+  return data || [];
+}
+
+function arrayFromText(value) {
+  if (Array.isArray(value)) return value;
+  return String(value || "")
+    .split(/[,，/]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function fromCloudContent(row) {
+  return {
+    title: row.title,
+    aiSearchReady: row.ai_search_ready,
+    account: row.account_name || "待分配账号",
+    audiencePersona: row.audience_personas || ["通用"],
+    author: row.author_name || "当前用户",
+    cta: row.cta || "待补充 CTA",
+    contentType: row.content_type || "内容",
+    emotionalTrigger: row.emotional_trigger || "待定",
+    funnelStage: row.funnel_stage || "Awareness",
+    leadMagnet: row.lead_magnet || "待定",
+    notes: row.notes || "待补充备注",
+    primaryKeyword: row.primary_keyword || "待定",
+    promptsUsed: row.prompts_used || "未使用",
+    publishDate: row.publish_date || new Date().toISOString().slice(0, 10),
+    references: row.references_note || "待补充引用",
+    repurposeStatus: row.repurpose_status || "可二改",
+    status: row.status_label || "草稿",
+    topicCluster: row.topic_cluster || "未分类",
+    waceFocus: row.wace_focus,
+  };
+}
+
+function fromCloudKnowledge(row) {
+  return {
+    title: row.title,
+    detail: row.detail || "待补充资料正文。",
+    notes: row.notes || "待补充备注。",
+    numericData: row.numeric_data_text || "待填",
+    reviewCycle: row.review_cycle || "每年",
+    source: row.source_url || "待补充来源",
+    sourceType: row.source_type || "人工整理",
+    subject: row.subject_tags || ["未分类"],
+    type: row.item_type || row.category || "资料",
+    usedInContents: row.used_in_contents || 0,
+    verifiedBy: row.verified_by_name || "当前用户",
+    lastVerified: row.last_verified_text || "待核实",
+    visibility: row.visibility || "内部",
+  };
+}
+
+function fromCloudPersona(row) {
+  return [
+    row.name || "未命名 IP",
+    row.positioning || "待补充人设定位",
+    `${row.persona_type || "IP"} · ${row.owner_name || "未分配"}`,
+    row.publishing_frequency || "待定频率",
+    `线索 ${row.lead_count || 0}`,
+  ];
+}
+
+function fromCloudAccount(row) {
+  return {
+    platform: row.platform || "平台",
+    accountName: row.account_name || "未命名账号",
+    status: row.account_status || "筹备",
+    contentCount: row.content_count || 0,
+    handle: row.handle_url || "待补充链接",
+    investmentTier: row.investment_tier || "辅助",
+    ownerType: row.owner_type || "自营",
+    persona: row.persona_name || "未绑定 IP",
+    talent: row.talent_name || "空白",
+    entityName: row.entity_name || "待填主体",
+    entityType: row.entity_type || "企业",
+    operator: row.operator_name || "未分配",
+    stage: row.account_stage || "筹备",
+    monthlyPosts: row.monthly_posts || 0,
+    leads: row.lead_count || 0,
+  };
+}
+
+function fromCloudPost(row) {
+  return [
+    row.publish_date || new Date().toISOString().slice(0, 10),
+    row.platform || "平台",
+    row.account_name || "发布账号",
+    row.persona_name || "绑定 IP",
+    row.title || "未命名发布内容",
+    row.status_label || "已发布",
+    row.metric_label || "待回填",
+  ];
+}
+
+function toCloudRow(collection, record) {
+  if (collection === "knowledge") {
+    return {
+      id: createId(),
+      title: record.title,
+      category: record.type,
+      detail: record.detail,
+      notes: record.notes,
+      numeric_data_text: record.numericData,
+      review_cycle: record.reviewCycle,
+      source_url: record.source,
+      source_type: record.sourceType,
+      subject_tags: record.subject,
+      item_type: record.type,
+      used_in_contents: Number(record.usedInContents) || 0,
+      verified_by_name: record.verifiedBy,
+      last_verified_text: record.lastVerified,
+      visibility: record.visibility,
+    };
+  }
+
+  if (collection === "personas") {
+    const [personaType, ownerName] = String(record[2] || "").split("·").map((item) => item.trim());
+    return {
+      id: createId(),
+      name: record[0],
+      positioning: record[1],
+      persona_type: personaType || "IP",
+      owner_name: ownerName || "未分配",
+      publishing_frequency: record[3],
+      lead_count: Number(String(record[4]).replace(/\D/g, "")) || 0,
+    };
+  }
+
+  if (collection === "contents") {
+    return {
+      id: createId(),
+      title: record.title,
+      ai_search_ready: record.aiSearchReady,
+      account_name: record.account,
+      audience_personas: record.audiencePersona,
+      author_name: record.author,
+      cta: record.cta,
+      content_type: record.contentType,
+      emotional_trigger: record.emotionalTrigger,
+      funnel_stage: record.funnelStage,
+      lead_magnet: record.leadMagnet,
+      notes: record.notes,
+      primary_keyword: record.primaryKeyword,
+      prompts_used: record.promptsUsed,
+      publish_date: record.publishDate,
+      references_note: record.references,
+      repurpose_status: record.repurposeStatus,
+      status_label: record.status,
+      topic_cluster: record.topicCluster,
+      wace_focus: record.waceFocus,
+    };
+  }
+
+  if (collection === "accounts") {
+    return {
+      id: createId(),
+      platform: record.platform,
+      account_name: record.accountName,
+      account_status: record.status,
+      content_count: record.contentCount,
+      handle_url: record.handle,
+      investment_tier: record.investmentTier,
+      owner_type: record.ownerType,
+      persona_name: record.persona,
+      talent_name: record.talent,
+      entity_name: record.entityName,
+      entity_type: record.entityType,
+      operator_name: record.operator,
+      account_stage: record.stage,
+      monthly_posts: record.monthlyPosts,
+      lead_count: record.leads,
+    };
+  }
+
+  if (collection === "posts") {
+    return {
+      id: createId(),
+      publish_date: record[0],
+      platform: record[1],
+      account_name: record[2],
+      persona_name: record[3],
+      title: record[4],
+      status_label: record[5],
+      metric_label: record[6],
+    };
+  }
+
+  return record;
+}
+
+async function persistRecordOnline(collection, record) {
+  if (!cloudReady || !cloudClient) {
+    persistRecord(collection, record);
+    return "local";
+  }
+
+  const tableMap = {
+    contents: "content_items",
+    knowledge: "knowledge_items",
+    personas: "ip_personas",
+    accounts: "social_accounts",
+    posts: "published_posts",
+  };
+
+  const { error } = await cloudClient.from(tableMap[collection]).insert(toCloudRow(collection, record));
+  if (error) {
+    console.warn("Cloud insert failed, saving locally instead.", error);
+    persistRecord(collection, record);
+    setCloudStatus("本地模式：云端写入失败，已临时保存在本机。", "local");
+    return "local";
+  }
+
+  setCloudStatus("云端数据库已连接。", "cloud");
+  return "cloud";
 }
 
 function badge(text, color = "") {
@@ -673,7 +957,7 @@ function switchToView(view) {
   if (navButton) navButton.click();
 }
 
-function saveModalRecord() {
+async function saveModalRecord() {
   const values = getModalValues();
 
   if (currentModalAction === "new-knowledge") {
@@ -693,10 +977,10 @@ function saveModalRecord() {
       visibility: values[5] || "内部",
     };
     knowledge.unshift(record);
-    persistRecord("knowledge", record);
+    const mode = await persistRecordOnline("knowledge", record);
     renderKnowledge();
     switchToView("knowledge");
-    showToast("真实资料已新增，并显示在资料库第一条。");
+    showToast(mode === "cloud" ? "真实资料已保存到云端数据库。" : "真实资料已临时保存到本机。");
     return true;
   }
 
@@ -709,10 +993,10 @@ function saveModalRecord() {
       "线索 0",
     ];
     personas.unshift(record);
-    persistRecord("personas", record);
+    const mode = await persistRecordOnline("personas", record);
     renderPersonas();
     switchToView("persona");
-    showToast("IP 已新增，并显示在 IP 矩阵第一条。");
+    showToast(mode === "cloud" ? "IP 已保存到云端数据库。" : "IP 已临时保存到本机。");
     return true;
   }
 
@@ -739,10 +1023,10 @@ function saveModalRecord() {
       notes: values[18] || "待补充备注",
     };
     contents.unshift(record);
-    persistRecord("contents", record);
+    const mode = await persistRecordOnline("contents", record);
     renderContent();
     switchToView("content");
-    showToast("内容资产已新增，并显示在内容库第一条。");
+    showToast(mode === "cloud" ? "内容资产已保存到云端数据库。" : "内容资产已临时保存到本机。");
     return true;
   }
 
@@ -765,10 +1049,10 @@ function saveModalRecord() {
       handle: values[11] || "待补充链接",
     };
     accounts.unshift(record);
-    persistRecord("accounts", record);
+    const mode = await persistRecordOnline("accounts", record);
     renderAccounts();
     switchToView("accounts");
-    showToast("账号已新增，并显示在账号矩阵第一条。");
+    showToast(mode === "cloud" ? "账号已保存到云端数据库。" : "账号已临时保存到本机。");
     return true;
   }
 
@@ -783,11 +1067,11 @@ function saveModalRecord() {
       "待回填",
     ];
     posts.unshift(record);
-    persistRecord("posts", record);
+    const mode = await persistRecordOnline("posts", record);
     renderPublishing();
     queryArchive();
     switchToView("publishing");
-    showToast("发布归档已保存，并显示在今日发布列表。");
+    showToast(mode === "cloud" ? "发布归档已保存到云端数据库。" : "发布归档已临时保存到本机。");
     return true;
   }
 
@@ -1258,9 +1542,9 @@ function wireActions() {
     }
   });
 
-  document.querySelector("#modal-confirm").addEventListener("click", () => {
+  document.querySelector("#modal-confirm").addEventListener("click", async () => {
     closeModal();
-    if (!saveModalRecord()) {
+    if (!(await saveModalRecord())) {
       showToast("已保存到原型。真实系统会写入数据库并记录操作人。");
     }
   });
@@ -1324,19 +1608,32 @@ function runLibrarySearch(library) {
   showToast(keyword ? `${config.label}搜索：找到 ${results.length} 条` : `已重置${config.label}列表`);
 }
 
-loadSavedState();
-renderTasks();
-renderPublishing();
-renderDailyTasks();
-renderContent();
-renderKnowledge();
-renderPersonas();
-renderAccounts();
-renderCrm();
-renderBars();
-renderAiLibrary();
-renderPermissions();
-queryArchive();
-wireNavigation();
-wireRoleSwitch();
-wireActions();
+function renderApp() {
+  renderTasks();
+  renderPublishing();
+  renderDailyTasks();
+  renderContent();
+  renderKnowledge();
+  renderPersonas();
+  renderAccounts();
+  renderCrm();
+  renderBars();
+  renderAiLibrary();
+  renderPermissions();
+  queryArchive();
+}
+
+async function bootstrap() {
+  loadSavedState();
+  await initCloudDatabase();
+  renderApp();
+  wireNavigation();
+  wireRoleSwitch();
+  wireActions();
+  const status = getCloudStatus();
+  if (status.message) {
+    showToast(status.message);
+  }
+}
+
+bootstrap();

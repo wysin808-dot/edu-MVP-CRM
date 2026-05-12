@@ -39,14 +39,30 @@ http://127.0.0.1:4175/
 
 这是静态原型：
 
-- 不保存真实数据
+- 默认仍可用浏览器本地保存；配置 Supabase 后，新建资料 / 内容 / IP / 账号 / 发布归档会写入云端数据库
 - 不支持真实登录
 - 不支持多人同时编辑
 - 上传图片/视频只是表单展示，不会真正存储
 
-真实多人协作版本建议使用：
+## Supabase 数据库上线
 
-```text
-Vercel + Supabase PostgreSQL + Supabase Auth + Supabase Storage
-```
+1. 在 Supabase 新建项目
+2. 打开 SQL Editor，执行 `docs/supabase-mvp-launch.sql`
+3. 在 Vercel Project Settings → Environment Variables 添加：
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+4. 重新部署 Vercel
 
+当前 MVP 会把以下记录写入 Supabase：
+
+- 真实资料库
+- 内容资产库
+- IP 矩阵
+- 账号矩阵
+- 今日发布归档
+
+下一步真实多人协作版本建议继续加入：
+
+- Supabase Auth 登录
+- 角色权限 RLS
+- Supabase Storage / 阿里云 OSS / Cloudflare R2 文件上传
