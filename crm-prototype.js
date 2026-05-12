@@ -393,6 +393,40 @@ const aiPromptLibrary = [
   },
 ];
 
+const STORAGE_KEY = "bci-media-crm-prototype-v1";
+let currentModalAction = "";
+
+function loadSavedState() {
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+
+  try {
+    const saved = JSON.parse(raw);
+    (saved.contents || []).forEach((item) => contents.unshift(item));
+    (saved.knowledge || []).forEach((item) => knowledge.unshift(item));
+    (saved.personas || []).forEach((item) => personas.unshift(item));
+    (saved.accounts || []).forEach((item) => accounts.unshift(item));
+    (saved.posts || []).forEach((item) => posts.unshift(item));
+  } catch (error) {
+    console.warn("Could not load prototype data", error);
+  }
+}
+
+function readSavedState() {
+  try {
+    return JSON.parse(window.localStorage.getItem(STORAGE_KEY)) || {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function persistRecord(collection, record) {
+  const saved = readSavedState();
+  saved[collection] = saved[collection] || [];
+  saved[collection].unshift(record);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+}
+
 function badge(text, color = "") {
   return `<span class="badge ${color}">${text}</span>`;
 }
@@ -602,6 +636,7 @@ function showToast(message) {
 }
 
 function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
+  currentModalAction = action;
   const template =
     modalTemplates[action] || {
       kicker: "Prototype Detail",
@@ -622,6 +657,141 @@ function closeModal() {
   const backdrop = document.querySelector("#modal-backdrop");
   backdrop.classList.remove("open");
   backdrop.setAttribute("aria-hidden", "true");
+}
+
+function getModalValues() {
+  return Array.from(document.querySelectorAll("#modal-body input, #modal-body select, #modal-body textarea")).map((field) => {
+    if (field.type === "file") {
+      return Array.from(field.files || []).map((file) => file.name).join(" / ");
+    }
+    return field.value.trim();
+  });
+}
+
+function switchToView(view) {
+  const navButton = document.querySelector(`.nav-item[data-view="${view}"]`);
+  if (navButton) navButton.click();
+}
+
+function saveModalRecord() {
+  const values = getModalValues();
+
+  if (currentModalAction === "new-knowledge") {
+    const record = {
+      title: values[0] || "未命名真实资料",
+      detail: values[11] || "待补充资料正文。",
+      notes: values[10] || "待补充备注。",
+      numericData: values[9] || "待填",
+      reviewCycle: values[3] || "每年",
+      source: values[8] || "待补充来源",
+      sourceType: values[4] || "人工整理",
+      subject: (values[6] || values[1] || "未分类").split(/[,，/]/).map((tag) => tag.trim()).filter(Boolean),
+      type: values[7] || values[1] || "资料",
+      usedInContents: 0,
+      verifiedBy: "当前用户",
+      lastVerified: values[2] || "待核实",
+      visibility: values[5] || "内部",
+    };
+    knowledge.unshift(record);
+    persistRecord("knowledge", record);
+    renderKnowledge();
+    switchToView("knowledge");
+    showToast("真实资料已新增，并显示在资料库第一条。");
+    return true;
+  }
+
+  if (currentModalAction === "new-persona") {
+    const record = [
+      values[0] || "未命名 IP",
+      values[4] || values[1] || "待补充人设定位",
+      `${values[1] || "IP"} · ${values[2] || "未分配"}`,
+      values[3] || "待定频率",
+      "线索 0",
+    ];
+    personas.unshift(record);
+    persistRecord("personas", record);
+    renderPersonas();
+    switchToView("persona");
+    showToast("IP 已新增，并显示在 IP 矩阵第一条。");
+    return true;
+  }
+
+  if (currentModalAction === "new-content") {
+    const record = {
+      title: values[0] || "未命名内容",
+      aiSearchReady: values[1] === "是",
+      account: values[2] || "待分配账号",
+      audiencePersona: (values[3] || "通用").split(/[,，/]/).map((tag) => tag.trim()).filter(Boolean),
+      author: values[4] || "当前用户",
+      contentType: values[5] || "内容",
+      emotionalTrigger: values[6] || "待定",
+      funnelStage: values[7] || "Awareness",
+      leadMagnet: values[8] || "待定",
+      primaryKeyword: values[9] || "待定",
+      promptsUsed: values[10] || "未使用",
+      publishDate: values[11] || new Date().toISOString().slice(0, 10),
+      repurposeStatus: values[12] || "可二改",
+      status: values[13] || "草稿",
+      topicCluster: values[14] || "未分类",
+      waceFocus: values[15] === "是",
+      cta: values[16] || "待补充 CTA",
+      references: values[17] || "待补充引用",
+      notes: values[18] || "待补充备注",
+    };
+    contents.unshift(record);
+    persistRecord("contents", record);
+    renderContent();
+    switchToView("content");
+    showToast("内容资产已新增，并显示在内容库第一条。");
+    return true;
+  }
+
+  if (currentModalAction === "new-account") {
+    const record = {
+      platform: values[0] || "平台",
+      accountName: values[1] || "未命名账号",
+      status: values[2] || "筹备",
+      contentCount: 0,
+      investmentTier: values[3] || "辅助",
+      ownerType: values[4] || "自营",
+      persona: values[5] || "未绑定 IP",
+      talent: values[6] || "空白",
+      entityName: values[7] || "待填主体",
+      entityType: values[8] || "企业",
+      operator: values[9] || "未分配",
+      stage: values[2] || "筹备",
+      monthlyPosts: 0,
+      leads: 0,
+      handle: values[11] || "待补充链接",
+    };
+    accounts.unshift(record);
+    persistRecord("accounts", record);
+    renderAccounts();
+    switchToView("accounts");
+    showToast("账号已新增，并显示在账号矩阵第一条。");
+    return true;
+  }
+
+  if (currentModalAction === "upload-post") {
+    const record = [
+      values[0] || new Date().toISOString().slice(0, 10),
+      values[1] || "平台",
+      values[2] || "发布账号",
+      values[3] || "绑定 IP",
+      values[4] || "未命名发布内容",
+      "已发布",
+      "待回填",
+    ];
+    posts.unshift(record);
+    persistRecord("posts", record);
+    renderPublishing();
+    queryArchive();
+    switchToView("publishing");
+    showToast("发布归档已保存，并显示在今日发布列表。");
+    return true;
+  }
+
+  return false;
 }
 
 function renderTasks() {
@@ -1090,7 +1260,9 @@ function wireActions() {
 
   document.querySelector("#modal-confirm").addEventListener("click", () => {
     closeModal();
-    showToast("已保存到原型。真实系统会写入数据库并记录操作人。");
+    if (!saveModalRecord()) {
+      showToast("已保存到原型。真实系统会写入数据库并记录操作人。");
+    }
   });
 
   document.addEventListener("keydown", (event) => {
@@ -1152,6 +1324,7 @@ function runLibrarySearch(library) {
   showToast(keyword ? `${config.label}搜索：找到 ${results.length} 条` : `已重置${config.label}列表`);
 }
 
+loadSavedState();
 renderTasks();
 renderPublishing();
 renderDailyTasks();
