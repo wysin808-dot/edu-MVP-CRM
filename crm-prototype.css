@@ -519,6 +519,16 @@ input {
   overflow: auto;
 }
 
+.compact-table {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.compact-table table {
+  min-width: 620px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -829,6 +839,14 @@ textarea {
 .detail-list strong {
   display: block;
   margin-bottom: 4px;
+}
+
+.modal-section {
+  margin-top: 16px;
+}
+
+.modal-section h3 {
+  margin-bottom: 8px;
 }
 
 .toast {

@@ -724,6 +724,113 @@ function recordMatches(record, keyword) {
   return JSON.stringify(record).toLowerCase().includes(keyword.toLowerCase());
 }
 
+function normalizeText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function accountsForPersona(personaName) {
+  const target = normalizeText(personaName);
+  return accounts.filter((account) => normalizeText(account.persona) === target);
+}
+
+function contentsForPersona(personaName) {
+  const linkedAccounts = accountsForPersona(personaName).map((account) => account.accountName);
+  return contents.filter((item) => linkedAccounts.includes(item.account) || recordMatches(item, personaName));
+}
+
+function postsForPersona(personaName) {
+  const target = normalizeText(personaName);
+  return posts.filter(([, , , persona]) => normalizeText(persona) === target);
+}
+
+function buildIpTimeline(personaName) {
+  const relatedAccounts = accountsForPersona(personaName);
+  const relatedContents = contentsForPersona(personaName);
+  const relatedPosts = postsForPersona(personaName).sort(([dateA], [dateB]) => dateB.localeCompare(dateA));
+
+  const accountRows =
+    relatedAccounts
+      .map(
+        (account) => `
+          <tr>
+            <td>${account.platform}</td>
+            <td><strong>${account.accountName}</strong></td>
+            <td>${account.operator}</td>
+            <td>${badge(account.status, account.status === "运营中" ? "green" : "amber")}</td>
+          </tr>
+        `,
+      )
+      .join("") || `<tr><td colspan="4">还没有绑定账号。</td></tr>`;
+
+  const contentRows =
+    relatedContents
+      .slice(0, 8)
+      .map(
+        (item) => `
+          <tr>
+            <td>${item.publishDate}</td>
+            <td><strong>${item.title}</strong></td>
+            <td>${item.account}</td>
+            <td>${badge(item.status, item.status === "Posted" || item.status === "已发布" ? "green" : "amber")}</td>
+          </tr>
+        `,
+      )
+      .join("") || `<tr><td colspan="4">还没有关联内容资产。</td></tr>`;
+
+  const postRows =
+    relatedPosts
+      .slice(0, 12)
+      .map(
+        ([date, platform, account, , title, status, metric]) => `
+          <tr>
+            <td>${date}</td>
+            <td>${platform}</td>
+            <td>${account}</td>
+            <td><strong>${title}</strong></td>
+            <td>${badge(status, status === "待回填" ? "amber" : "green")}</td>
+            <td>${metric}</td>
+          </tr>
+        `,
+      )
+      .join("") || `<tr><td colspan="6">还没有发布归档。运营发布后，在“今日发布”上传归档就会出现在这里。</td></tr>`;
+
+  return `
+    <div class="detail-list">
+      <div><strong>IP</strong><span>${personaName}</span></div>
+      <div><strong>绑定账号</strong><span>${relatedAccounts.length} 个</span></div>
+      <div><strong>内容资产</strong><span>${relatedContents.length} 条</span></div>
+      <div><strong>发布归档</strong><span>${relatedPosts.length} 条</span></div>
+    </div>
+    <div class="modal-section">
+      <h3>绑定账号</h3>
+      <div class="table-card compact-table">
+        <table>
+          <thead><tr><th>平台</th><th>账号</th><th>运营人</th><th>状态</th></tr></thead>
+          <tbody>${accountRows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h3>内容资产</h3>
+      <div class="table-card compact-table">
+        <table>
+          <thead><tr><th>日期</th><th>内容</th><th>账号</th><th>状态</th></tr></thead>
+          <tbody>${contentRows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-section">
+      <h3>发布归档时间线</h3>
+      <div class="table-card compact-table">
+        <table>
+          <thead><tr><th>日期</th><th>平台</th><th>账号</th><th>内容</th><th>状态</th><th>数据</th></tr></thead>
+          <tbody>${postRows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 const modalTemplates = {
   "new-content": {
     kicker: "Content Asset",
@@ -1238,7 +1345,7 @@ function renderPersonas(items = personas) {
           <h3>${name}</h3>
           <p>${positioning}</p>
           <div class="card-meta">${badge(channels)}${badge(volume, "blue")}</div>
-          <div class="card-footer"><span>${leads}</span><button class="ghost-button row-action" type="button" data-title="${name}" data-kind="IP 时间线">查看时间线</button></div>
+          <div class="card-footer"><span>${leads}</span><button class="ghost-button persona-timeline" type="button" data-title="${name}">查看时间线</button></div>
         </article>
       `,
     )
@@ -1506,6 +1613,13 @@ function wireActions() {
       document.querySelectorAll(".filter").forEach((item) => item.classList.remove("active"));
       filterButton.classList.add("active");
       showToast(`已切换筛选：${filterButton.textContent}`);
+      return;
+    }
+
+    const personaTimelineButton = event.target.closest(".persona-timeline");
+    if (personaTimelineButton) {
+      const personaName = personaTimelineButton.dataset.title;
+      openModal("persona-timeline", `${personaName} 内容时间线`, buildIpTimeline(personaName));
       return;
     }
 
