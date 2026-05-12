@@ -724,8 +724,34 @@ function recordMatches(record, keyword) {
   return JSON.stringify(record).toLowerCase().includes(keyword.toLowerCase());
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function normalizeText(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function uniqueValues(values) {
+  return Array.from(new Set(values.map((value) => String(value || "").trim()).filter(Boolean)));
+}
+
+function personaNames() {
+  return uniqueValues(personas.map((persona) => (Array.isArray(persona) ? persona[0] : persona.name)));
+}
+
+function accountNames() {
+  return uniqueValues(accounts.map((account) => account.accountName));
+}
+
+function optionList(values, fallback = "暂无数据") {
+  const options = uniqueValues(values);
+  if (!options.length) return `<option>${fallback}</option>`;
+  return options.map((value) => `<option>${escapeHtml(value)}</option>`).join("");
 }
 
 function accountsForPersona(personaName) {
@@ -862,12 +888,12 @@ const modalTemplates = {
   "upload-post": {
     kicker: "Daily Archive",
     title: "上传今日发布",
-    body: `
+    body: () => `
       <div class="form-grid">
         <label>发布日期<input type="date" value="2026-05-11" /></label>
         <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>抖音</option></select></label>
-        <label>发布账号<select><option>BCI升学顾问号</option><option>BCI官方视频号</option><option>BCI招生老师号</option></select></label>
-        <label>绑定 IP<select><option>升学顾问 IP</option><option>校长 IP</option><option>招生老师 IP</option></select></label>
+        <label>发布账号<select>${optionList(accountNames(), "请先新增账号")}</select></label>
+        <label>绑定 IP<select>${optionList(personaNames(), "请先新增 IP")}</select></label>
         <label>关联内容资产<select><option>WACE 可以申请 NUS 吗？</option><option>新加坡高中不是越贵越好，真正要看这 3 点</option><option>ATAR 90 不一定上 NUS，关键看这一步</option></select></label>
         <label>媒体类型<select><option>图文</option><option>短视频</option><option>公众号文章</option><option>朋友圈</option></select></label>
         <label class="full-field">发布链接<input value="https://example.com/post/..." /></label>
@@ -940,14 +966,14 @@ const modalTemplates = {
   "new-account": {
     kicker: "Account Matrix",
     title: "新增自媒体账号",
-    body: `
+    body: () => `
       <div class="form-grid">
         <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>抖音</option></select></label>
         <label>账号名称<input value="BCI西澳课程中心" /></label>
         <label>Account Status<select><option>筹备</option><option>养号</option><option>运营中</option><option>暂停</option></select></label>
         <label>Investment Tier<select><option>主力</option><option>辅助</option><option>测试</option></select></label>
         <label>Owner Type<select><option>自营</option><option>合作</option><option>外包</option></select></label>
-        <label>绑定 IP<select><option>升学顾问 IP</option><option>校长 IP</option><option>招生老师 IP</option></select></label>
+        <label>绑定 IP<select>${optionList(personaNames(), "请先新增 IP")}</select></label>
         <label>Talent / 主理人<input value="空白" /></label>
         <label>主体名称<input value="师云教育上海" /></label>
         <label>主体类型<select><option>企业</option><option>学校</option><option>个人</option></select></label>
@@ -1038,7 +1064,7 @@ function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
     };
   document.querySelector("#modal-kicker").textContent = template.kicker;
   document.querySelector("#modal-title").textContent = template.title;
-  document.querySelector("#modal-body").innerHTML = template.body;
+  document.querySelector("#modal-body").innerHTML = typeof template.body === "function" ? template.body() : template.body;
   const backdrop = document.querySelector("#modal-backdrop");
   backdrop.classList.add("open");
   backdrop.setAttribute("aria-hidden", "false");
