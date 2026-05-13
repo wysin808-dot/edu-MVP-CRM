@@ -4,7 +4,7 @@ const roleCopy = {
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
     nav: ["dashboard", "publishing", "content", "knowledge", "calendar", "crm"],
     user: "Ocean Wang",
-    contentFilter: "own",
+    contentFilter: "all",
   },
   lead: {
     title: "部门负责人工作台",
@@ -25,7 +25,7 @@ const roleCopy = {
     summary: "基于真实资料库生成内容，保存 prompt、版本和采用记录。",
     nav: ["dashboard", "content", "knowledge", "ai", "calendar"],
     user: "AI 编辑",
-    contentFilter: "own",
+    contentFilter: "all",
   },
   admission: {
     title: "招生顾问工作台",
@@ -41,8 +41,20 @@ function getFilteredContents() {
   const config = roleCopy[role];
   if (config.contentFilter === "all") return contents;
   if (config.contentFilter === "none") return [];
-  // "own": match by user name
   return contents.filter((c) => c.author === config.user || c.author === "当前用户");
+}
+
+function getMyAccounts() {
+  const role = document.querySelector("#role-select").value;
+  if (role === "lead" || role === "admin") return accounts;
+  if (role === "admission") return [];
+  // operator / ai: only own assigned accounts
+  const myName = roleCopy[role].user;
+  return accounts.filter((a) => a.operator === myName);
+}
+
+function getMyAccountNames() {
+  return getMyAccounts().map((a) => a.accountName);
 }
 
 const tasks = [
@@ -1646,7 +1658,17 @@ function renderDailyTasks() {
     return `${detail}`;
   }
 
-  target.innerHTML = dailyTasks
+  const myAccountNames = getMyAccountNames();
+  const visibleTasks = dailyTasks.filter(([, , account]) =>
+    myAccountNames.length === 0 && currentRole !== "admission" ? true : myAccountNames.includes(account)
+  );
+
+  if (visibleTasks.length === 0) {
+    target.innerHTML = `<p style="color:var(--muted);padding:20px 0">今日暂无分配给你的任务。</p>`;
+    return;
+  }
+
+  target.innerHTML = visibleTasks
     .map(
       ([time, platform, account, persona, title, status, color]) => `
         <article class="daily-task-card">
@@ -1952,7 +1974,8 @@ function renderPersonas(items = personas) {
     .join("") || `<div class="empty-state">没有找到匹配的 IP。</div>`;
 }
 
-function renderAccounts(items = accounts) {
+function renderAccounts(items) {
+  if (!items) items = getMyAccounts();
   const target = document.querySelector("#accounts-table");
   target.innerHTML = items
     .map(
@@ -2133,6 +2156,7 @@ function wireRoleSwitch() {
     renderContent();
     renderTasks();
     renderDailyTasks();
+    renderAccounts();
   });
 }
 
