@@ -1359,6 +1359,23 @@ async function saveModalRecord() {
     return true;
   }
 
+  if (currentModalAction === "resubmit-review") {
+    const modalTitle = document.querySelector("#modal-title")?.textContent || "";
+    const cleanTitle = modalTitle.replace("重新提交：", "");
+    const item = contents.find((c) => cleanTitle.includes(c.title.slice(0, 20)));
+    const comment = document.querySelector("#modal-body textarea")?.value.trim() || "已修改重新提交";
+    if (item) {
+      item.status = "待审核";
+      item.reviewHistory = item.reviewHistory || [];
+      item.reviewHistory.push({ reviewer: "运营人员", action: "resubmit", comment, timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") });
+      persistContentUpdate(item);
+      renderContent();
+      renderApp();
+    }
+    showToast("已重新提交审核，等待部门负责人处理。");
+    return true;
+  }
+
   if (currentModalAction === "metrics-backfill") {
     const reads = parseInt(document.querySelector("#bf-reads")?.value) || 0;
     const likes = parseInt(document.querySelector("#bf-likes")?.value) || 0;
@@ -1608,7 +1625,7 @@ function buildRepurposeChainMini(item) {
 /* ── P1: Review helpers ── */
 function buildReviewTimeline(history) {
   if (!history || history.length === 0) return '<p style="color:var(--muted)">暂无审核记录。</p>';
-  const actionMap = { approve: ["审核通过", "green"], reject: ["已驳回", "red"], revise: ["修改意见", "amber"] };
+  const actionMap = { approve: ["审核通过", "green"], reject: ["已驳回", "red"], revise: ["修改意见", "amber"], resubmit: ["重新提交", "blue"] };
   return `<div class="review-timeline">${[...history].reverse().map((entry) => {
     const [label, color] = actionMap[entry.action] || ["操作", "blue"];
     return `<div class="review-entry">
@@ -2125,11 +2142,31 @@ function wireActions() {
       /* P1: intercept review & backfill tasks */
       if (kind === "任务处理") {
         const contentItem = contents.find((c) => c.title === title || title.includes(c.title?.slice(0, 8)));
+        if (contentItem && contentItem.status === "已驳回") {
+          const lastReject = (contentItem.reviewHistory || []).filter((r) => r.action === "reject").pop();
+          openModal("resubmit-review", `重新提交：${contentItem.title.slice(0, 20)}`, `
+            <div class="detail-list">
+              <div><strong>内容标题</strong><span>${escapeHtml(contentItem.title)}</span></div>
+              <div><strong>当前状态</strong><span>${badge("已驳回", "red")}</span></div>
+              ${lastReject ? `<div><strong>驳回原因</strong><span style="color:#dc2626">${escapeHtml(lastReject.comment || "未填写原因")}</span></div>` : ""}
+              ${lastReject ? `<div><strong>驳回时间</strong><span>${lastReject.time}</span></div>` : ""}
+            </div>
+            <div class="modal-section">
+              <h3>修改并重新提交</h3>
+              <label>修改说明<textarea rows="3" placeholder="说明本次修改了什么内容…"></textarea></label>
+            </div>
+          `);
+          return;
+        }
+        if (contentItem && contentItem.status === "可发布") {
+          openModal("upload-post");
+          return;
+        }
         if (contentItem && (contentItem.status === "待审核" || contentItem.status === "草稿")) {
           openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
           return;
         }
-        if (contentItem && (contentItem.status === "已发布" || contentItem.status === "Posted" || contentItem.status === "审核通过" || contentItem.status === "已复盘")) {
+        if (contentItem && (contentItem.status === "已发布" || contentItem.status === "Posted" || contentItem.status === "已复盘")) {
           openModal("metrics-backfill", `数据回填：${contentItem.title.slice(0, 15)}`, buildMetricsForm(contentItem));
           return;
         }
