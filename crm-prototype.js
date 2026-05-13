@@ -3215,17 +3215,17 @@ function generateNotifications() {
   const trustCount = funnelCounts["Trust"] || 0;
   const visitCount = funnelCounts["Visit"] || 0;
   if (trustCount === 0 && visitCount === 0) {
-    notifs.push({ type: "warn", icon: "🔻", title: "漏斗中段缺失", desc: "Trust 和 Visit 阶段内容为 0，容易导致线索转化断层。", time: "策略建议", targetView: "analytics" });
+    notifs.push({ type: "warn", icon: "🔻", title: "漏斗中段缺失", desc: "Trust 和 Visit 阶段内容为 0，容易导致线索转化断层。", time: "策略建议", targetView: "analytics", fallbackView: "content" });
   }
   // 5. Top content congratulation
   const topItem = contents.filter((c) => c.metrics).sort((a, b) => contentScore(b.metrics) - contentScore(a.metrics))[0];
   if (topItem && contentScore(topItem.metrics) > 500) {
-    notifs.push({ type: "info", icon: "🎉", title: `爆款预警：${topItem.title.slice(0, 15)}…`, desc: `综合分 ${Math.round(contentScore(topItem.metrics))}，建议复用到更多平台。`, time: "今日", targetView: "content" });
+    notifs.push({ type: "info", icon: "🎉", title: `爆款预警：${topItem.title.slice(0, 15)}…`, desc: `综合分 ${Math.round(contentScore(topItem.metrics))}，建议复用到更多平台。`, time: "今日", targetView: "content", filterStatus: "已发布" });
   }
   // 6. Repurpose reminder
   const canRepurpose = contents.filter((c) => c.repurposeStatus && c.repurposeStatus.includes("可") && (!c.repurposeChildren || c.repurposeChildren.length === 0)).length;
   if (canRepurpose > 0) {
-    notifs.push({ type: "info", icon: "🔄", title: `${canRepurpose} 条内容可跨平台复用`, desc: "已标记可复用但尚未衍生新内容，建议安排改写。", time: "本周", targetView: "content" });
+    notifs.push({ type: "info", icon: "🔄", title: `${canRepurpose} 条内容可跨平台复用`, desc: "已标记可复用但尚未衍生新内容，建议安排改写。", time: "本周", targetView: "content", filterStatus: "可发布" });
   }
   return notifs;
 }
@@ -3245,7 +3245,7 @@ function renderNotifications() {
     return;
   }
   list.innerHTML = notifs.map((n) => `
-    <div class="notif-item notif-${n.type} notif-link" data-target-view="${n.targetView || ""}" data-filter-status="${n.filterStatus || ""}" style="cursor:pointer">
+    <div class="notif-item notif-${n.type} notif-link" data-target-view="${n.targetView || ""}" data-fallback-view="${n.fallbackView || ""}" data-filter-status="${n.filterStatus || ""}" style="cursor:pointer">
       <span class="notif-icon">${n.icon}</span>
       <div class="notif-body">
         <strong>${n.title}</strong>
@@ -3276,8 +3276,15 @@ function wireNotifications() {
   panel.addEventListener("click", (event) => {
     const item = event.target.closest(".notif-link");
     if (!item) return;
-    const targetView = item.dataset.targetView;
+    let targetView = item.dataset.targetView;
     if (!targetView) return;
+    // Check if the target view is accessible for the current role
+    const navBtn = document.querySelector(`.nav-item[data-view="${targetView}"]`);
+    if (!navBtn || navBtn.offsetParent === null) {
+      // Use explicit fallback if provided, otherwise default
+      const fallback = item.dataset.fallbackView;
+      targetView = fallback || (targetView === "analytics" ? "content" : "dashboard");
+    }
     // Close notification panel
     toggle();
     // Navigate to target view
