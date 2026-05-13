@@ -31,7 +31,7 @@ const roleCopy = {
     title: "招生顾问",
     summary: "跟进分配线索，查看来源内容，记录到访、报名和流失结果。",
     nav: ["dashboard", "crm"],
-    user: "招生顾问",
+    user: "顾问 A",
     contentFilter: "none",
   },
 };
@@ -398,12 +398,17 @@ const accounts = [
   },
 ];
 
-const crmColumns = [
-  ["新线索", [["G9 学生家长", "来自小红书：WACE 申请 NUS"], ["G10 转轨家庭", "来自视频号：ATAR 评分"]]],
-  ["已咨询", [["G8 学生家长", "来源：招生老师 IP"], ["G11 插班咨询", "来源：公众号学费文章"]]],
-  ["预约到访", [["G9 学生家长", "周六开放日"], ["G7 家庭", "校园参观"]]],
-  ["缴费 / 流失", [["G10 学生", "已缴费"], ["G12 家庭", "流失：时间不匹配"]]],
+const crmLeads = [
+  { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "新线索", assignee: "", date: "2026-05-13" },
+  { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "新线索", assignee: "", date: "2026-05-12" },
+  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "已咨询", assignee: "顾问 A", date: "2026-05-10" },
+  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "已咨询", assignee: "顾问 B", date: "2026-05-09" },
+  { name: "G9 学生家长（张）", source: "周六开放日", stage: "预约到访", assignee: "顾问 A", date: "2026-05-08" },
+  { name: "G7 家庭", source: "校园参观", stage: "预约到访", assignee: "顾问 C", date: "2026-05-07" },
+  { name: "G10 学生", source: "已缴费", stage: "缴费", assignee: "顾问 B", date: "2026-04-28" },
+  { name: "G12 家庭", source: "流失：时间不匹配", stage: "流失", assignee: "顾问 A", date: "2026-05-01" },
 ];
+const crmStages = ["新线索", "已咨询", "预约到访", "缴费", "流失"];
 
 const permissions = [
   ["超级管理员", "全系统", "用户、角色、账号、IP、资料、CRM、导出"],
@@ -420,7 +425,9 @@ const teamMembers = [
   { name: "运营 C", email: "opc@bci.edu.sg", role: "运营人员", accounts: "BCI招生老师号", status: "在职", joinDate: "2026-03-10" },
   { name: "部门负责人", email: "lead@bci.edu.sg", role: "部门负责人", accounts: "全部账号", status: "在职", joinDate: "2025-08-01" },
   { name: "AI 编辑", email: "ai@bci.edu.sg", role: "AI 内容编辑", accounts: "—", status: "在职", joinDate: "2026-03-01" },
-  { name: "招生顾问", email: "admission@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-01-20" },
+  { name: "顾问 A", email: "advisorA@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-01-20" },
+  { name: "顾问 B", email: "advisorB@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-02-15" },
+  { name: "顾问 C", email: "advisorC@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-03-01" },
 ];
 
 const aiPromptLibrary = [
@@ -1732,7 +1739,7 @@ function renderKpiCards() {
   ).length;
 
   // 4. 本周新线索 — count from CRM "新线索" column
-  const newLeadsCount = crmColumns.find(([stage]) => stage === "新线索")?.[1]?.length || 0;
+  const newLeadsCount = crmLeads.filter((l) => l.stage === "新线索").length;
 
   // Role-specific card sets
   const cards = [];
@@ -2264,27 +2271,75 @@ function renderAccounts(items) {
     `<tr><td colspan="7"><div class="empty-state">没有找到匹配的账号。</div></td></tr>`;
 }
 
+function getAdmissionCounselors() {
+  return teamMembers.filter((m) => m.role === "招生顾问" && m.status === "在职").map((m) => m.name);
+}
+
 function renderCrm() {
   const target = document.querySelector("#crm-kanban");
-  target.innerHTML = crmColumns
-    .map(
-      ([stage, leads]) => `
-        <section class="kanban-column">
-          <h3>${stage}</h3>
-          ${leads
-            .map(
-              ([name, source]) => `
-                <article class="lead-card row-action" data-title="${name}" data-kind="线索详情">
-                  <strong>${name}</strong>
-                  <span>${source}</span>
-                </article>
-              `,
-            )
-            .join("")}
-        </section>
-      `,
-    )
-    .join("");
+  if (!target) return;
+  const role = document.querySelector("#role-select").value;
+  const currentUser = roleCopy[role]?.user || "";
+  const isAdmission = role === "admission";
+  const counselors = getAdmissionCounselors();
+
+  // Admission counselors only see their own leads
+  const visibleLeads = isAdmission
+    ? crmLeads.filter((l) => l.assignee === currentUser)
+    : crmLeads;
+
+  // Build kanban columns from crmStages
+  const displayStages = ["新线索", "已咨询", "预约到访", "缴费 / 流失"];
+  const stageMap = {
+    "新线索": ["新线索"],
+    "已咨询": ["已咨询"],
+    "预约到访": ["预约到访"],
+    "缴费 / 流失": ["缴费", "流失"],
+  };
+
+  target.innerHTML = displayStages.map((displayName) => {
+    const matchStages = stageMap[displayName];
+    const leads = visibleLeads.filter((l) => matchStages.includes(l.stage));
+    return `
+      <section class="kanban-column">
+        <h3>${displayName} <span class="crm-count">${leads.length}</span></h3>
+        ${leads.map((lead) => `
+          <article class="lead-card row-action" data-title="${escapeHtml(lead.name)}" data-kind="线索详情">
+            <strong>${escapeHtml(lead.name)}</strong>
+            <span>${escapeHtml(lead.source)}</span>
+            <div class="lead-meta">
+              ${lead.assignee
+                ? `<span class="lead-assignee">👤 ${escapeHtml(lead.assignee)}</span>`
+                : (lead.stage === "新线索" && !isAdmission
+                  ? `<select class="lead-assign-select" data-lead-name="${escapeHtml(lead.name)}">
+                      <option value="">分配顾问…</option>
+                      ${counselors.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")}
+                    </select>`
+                  : `<span class="lead-assignee unassigned">未分配</span>`)
+              }
+              <span class="lead-date">${lead.date || ""}</span>
+            </div>
+          </article>
+        `).join("")}
+      </section>
+    `;
+  }).join("");
+
+  // Wire assign dropdowns
+  target.querySelectorAll(".lead-assign-select").forEach((sel) => {
+    sel.addEventListener("change", (e) => {
+      const leadName = e.target.dataset.leadName;
+      const assignee = e.target.value;
+      if (!assignee) return;
+      const lead = crmLeads.find((l) => l.name === leadName && !l.assignee);
+      if (lead) {
+        lead.assignee = assignee;
+        renderCrm();
+      }
+    });
+    // Stop click from bubbling to the card's row-action handler
+    sel.addEventListener("click", (e) => e.stopPropagation());
+  });
 }
 
 function renderBars() {
@@ -2460,6 +2515,8 @@ function wireRoleSwitch() {
     renderTasks();
     renderDailyTasks();
     renderAccounts();
+    renderCrm();
+    renderNotifications();
   });
 }
 
@@ -3260,15 +3317,29 @@ function generateNotifications() {
     }
   }
 
-  // ── Admission-specific: lead reminders ──
+  // ── Admission-specific: lead reminders (filtered to own leads) ──
   if (isAdmission) {
-    const newLeads = typeof crmLeads !== "undefined" ? crmLeads.filter((l) => l.status === "新线索").length : 0;
-    if (newLeads > 0) {
-      notifs.push({ type: "action", icon: "🎯", title: `${newLeads} 条新线索待跟进`, desc: "请及时联系，避免线索冷却流失。", time: "实时", targetView: "crm" });
+    const myName = roleCopy[role]?.user || "";
+    const myLeads = crmLeads.filter((l) => l.assignee === myName);
+    const myNew = myLeads.filter((l) => l.stage === "新线索").length;
+    const unassigned = crmLeads.filter((l) => l.stage === "新线索" && !l.assignee).length;
+    if (myNew > 0) {
+      notifs.push({ type: "action", icon: "🎯", title: `你有 ${myNew} 条新线索待跟进`, desc: "请及时联系，避免线索冷却流失。", time: "实时", targetView: "crm" });
     }
-    const todayVisits = typeof crmLeads !== "undefined" ? crmLeads.filter((l) => l.status === "预约到访").length : 0;
-    if (todayVisits > 0) {
-      notifs.push({ type: "info", icon: "🏫", title: `${todayVisits} 组家庭预约到访`, desc: "请提前准备接待材料和校园参观路线。", time: "今日", targetView: "crm" });
+    if (unassigned > 0) {
+      notifs.push({ type: "info", icon: "📩", title: `${unassigned} 条线索待分配`, desc: "有新线索尚未分配顾问，请联系负责人。", time: "实时", targetView: "crm" });
+    }
+    const myVisits = myLeads.filter((l) => l.stage === "预约到访").length;
+    if (myVisits > 0) {
+      notifs.push({ type: "info", icon: "🏫", title: `你有 ${myVisits} 组家庭预约到访`, desc: "请提前准备接待材料和校园参观路线。", time: "今日", targetView: "crm" });
+    }
+  }
+
+  // ── Manager: unassigned leads alert ──
+  if (isManager) {
+    const unassigned = crmLeads.filter((l) => l.stage === "新线索" && !l.assignee).length;
+    if (unassigned > 0) {
+      notifs.push({ type: "action", icon: "📩", title: `${unassigned} 条新线索待分配顾问`, desc: "请在招生 CRM 中将线索分配给具体顾问。", time: "实时", targetView: "crm" });
     }
   }
 
