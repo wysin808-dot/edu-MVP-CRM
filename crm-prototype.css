@@ -951,6 +951,18 @@ textarea {
 .detail-list strong {
   display: block;
   margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-list span {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
 }
 
 .modal-section {
