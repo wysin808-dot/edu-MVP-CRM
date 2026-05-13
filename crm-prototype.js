@@ -3197,17 +3197,17 @@ function generateNotifications() {
   const weekStartStr = weekStart.toISOString().slice(0, 10);
   const waceCount = contents.filter((c) => c.waceFocus && c.publishDate >= weekStartStr).length;
   if (waceCount < 2) {
-    notifs.push({ type: "warn", icon: "⚠️", title: `WACE 内容本周仅 ${waceCount} 条`, desc: `铁律要求每周 ≥ 2 条，还差 ${2 - waceCount} 条。`, time: "实时" });
+    notifs.push({ type: "warn", icon: "⚠️", title: `WACE 内容本周仅 ${waceCount} 条`, desc: `铁律要求每周 ≥ 2 条，还差 ${2 - waceCount} 条。`, time: "实时", targetView: "content" });
   }
   // 2. Pending review count
   const pendingReview = contents.filter((c) => c.status === "待审核").length;
   if (pendingReview > 0) {
-    notifs.push({ type: "action", icon: "📋", title: `${pendingReview} 条内容待审核`, desc: "部门负责人请及时处理审核队列。", time: "实时" });
+    notifs.push({ type: "action", icon: "📋", title: `${pendingReview} 条内容待审核`, desc: "部门负责人请及时处理审核队列。", time: "实时", targetView: "content", filterStatus: "待审核" });
   }
   // 3. Metrics backfill needed
-  const needBackfill = contents.filter((c) => (c.status === "已发布" || c.status === "Posted") && c.metrics && c.metrics.reads === 0).length;
+  const needBackfill = contents.filter((c) => (c.status === "已发布") && c.metrics && c.metrics.reads === 0).length;
   if (needBackfill > 0) {
-    notifs.push({ type: "action", icon: "📊", title: `${needBackfill} 条内容待回填数据`, desc: "已发布但未录入表现数据，影响复盘准确性。", time: "实时" });
+    notifs.push({ type: "action", icon: "📊", title: `${needBackfill} 条内容待回填数据`, desc: "已发布但未录入表现数据，影响复盘准确性。", time: "实时", targetView: "content", filterStatus: "已发布" });
   }
   // 4. Funnel imbalance
   const funnelCounts = {};
@@ -3215,17 +3215,17 @@ function generateNotifications() {
   const trustCount = funnelCounts["Trust"] || 0;
   const visitCount = funnelCounts["Visit"] || 0;
   if (trustCount === 0 && visitCount === 0) {
-    notifs.push({ type: "warn", icon: "🔻", title: "漏斗中段缺失", desc: "Trust 和 Visit 阶段内容为 0，容易导致线索转化断层。", time: "策略建议" });
+    notifs.push({ type: "warn", icon: "🔻", title: "漏斗中段缺失", desc: "Trust 和 Visit 阶段内容为 0，容易导致线索转化断层。", time: "策略建议", targetView: "analytics" });
   }
   // 5. Top content congratulation
   const topItem = contents.filter((c) => c.metrics).sort((a, b) => contentScore(b.metrics) - contentScore(a.metrics))[0];
   if (topItem && contentScore(topItem.metrics) > 500) {
-    notifs.push({ type: "info", icon: "🎉", title: `爆款预警：${topItem.title.slice(0, 15)}…`, desc: `综合分 ${Math.round(contentScore(topItem.metrics))}，建议复用到更多平台。`, time: "今日" });
+    notifs.push({ type: "info", icon: "🎉", title: `爆款预警：${topItem.title.slice(0, 15)}…`, desc: `综合分 ${Math.round(contentScore(topItem.metrics))}，建议复用到更多平台。`, time: "今日", targetView: "content" });
   }
   // 6. Repurpose reminder
   const canRepurpose = contents.filter((c) => c.repurposeStatus && c.repurposeStatus.includes("可") && (!c.repurposeChildren || c.repurposeChildren.length === 0)).length;
   if (canRepurpose > 0) {
-    notifs.push({ type: "info", icon: "🔄", title: `${canRepurpose} 条内容可跨平台复用`, desc: "已标记可复用但尚未衍生新内容，建议安排改写。", time: "本周" });
+    notifs.push({ type: "info", icon: "🔄", title: `${canRepurpose} 条内容可跨平台复用`, desc: "已标记可复用但尚未衍生新内容，建议安排改写。", time: "本周", targetView: "content" });
   }
   return notifs;
 }
@@ -3245,13 +3245,13 @@ function renderNotifications() {
     return;
   }
   list.innerHTML = notifs.map((n) => `
-    <div class="notif-item notif-${n.type}">
+    <div class="notif-item notif-${n.type} notif-link" data-target-view="${n.targetView || ""}" data-filter-status="${n.filterStatus || ""}" style="cursor:pointer">
       <span class="notif-icon">${n.icon}</span>
       <div class="notif-body">
         <strong>${n.title}</strong>
         <p>${n.desc}</p>
       </div>
-      <span class="notif-time">${n.time}</span>
+      <span class="notif-link-arrow">→</span>
     </div>
   `).join("");
 }
@@ -3271,6 +3271,26 @@ function wireNotifications() {
   btn.addEventListener("click", toggle);
   if (closeBtn) closeBtn.addEventListener("click", toggle);
   if (overlay) overlay.addEventListener("click", toggle);
+
+  // Click notification item → navigate to relevant view
+  panel.addEventListener("click", (event) => {
+    const item = event.target.closest(".notif-link");
+    if (!item) return;
+    const targetView = item.dataset.targetView;
+    if (!targetView) return;
+    // Close notification panel
+    toggle();
+    // Navigate to target view
+    switchToView(targetView);
+    // If there's a filter status, trigger the status chip click
+    const filterStatus = item.dataset.filterStatus;
+    if (filterStatus) {
+      setTimeout(() => {
+        const chip = document.querySelector(`.status-chip[data-filter-status="${filterStatus}"]`);
+        if (chip) chip.click();
+      }, 200);
+    }
+  });
 }
 
 function renderApp() {

@@ -1617,6 +1617,10 @@ textarea {
 .notif-body strong { display: block; font-size: 14px; margin-bottom: 4px; }
 .notif-body p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.4; }
 .notif-time { font-size: 11px; color: var(--muted); white-space: nowrap; margin-top: 2px; }
+.notif-link { transition: transform 0.12s, box-shadow 0.12s; }
+.notif-link:hover { transform: translateX(2px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.notif-link-arrow { font-size: 16px; color: var(--muted); flex-shrink: 0; align-self: center; transition: color 0.12s; }
+.notif-link:hover .notif-link-arrow { color: var(--brand); }
 /* ── Notification bell button ── */
 .notif-bell {
   position: relative;
