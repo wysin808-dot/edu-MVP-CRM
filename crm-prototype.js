@@ -2,22 +2,27 @@ const roleCopy = {
   operator: {
     title: "运营人员工作台",
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
+    nav: ["dashboard", "publishing", "content", "knowledge", "calendar"],
   },
   lead: {
     title: "部门负责人工作台",
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
+    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics"],
   },
   admin: {
     title: "超级管理员工作台",
     summary: "管理用户、角色、账号、IP、资料库和全局数据权限。",
+    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "team"],
   },
   ai: {
     title: "AI 内容编辑工作台",
     summary: "基于真实资料库生成内容，保存 prompt、版本和采用记录。",
+    nav: ["dashboard", "content", "knowledge", "ai", "calendar"],
   },
   admission: {
     title: "招生顾问工作台",
     summary: "跟进分配线索，查看来源内容，记录到访、报名和流失结果。",
+    nav: ["dashboard", "crm"],
   },
 };
 
@@ -1884,13 +1889,62 @@ function wireNavigation() {
   });
 }
 
+function applyRoleNav(role) {
+  const allowed = roleCopy[role].nav;
+  const navItems = document.querySelectorAll(".nav-item");
+  const dividers = document.querySelectorAll(".nav-divider");
+
+  // Show/hide nav items
+  navItems.forEach((btn) => {
+    const view = btn.dataset.view;
+    const visible = allowed.includes(view);
+    btn.style.display = visible ? "" : "none";
+  });
+
+  // Smart divider visibility: hide if no visible items on either side
+  dividers.forEach((div) => {
+    let prevVisible = false;
+    let nextVisible = false;
+    let el = div.previousElementSibling;
+    while (el) {
+      if (el.classList.contains("nav-divider")) break;
+      if (el.classList.contains("nav-item") && el.style.display !== "none") { prevVisible = true; break; }
+      el = el.previousElementSibling;
+    }
+    el = div.nextElementSibling;
+    while (el) {
+      if (el.classList.contains("nav-divider")) break;
+      if (el.classList.contains("nav-item") && el.style.display !== "none") { nextVisible = true; break; }
+      el = el.nextElementSibling;
+    }
+    div.style.display = (prevVisible && nextVisible) ? "" : "none";
+  });
+
+  // If current active view is hidden, switch to dashboard
+  const activeNav = document.querySelector(".nav-item.active");
+  if (activeNav && activeNav.style.display === "none") {
+    document.querySelectorAll(".nav-item").forEach((item) => item.classList.remove("active"));
+    document.querySelectorAll(".view").forEach((section) => section.classList.remove("active"));
+    const dashBtn = document.querySelector('.nav-item[data-view="dashboard"]');
+    dashBtn.classList.add("active");
+    document.querySelector("#dashboard-view").classList.add("active");
+    document.querySelector("#view-title").textContent = "工作台";
+  }
+}
+
 function wireRoleSwitch() {
   const select = document.querySelector("#role-select");
   const title = document.querySelector("#role-title");
   const summary = document.querySelector("#role-summary");
+
+  // Apply on load
+  applyRoleNav(select.value);
+
   select.addEventListener("change", () => {
-    title.textContent = roleCopy[select.value].title;
-    summary.textContent = roleCopy[select.value].summary;
+    const role = select.value;
+    title.textContent = roleCopy[role].title;
+    summary.textContent = roleCopy[role].summary;
+    applyRoleNav(role);
   });
 }
 
