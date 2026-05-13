@@ -1587,12 +1587,12 @@ function renderTasks() {
 
   target.innerHTML = `
     <div class="status-summary-row">
-      ${draft ? `<div class="status-chip blue"><strong>${draft}</strong><span>草稿</span></div>` : ""}
-      ${pending ? `<div class="status-chip amber"><strong>${pending}</strong><span>待审核</span></div>` : ""}
-      ${rejected ? `<div class="status-chip red"><strong>${rejected}</strong><span>已驳回</span></div>` : ""}
-      ${ready ? `<div class="status-chip green"><strong>${ready}</strong><span>可发布</span></div>` : ""}
-      ${backfill ? `<div class="status-chip amber"><strong>${backfill}</strong><span>待回填</span></div>` : ""}
-      ${published ? `<div class="status-chip muted"><strong>${published}</strong><span>已发布</span></div>` : ""}
+      ${draft ? `<div class="status-chip blue" data-filter-status="草稿"><strong>${draft}</strong><span>草稿</span></div>` : ""}
+      ${pending ? `<div class="status-chip amber" data-filter-status="待审核"><strong>${pending}</strong><span>待审核</span></div>` : ""}
+      ${rejected ? `<div class="status-chip red" data-filter-status="已驳回"><strong>${rejected}</strong><span>已驳回</span></div>` : ""}
+      ${ready ? `<div class="status-chip green" data-filter-status="可发布"><strong>${ready}</strong><span>可发布</span></div>` : ""}
+      ${backfill ? `<div class="status-chip amber" data-filter-status="待回填"><strong>${backfill}</strong><span>待回填</span></div>` : ""}
+      ${published ? `<div class="status-chip muted" data-filter-status="已发布"><strong>${published}</strong><span>已发布</span></div>` : ""}
     </div>
   `;
 }
@@ -2119,6 +2119,48 @@ function wireActions() {
     const librarySearchButton = event.target.closest(".library-search-button");
     if (librarySearchButton) {
       runLibrarySearch(librarySearchButton.dataset.library);
+      return;
+    }
+
+    /* Status chip click → show filtered content list */
+    const statusChip = event.target.closest(".status-chip[data-filter-status]");
+    if (statusChip) {
+      const filterStatus = statusChip.dataset.filterStatus;
+      const currentRole = document.querySelector("#role-select").value;
+      const isReviewer = currentRole === "lead" || currentRole === "admin";
+      const filtered = getFilteredContents();
+      const statusMap = {
+        "草稿": (s) => s === "草稿",
+        "待审核": (s) => s === "待审核",
+        "已驳回": (s) => s === "已驳回",
+        "可发布": (s) => s === "可发布" || s === "审核通过",
+        "待回填": (s) => s === "待回填",
+        "已发布": (s) => s === "已发布" || s === "Posted" || s === "已复盘",
+      };
+      const matchFn = statusMap[filterStatus] || (() => false);
+      const matched = filtered.filter((c) => matchFn(c.status));
+      const actionLabel = isReviewer && (filterStatus === "待审核" || filterStatus === "草稿" || filterStatus === "已驳回") ? "审核" : "查看";
+      const listHtml = matched.length
+        ? matched.map((c) => `
+            <article class="review-list-item content-detail" data-title="${escapeHtml(c.title)}" style="cursor:pointer">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)">
+                <div>
+                  <strong>${escapeHtml(c.title)}</strong>
+                  <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.account} · ${c.author || "—"} · ${c.publishDate || "—"}</div>
+                </div>
+                <span class="ghost-button" style="white-space:nowrap">${actionLabel} →</span>
+              </div>
+            </article>
+          `).join("")
+        : `<p style="color:var(--muted);padding:20px 0">暂无${filterStatus}内容。</p>`;
+
+      const modalTitle = isReviewer && filterStatus === "待审核"
+        ? `待审核内容（${matched.length}）`
+        : `${filterStatus}内容（${matched.length}）`;
+
+      openModal("content-detail", modalTitle, `<div>${listHtml}</div>`);
+      document.querySelector("#modal-confirm").style.display = "none";
+      document.querySelector("#modal-draft").style.display = "none";
       return;
     }
 
