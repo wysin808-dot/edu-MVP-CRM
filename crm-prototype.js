@@ -413,6 +413,16 @@ const permissions = [
   ["招生顾问", "分配线索", "跟进 CRM、记录到访、反馈线索质量"],
 ];
 
+const teamMembers = [
+  { name: "Ocean Wang", email: "ocean@bci.edu.sg", role: "运营人员", accounts: "BCI西澳课程中心, BCI国际学校", status: "在职", joinDate: "2026-01-15" },
+  { name: "运营 A", email: "opa@bci.edu.sg", role: "运营人员", accounts: "BCI升学顾问号, BCI学生故事", status: "在职", joinDate: "2026-02-01" },
+  { name: "运营 B", email: "opb@bci.edu.sg", role: "运营人员", accounts: "BCI官方视频号", status: "在职", joinDate: "2026-02-01" },
+  { name: "运营 C", email: "opc@bci.edu.sg", role: "运营人员", accounts: "BCI招生老师号", status: "在职", joinDate: "2026-03-10" },
+  { name: "部门负责人", email: "lead@bci.edu.sg", role: "部门负责人", accounts: "全部账号", status: "在职", joinDate: "2025-08-01" },
+  { name: "AI 编辑", email: "ai@bci.edu.sg", role: "AI 内容编辑", accounts: "—", status: "在职", joinDate: "2026-03-01" },
+  { name: "招生顾问", email: "admission@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-01-20" },
+];
+
 const aiPromptLibrary = [
   {
     title: "标题改写·反常识公式 5 候选",
@@ -1117,11 +1127,23 @@ const modalTemplates = {
     title: "邀请团队成员",
     body: `
       <div class="form-grid">
-        <label>姓名<input value="新成员" /></label>
-        <label>邮箱<input value="team@bci.edu.sg" /></label>
-        <label>角色<select><option>运营人员</option><option>部门负责人</option><option>AI 内容编辑</option><option>招生顾问</option></select></label>
-        <label>负责账号<select><option>BCI升学顾问号</option><option>BCI官方视频号</option><option>BCI招生老师号</option></select></label>
+        <label>姓名<input id="member-name" placeholder="输入成员姓名" /></label>
+        <label>邮箱<input id="member-email" type="email" placeholder="name@bci.edu.sg" /></label>
+        <label>角色
+          <select id="member-role">
+            <option value="运营人员">运营人员</option>
+            <option value="部门负责人">部门负责人</option>
+            <option value="AI 内容编辑">AI 内容编辑</option>
+            <option value="招生顾问">招生顾问</option>
+          </select>
+        </label>
+        <label>负责账号（运营人员需选择）
+          <select id="member-accounts" multiple style="min-height:80px">
+            ${accounts.map((a) => '<option value="' + a.accountName + '">' + a.accountName + '</option>').join("")}
+          </select>
+        </label>
       </div>
+      <p style="color:var(--muted);font-size:13px;margin-top:8px">部门负责人自动拥有全部账号权限，招生顾问无需分配账号。</p>
     `,
   },
   "export-report": {
@@ -1410,6 +1432,38 @@ async function saveModalRecord() {
     renderAccounts();
     switchToView("accounts");
     showToast(mode === "cloud" ? "账号已保存到云端数据库。" : "账号已临时保存到本机。");
+    return true;
+  }
+
+  if (currentModalAction === "invite-member") {
+    const name = document.querySelector("#member-name")?.value.trim();
+    const email = document.querySelector("#member-email")?.value.trim();
+    const role = document.querySelector("#member-role")?.value;
+    const accountSelect = document.querySelector("#member-accounts");
+    const selectedAccounts = accountSelect
+      ? Array.from(accountSelect.selectedOptions).map((o) => o.value).join(", ")
+      : "";
+
+    if (!name) { showToast("请输入成员姓名。"); return false; }
+    if (!email) { showToast("请输入邮箱地址。"); return false; }
+
+    let assignedAccounts = selectedAccounts;
+    if (role === "部门负责人" || role === "超级管理员") assignedAccounts = "全部账号";
+    if (role === "招生顾问") assignedAccounts = "—";
+    if (role === "AI 内容编辑" && !assignedAccounts) assignedAccounts = "—";
+
+    const member = {
+      name,
+      email,
+      role,
+      accounts: assignedAccounts || "待分配",
+      status: "在职",
+      joinDate: new Date().toISOString().slice(0, 10),
+    };
+    teamMembers.push(member);
+    renderPermissions();
+    switchToView("team");
+    showToast(`已添加成员「${name}」，角色：${role}。`);
     return true;
   }
 
@@ -2244,7 +2298,8 @@ function renderAiLibrary(items = aiPromptLibrary) {
 
 function renderPermissions() {
   const target = document.querySelector("#permission-grid");
-  target.innerHTML = permissions
+
+  const roleCards = permissions
     .map(
       ([role, scope, detail]) => `
         <article class="permission-card row-action" data-title="${role}" data-kind="角色权限">
@@ -2255,6 +2310,37 @@ function renderPermissions() {
       `,
     )
     .join("");
+
+  const roleColorMap = { "运营人员": "blue", "部门负责人": "green", "超级管理员": "red", "AI 内容编辑": "amber", "招生顾问": "" };
+  const memberRows = teamMembers
+    .map(
+      (m) => `
+        <tr class="clickable-row member-detail" data-member-name="${escapeHtml(m.name)}">
+          <td><strong>${escapeHtml(m.name)}</strong></td>
+          <td>${escapeHtml(m.email)}</td>
+          <td>${badge(m.role, roleColorMap[m.role] || "blue")}</td>
+          <td>${escapeHtml(m.accounts)}</td>
+          <td>${badge(m.status, m.status === "在职" ? "green" : "red")}</td>
+          <td>${m.joinDate}</td>
+        </tr>
+      `,
+    )
+    .join("");
+
+  target.innerHTML = `
+    ${roleCards}
+    <div class="table-card" style="grid-column:1/-1;margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 0">
+        <h3 style="margin:0">团队成员（${teamMembers.length} 人）</h3>
+      </div>
+      <table>
+        <thead>
+          <tr><th>姓名</th><th>邮箱</th><th>角色</th><th>负责账号</th><th>状态</th><th>入职日期</th></tr>
+        </thead>
+        <tbody>${memberRows}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 function wireNavigation() {
