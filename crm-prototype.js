@@ -72,9 +72,11 @@ const posts = [
 ];
 
 const dailyTasks = [
-  ["09:30", "小红书", "BCI升学顾问号", "升学顾问 IP", "NTU 接受 WACE ATAR 作为录取参考吗", "待发布", "green"],
+  ["09:30", "小红书", "BCI西澳课程中心", "升学顾问 IP", "新加坡高中不是越贵越好，真正要看这 3 点", "待发布", "green"],
+  ["10:30", "小红书", "BCI升学顾问号", "升学顾问 IP", "NTU 接受 WACE ATAR 作为录取参考吗", "待发布", "green"],
   ["11:00", "视频号", "BCI官方视频号", "校长 IP", "为什么 9 年级转轨国际课程要看科目组合", "待审核", "red"],
   ["14:00", "小红书", "BCI招生老师号", "招生老师 IP", "新加坡国际高中学费区间怎么判断", "草稿修改", "blue"],
+  ["15:00", "小红书", "BCI西澳课程中心", "王一样讲新加坡", "WACE 成绩可以申请哪些澳洲大学", "待审核", "red"],
   ["16:30", "公众号", "BCI国际学校", "官方 IP", "WACE 课程结构：必修、选修和学分", "待归档", "amber"],
 ];
 
@@ -377,6 +379,22 @@ const accounts = [
     stage: "养号",
     monthlyPosts: 12,
     leads: 8,
+  },
+  {
+    accountName: "BCI国际学校",
+    status: "增长",
+    contentCount: 36,
+    handle: "微信公众号",
+    investmentTier: "核心",
+    ownerType: "自营",
+    persona: "官方 IP",
+    talent: "校方品牌",
+    entityName: "BCI International",
+    entityType: "学校",
+    operator: "Ocean Wang",
+    stage: "增长",
+    monthlyPosts: 8,
+    leads: 15,
   },
 ];
 
