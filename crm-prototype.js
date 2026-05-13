@@ -2,7 +2,7 @@ const roleCopy = {
   operator: {
     title: "运营人员工作台",
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
-    nav: ["dashboard", "publishing", "content", "knowledge", "calendar"],
+    nav: ["dashboard", "publishing", "content", "knowledge", "calendar", "crm"],
   },
   lead: {
     title: "部门负责人工作台",
