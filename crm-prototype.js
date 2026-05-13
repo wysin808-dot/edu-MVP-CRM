@@ -1447,6 +1447,42 @@ async function saveModalRecord() {
     return true;
   }
 
+  // Content detail: submit draft for review
+  if (currentModalAction === "content-submit-review") {
+    const item = window._contentDetailItem;
+    if (item) {
+      item.status = "待审核";
+      item.reviewHistory = item.reviewHistory || [];
+      item.reviewHistory.push({ reviewer: "运营人员", action: "resubmit", comment: "草稿提交审核", timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") });
+      persistContentUpdate(item);
+      renderContent();
+      renderApp();
+    }
+    showToast("已提交审核，等待部门负责人处理。");
+    return true;
+  }
+
+  // Content detail: resubmit rejected content
+  if (currentModalAction === "content-resubmit") {
+    const item = window._contentDetailItem;
+    if (item) {
+      item.status = "待审核";
+      item.reviewHistory = item.reviewHistory || [];
+      item.reviewHistory.push({ reviewer: "运营人员", action: "resubmit", comment: "已修改重新提交", timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") });
+      persistContentUpdate(item);
+      renderContent();
+      renderApp();
+    }
+    showToast("已重新提交审核，等待部门负责人处理。");
+    return true;
+  }
+
+  // Content detail: publish (open upload-post form)
+  if (currentModalAction === "content-publish") {
+    openModal("upload-post");
+    return true;
+  }
+
   return false;
 }
 
@@ -1457,24 +1493,35 @@ function statusColor(s) {
 
 function renderTasks() {
   const target = document.querySelector("#task-list");
-  target.innerHTML = tasks
-    .map(
-      ([account, title, status, color]) => {
-        // Sync status from contents if a matching item exists
-        const match = contents.find((c) => title.includes(c.title?.slice(0, 8)) || c.title?.includes(title.slice(0, 8)));
-        const liveStatus = match ? match.status : status;
-        const liveColor = match ? statusColor(match.status) : color;
-        return `
-        <div class="task-row">
-          <strong>${account}</strong>
-          <span>${title}</span>
-          ${badge(liveStatus, liveColor)}
-          <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">处理</button>
-        </div>
-      `;
-      },
-    )
-    .join("");
+
+  // 1. Render hardcoded tasks (syncing live status from contents)
+  const hardcodedHtml = tasks.map(([account, title, status, color]) => {
+    const match = contents.find((c) => title.includes(c.title?.slice(0, 8)) || c.title?.includes(title.slice(0, 8)));
+    const liveStatus = match ? match.status : status;
+    const liveColor = match ? statusColor(match.status) : color;
+    return `
+      <div class="task-row">
+        <strong>${account}</strong>
+        <span>${title}</span>
+        ${badge(liveStatus, liveColor)}
+        <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">处理</button>
+      </div>`;
+  });
+
+  // 2. Append user-created content with actionable statuses
+  const actionableStatuses = ["草稿", "待审核", "已驳回", "可发布", "待回填"];
+  const matchedTitles = tasks.map(([, t]) => t);
+  const dynamicHtml = contents
+    .filter((c) => actionableStatuses.includes(c.status) && !matchedTitles.some((t) => t.includes(c.title?.slice(0, 8)) || c.title?.includes(t.slice(0, 8))))
+    .map((c) => `
+      <div class="task-row">
+        <strong>${c.account || "—"}</strong>
+        <span>${escapeHtml(c.title)}</span>
+        ${badge(c.status, statusColor(c.status))}
+        <button class="ghost-button row-action" type="button" data-title="${escapeHtml(c.title)}" data-kind="任务处理">处理</button>
+      </div>`);
+
+  target.innerHTML = hardcodedHtml.concat(dynamicHtml).join("");
 }
 
 function renderPublishing() {
@@ -2010,7 +2057,7 @@ function wireActions() {
               <div><strong>Emotional Trigger</strong><span>${item.emotionalTrigger}</span></div>
               <div><strong>Content Type</strong><span>${item.contentType}</span></div>
               <div><strong>Lead Magnet</strong><span>${item.leadMagnet}</span></div>
-              <div><strong>Audience Persona</strong><span>${item.audiencePersona.join(" / ")}</span></div>
+              <div><strong>Audience Persona</strong><span>${(item.audiencePersona || []).join(" / ")}</span></div>
               <div><strong>CTA</strong><span>${item.cta}</span></div>
               <div><strong>Publish Date</strong><span>${item.publishDate}</span></div>
               <div><strong>Primary Keyword</strong><span>${item.primaryKeyword}</span></div>
@@ -2031,6 +2078,28 @@ function wireActions() {
             </div>
           `,
         );
+        // Status-aware footer buttons for content detail
+        const confirmBtn = document.querySelector("#modal-confirm");
+        const draftBtn = document.querySelector("#modal-draft");
+        draftBtn.style.display = "none";
+        if (item.status === "草稿") {
+          confirmBtn.style.display = "";
+          confirmBtn.textContent = "提交审核";
+          currentModalAction = "content-submit-review";
+          window._contentDetailItem = item;
+        } else if (item.status === "已驳回") {
+          confirmBtn.style.display = "";
+          confirmBtn.textContent = "重新提交";
+          currentModalAction = "content-resubmit";
+          window._contentDetailItem = item;
+        } else if (item.status === "可发布") {
+          confirmBtn.style.display = "";
+          confirmBtn.textContent = "发布归档";
+          currentModalAction = "content-publish";
+          window._contentDetailItem = item;
+        } else {
+          confirmBtn.style.display = "none";
+        }
       }
       return;
     }
