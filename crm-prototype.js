@@ -3,28 +3,47 @@ const roleCopy = {
     title: "运营人员工作台",
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
     nav: ["dashboard", "publishing", "content", "knowledge", "calendar", "crm"],
+    user: "Ocean Wang",
+    contentFilter: "own",
   },
   lead: {
     title: "部门负责人工作台",
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
     nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics"],
+    user: "部门负责人",
+    contentFilter: "all",
   },
   admin: {
     title: "超级管理员工作台",
     summary: "管理用户、角色、账号、IP、资料库和全局数据权限。",
     nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "team"],
+    user: "管理员",
+    contentFilter: "all",
   },
   ai: {
     title: "AI 内容编辑工作台",
     summary: "基于真实资料库生成内容，保存 prompt、版本和采用记录。",
     nav: ["dashboard", "content", "knowledge", "ai", "calendar"],
+    user: "AI 编辑",
+    contentFilter: "own",
   },
   admission: {
     title: "招生顾问工作台",
     summary: "跟进分配线索，查看来源内容，记录到访、报名和流失结果。",
     nav: ["dashboard", "crm"],
+    user: "招生顾问",
+    contentFilter: "none",
   },
 };
+
+function getFilteredContents() {
+  const role = document.querySelector("#role-select").value;
+  const config = roleCopy[role];
+  if (config.contentFilter === "all") return contents;
+  if (config.contentFilter === "none") return [];
+  // "own": match by user name
+  return contents.filter((c) => c.author === config.user || c.author === "当前用户");
+}
 
 const tasks = [
   ["小红书 01", "WACE 可以申请 NUS 吗？", "待审核", "red"],
@@ -1297,7 +1316,7 @@ async function saveModalRecord() {
       aiSearchReady: values[1] === "是",
       account: values[2] || "待分配账号",
       audiencePersona: (values[3] || "通用").split(/[,，/]/).map((tag) => tag.trim()).filter(Boolean),
-      author: values[4] || "当前用户",
+      author: values[4] || roleCopy[document.querySelector("#role-select").value].user,
       contentType: values[5] || "内容",
       emotionalTrigger: values[6] || "待定",
       funnelStage: values[7] || "Awareness",
@@ -1538,14 +1557,21 @@ function renderTasks() {
   const target = document.querySelector("#task-summary");
   if (!target) return;
 
-  // Collect all statuses: hardcoded tasks (synced with contents) + content items
+  // Use role-filtered contents for status counts
+  const filtered = getFilteredContents();
   const allStatuses = [];
   tasks.forEach(([, title, status]) => {
-    const match = contents.find((c) => title.includes(c.title?.slice(0, 8)) || c.title?.includes(title.slice(0, 8)));
-    allStatuses.push(match ? match.status : status);
+    const match = filtered.find((c) => title.includes(c.title?.slice(0, 8)) || c.title?.includes(title.slice(0, 8)));
+    if (match) {
+      allStatuses.push(match.status);
+    } else {
+      // Only include hardcoded task if role sees all content
+      const role = document.querySelector("#role-select").value;
+      if (roleCopy[role].contentFilter === "all") allStatuses.push(status);
+    }
   });
   const matchedTitles = tasks.map(([, t]) => t);
-  contents.forEach((c) => {
+  filtered.forEach((c) => {
     if (!matchedTitles.some((t) => t.includes(c.title?.slice(0, 8)) || c.title?.includes(t.slice(0, 8)))) {
       allStatuses.push(c.status);
     }
@@ -1812,7 +1838,8 @@ function buildMetricsForm(item) {
   `;
 }
 
-function renderContent(items = contents) {
+function renderContent(items) {
+  if (!items) items = getFilteredContents();
   const target = document.querySelector("#content-cards");
   target.innerHTML = items
     .map(
@@ -2077,6 +2104,8 @@ function wireRoleSwitch() {
     title.textContent = roleCopy[role].title;
     summary.textContent = roleCopy[role].summary;
     applyRoleNav(role);
+    renderContent();
+    renderTasks();
   });
 }
 
@@ -2395,7 +2424,7 @@ function runLibrarySearch(library) {
   const configs = {
     content: {
       input: "#content-search",
-      source: contents,
+      source: getFilteredContents(),
       render: renderContent,
       label: "内容资产",
     },
@@ -2437,7 +2466,8 @@ const activeFilters = { funnel: "", emotion: "", repurpose: "", topic: "" };
 
 function applyStrategyFilters() {
   const keyword = (document.querySelector("#content-search")?.value || "").trim();
-  const filtered = contents.filter((item) => {
+  const base = getFilteredContents();
+  const filtered = base.filter((item) => {
     if (activeFilters.funnel && item.funnelStage !== activeFilters.funnel) return false;
     if (activeFilters.emotion && !includesKeyword(item.emotionalTrigger, activeFilters.emotion)) return false;
     if (activeFilters.repurpose && !includesKeyword(item.repurposeStatus, activeFilters.repurpose)) return false;
