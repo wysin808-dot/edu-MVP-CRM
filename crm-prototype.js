@@ -1618,6 +1618,8 @@ function renderPublishing() {
 
 function renderDailyTasks() {
   const target = document.querySelector("#daily-task-list");
+  const currentRole = document.querySelector("#role-select").value;
+  const isReviewer = currentRole === "lead" || currentRole === "admin";
   target.innerHTML = dailyTasks
     .map(
       ([time, platform, account, persona, title, status, color]) => `
@@ -1632,9 +1634,12 @@ function renderDailyTasks() {
             <p>${account} · ${persona}</p>
           </div>
           <div class="daily-task-actions">
-            <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务详情">详情</button>
-            <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="提交审核">提交审核</button>
-            <button class="primary-button action-button" type="button" data-action="upload-post">发布归档</button>
+            <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">详情</button>
+            ${isReviewer
+              ? `<button class="primary-button row-action" type="button" data-title="${title}" data-kind="任务处理">审核</button>`
+              : `<button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">提交审核</button>
+                 <button class="primary-button action-button" type="button" data-action="upload-post">发布归档</button>`
+            }
           </div>
         </article>
       `,
@@ -2121,28 +2126,47 @@ function wireActions() {
     if (contentButton) {
       const item = contents.find((entry) => entry.title === contentButton.dataset.title);
       if (item) {
-        openModal("content-detail", item.title, buildContentDetailHtml(item));
-        // Status-aware footer buttons for content detail
-        const confirmBtn = document.querySelector("#modal-confirm");
-        const draftBtn = document.querySelector("#modal-draft");
-        draftBtn.style.display = "none";
-        if (item.status === "草稿") {
-          confirmBtn.style.display = "";
-          confirmBtn.textContent = "提交审核";
-          currentModalAction = "content-submit-review";
-          window._contentDetailItem = item;
-        } else if (item.status === "已驳回") {
-          confirmBtn.style.display = "";
-          confirmBtn.textContent = "重新提交";
-          currentModalAction = "content-resubmit";
-          window._contentDetailItem = item;
-        } else if (item.status === "可发布") {
-          confirmBtn.style.display = "";
-          confirmBtn.textContent = "发布归档";
-          currentModalAction = "content-publish";
-          window._contentDetailItem = item;
+        const currentRole = document.querySelector("#role-select").value;
+        const isReviewer = currentRole === "lead" || currentRole === "admin";
+
+        if (isReviewer) {
+          // Lead / Admin: review-oriented actions
+          if (item.status === "待审核" || item.status === "草稿" || item.status === "已驳回" || item.status === "可发布" || item.status === "审核通过") {
+            openModal("review-action", `审核：${item.title.slice(0, 20)}`, buildReviewForm(item));
+          } else if (item.status === "已发布" || item.status === "Posted" || item.status === "已复盘" || item.status === "待回填") {
+            openModal("metrics-backfill", `数据查看：${item.title.slice(0, 15)}`, buildMetricsForm(item));
+          } else {
+            openModal("content-detail", item.title, buildContentDetailHtml(item));
+            document.querySelector("#modal-confirm").style.display = "none";
+            document.querySelector("#modal-draft").style.display = "none";
+          }
         } else {
-          confirmBtn.style.display = "none";
+          // Operator / AI / others: action buttons based on status
+          openModal("content-detail", item.title, buildContentDetailHtml(item));
+          const confirmBtn = document.querySelector("#modal-confirm");
+          const draftBtn = document.querySelector("#modal-draft");
+          draftBtn.style.display = "none";
+          if (item.status === "草稿") {
+            confirmBtn.style.display = "";
+            confirmBtn.textContent = "提交审核";
+            currentModalAction = "content-submit-review";
+            window._contentDetailItem = item;
+          } else if (item.status === "已驳回") {
+            confirmBtn.style.display = "";
+            confirmBtn.textContent = "重新提交";
+            currentModalAction = "content-resubmit";
+            window._contentDetailItem = item;
+          } else if (item.status === "可发布" || item.status === "审核通过") {
+            confirmBtn.style.display = "";
+            confirmBtn.textContent = "发布归档";
+            currentModalAction = "content-publish";
+            window._contentDetailItem = item;
+          } else if (item.status === "待审核") {
+            // Operator waiting for review: read-only
+            confirmBtn.style.display = "none";
+          } else {
+            confirmBtn.style.display = "none";
+          }
         }
       }
       return;
@@ -2272,29 +2296,38 @@ function wireActions() {
       /* P1: intercept review & backfill tasks */
       if (kind === "任务处理") {
         const contentItem = contents.find((c) => c.title === title || title.includes(c.title?.slice(0, 8)));
-        if (contentItem && contentItem.status === "已驳回") {
-          const lastReject = (contentItem.reviewHistory || []).filter((r) => r.action === "reject").pop();
-          openModal("resubmit-review", `重新提交：${contentItem.title.slice(0, 20)}`, `
-            <div class="detail-list">
-              <div><strong>内容标题</strong><span>${escapeHtml(contentItem.title)}</span></div>
-              <div><strong>当前状态</strong><span>${badge("已驳回", "red")}</span></div>
-              ${lastReject ? `<div><strong>驳回原因</strong><span style="color:#dc2626">${escapeHtml(lastReject.comment || "未填写原因")}</span></div>` : ""}
-              ${lastReject ? `<div><strong>驳回时间</strong><span>${lastReject.timestamp}</span></div>` : ""}
-            </div>
-            <div class="modal-section">
-              <h3>修改并重新提交</h3>
-              <label>修改说明<textarea rows="3" placeholder="说明本次修改了什么内容…"></textarea></label>
-            </div>
-          `);
-          return;
-        }
-        if (contentItem && contentItem.status === "可发布") {
-          openModal("upload-post");
-          return;
-        }
         const currentRole = document.querySelector("#role-select").value;
+        const isReviewer = currentRole === "lead" || currentRole === "admin";
+        if (contentItem && contentItem.status === "已驳回") {
+          if (isReviewer) {
+            openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
+          } else {
+            const lastReject = (contentItem.reviewHistory || []).filter((r) => r.action === "reject").pop();
+            openModal("resubmit-review", `重新提交：${contentItem.title.slice(0, 20)}`, `
+              <div class="detail-list">
+                <div><strong>内容标题</strong><span>${escapeHtml(contentItem.title)}</span></div>
+                <div><strong>当前状态</strong><span>${badge("已驳回", "red")}</span></div>
+                ${lastReject ? `<div><strong>驳回原因</strong><span style="color:#dc2626">${escapeHtml(lastReject.comment || "未填写原因")}</span></div>` : ""}
+                ${lastReject ? `<div><strong>驳回时间</strong><span>${lastReject.timestamp}</span></div>` : ""}
+              </div>
+              <div class="modal-section">
+                <h3>修改并重新提交</h3>
+                <label>修改说明<textarea rows="3" placeholder="说明本次修改了什么内容…"></textarea></label>
+              </div>
+            `);
+          }
+          return;
+        }
+        if (contentItem && (contentItem.status === "可发布" || contentItem.status === "审核通过")) {
+          if (isReviewer) {
+            openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
+          } else {
+            openModal("upload-post");
+          }
+          return;
+        }
         if (contentItem && contentItem.status === "草稿") {
-          if (currentRole === "lead" || currentRole === "admin") {
+          if (isReviewer) {
             openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
           } else {
             // Operator: show content detail with submit button
@@ -2310,7 +2343,7 @@ function wireActions() {
           return;
         }
         if (contentItem && contentItem.status === "待审核") {
-          if (currentRole === "lead" || currentRole === "admin") {
+          if (isReviewer) {
             openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
           } else {
             // Operator: read-only, waiting for review
@@ -2329,37 +2362,45 @@ function wireActions() {
           const taskEntry = tasks.find(([, t]) => t === title);
           const inferredStatus = taskEntry ? taskEntry[2] : "草稿";
           const inferredAccount = taskEntry ? taskEntry[0] : "—";
+          const pseudoItem = { title, account: inferredAccount, status: inferredStatus, funnelStage: "—", reviewHistory: [], metrics: {} };
           if (inferredStatus === "可发布") {
-            openModal("upload-post");
+            if (isReviewer) {
+              openModal("review-action", `审核：${title.slice(0, 20)}`, buildReviewForm(pseudoItem));
+            } else {
+              openModal("upload-post");
+            }
             return;
           }
           if (inferredStatus === "待回填") {
-            openModal("metrics-backfill", `数据回填：${title.slice(0, 15)}`, buildMetricsForm({ title, account: inferredAccount, metrics: {} }));
+            openModal("metrics-backfill", `数据回填：${title.slice(0, 15)}`, buildMetricsForm(pseudoItem));
             return;
           }
-          // 草稿 / 待审核: show info + status-appropriate button
-          const statusBadge = badge(inferredStatus, statusColor(inferredStatus));
-          openModal("content-detail", title, `
-            <div class="detail-list">
-              <div><strong>内容标题</strong><span>${escapeHtml(title)}</span></div>
-              <div><strong>账号</strong><span>${inferredAccount}</span></div>
-              <div><strong>当前状态</strong><span>${statusBadge}</span></div>
-            </div>
-            <div class="modal-section">
-              <h3>审核记录</h3>
-              <p style="color:var(--muted)">暂无审核记录。</p>
-            </div>
-          `);
-          const confirmBtn = document.querySelector("#modal-confirm");
-          const draftBtn = document.querySelector("#modal-draft");
-          draftBtn.style.display = "none";
-          if (inferredStatus === "草稿" && currentRole !== "lead" && currentRole !== "admin") {
-            confirmBtn.style.display = "";
-            confirmBtn.textContent = "提交审核";
-          } else if (inferredStatus === "待审核" && currentRole !== "lead" && currentRole !== "admin") {
-            confirmBtn.style.display = "none";
+          // 草稿 / 待审核
+          if (isReviewer) {
+            openModal("review-action", `审核：${title.slice(0, 20)}`, buildReviewForm(pseudoItem));
           } else {
-            confirmBtn.style.display = "";
+            const statusBadge = badge(inferredStatus, statusColor(inferredStatus));
+            openModal("content-detail", title, `
+              <div class="detail-list">
+                <div><strong>内容标题</strong><span>${escapeHtml(title)}</span></div>
+                <div><strong>账号</strong><span>${inferredAccount}</span></div>
+                <div><strong>当前状态</strong><span>${statusBadge}</span></div>
+              </div>
+              <div class="modal-section">
+                <h3>审核记录</h3>
+                <p style="color:var(--muted)">暂无审核记录。</p>
+              </div>
+            `);
+            const confirmBtn = document.querySelector("#modal-confirm");
+            const draftBtn = document.querySelector("#modal-draft");
+            draftBtn.style.display = "none";
+            if (inferredStatus === "草稿") {
+              confirmBtn.style.display = "";
+              confirmBtn.textContent = "提交审核";
+              currentModalAction = "content-submit-review";
+            } else {
+              confirmBtn.style.display = "none";
+            }
           }
           return;
         }
