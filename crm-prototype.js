@@ -978,7 +978,7 @@ const modalTemplates = {
         <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>抖音</option></select></label>
         <label>发布账号<select>${optionList(accountNames(), "请先新增账号")}</select></label>
         <label>绑定 IP<select>${optionList(personaNames(), "请先新增 IP")}</select></label>
-        <label>关联内容资产<select><option>WACE 可以申请 NUS 吗？</option><option>新加坡高中不是越贵越好，真正要看这 3 点</option><option>ATAR 90 不一定上 NUS，关键看这一步</option></select></label>
+        <label>关联内容资产<select>${contents.map((c) => `<option>${escapeHtml(c.title)}</option>`).join("")}</select></label>
         <label>媒体类型<select><option>图文</option><option>短视频</option><option>公众号文章</option><option>朋友圈</option></select></label>
         <label class="full-field">发布链接<input value="https://example.com/post/..." /></label>
         <div class="full-field upload-section">
