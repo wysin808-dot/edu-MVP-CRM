@@ -2149,7 +2149,7 @@ function wireActions() {
               <div><strong>内容标题</strong><span>${escapeHtml(contentItem.title)}</span></div>
               <div><strong>当前状态</strong><span>${badge("已驳回", "red")}</span></div>
               ${lastReject ? `<div><strong>驳回原因</strong><span style="color:#dc2626">${escapeHtml(lastReject.comment || "未填写原因")}</span></div>` : ""}
-              ${lastReject ? `<div><strong>驳回时间</strong><span>${lastReject.time}</span></div>` : ""}
+              ${lastReject ? `<div><strong>驳回时间</strong><span>${lastReject.timestamp}</span></div>` : ""}
             </div>
             <div class="modal-section">
               <h3>修改并重新提交</h3>
