@@ -1620,6 +1620,32 @@ function renderDailyTasks() {
   const target = document.querySelector("#daily-task-list");
   const currentRole = document.querySelector("#role-select").value;
   const isReviewer = currentRole === "lead" || currentRole === "admin";
+
+  function taskButtons(status, title) {
+    const detail = `<button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">详情</button>`;
+    const review = `<button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">审核</button>`;
+    const submit = `<button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">提交审核</button>`;
+    const archive = `<button class="primary-button action-button" type="button" data-action="upload-post">发布归档</button>`;
+
+    if (status === "待发布") {
+      // 审核通过，等运营人员去手机发布，发完回来归档
+      return isReviewer ? `${detail}${archive}` : `${detail}${archive}`;
+    }
+    if (status === "待审核") {
+      // 运营人员等待审核，负责人可审核
+      return isReviewer ? `${detail}${review}` : `${detail}`;
+    }
+    if (status === "草稿修改" || status === "草稿") {
+      // 需要修改/完善，运营人员提交审核，负责人可审核也可提交
+      return isReviewer ? `${detail}${review}${submit}` : `${detail}${submit}`;
+    }
+    if (status === "待归档") {
+      // 已发布但还没填归档信息
+      return `${detail}${archive}`;
+    }
+    return `${detail}`;
+  }
+
   target.innerHTML = dailyTasks
     .map(
       ([time, platform, account, persona, title, status, color]) => `
@@ -1634,13 +1660,7 @@ function renderDailyTasks() {
             <p>${account} · ${persona}</p>
           </div>
           <div class="daily-task-actions">
-            <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">详情</button>
-            ${isReviewer
-              ? `<button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">审核</button>
-                 <button class="primary-button action-button" type="button" data-action="upload-post">发布归档</button>`
-              : `<button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">提交审核</button>
-                 <button class="primary-button action-button" type="button" data-action="upload-post">发布归档</button>`
-            }
+            ${taskButtons(status, title)}
           </div>
         </article>
       `,
