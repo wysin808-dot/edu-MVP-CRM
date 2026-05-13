@@ -399,6 +399,42 @@ input {
   background: var(--surface-soft);
 }
 
+.status-summary-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.status-chip {
+  flex: 1;
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  cursor: default;
+}
+
+.status-chip strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.status-chip span {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.status-chip.blue strong { color: #2563eb; }
+.status-chip.amber strong { color: #d97706; }
+.status-chip.red strong { color: #dc2626; }
+.status-chip.green strong { color: #16a34a; }
+.status-chip.muted strong { color: var(--muted); }
+
 .daily-task-list {
   display: grid;
   gap: 10px;

@@ -1535,36 +1535,40 @@ function buildContentDetailHtml(item) {
 }
 
 function renderTasks() {
-  const target = document.querySelector("#task-list");
+  const target = document.querySelector("#task-summary");
+  if (!target) return;
 
-  // 1. Render hardcoded tasks (syncing live status from contents)
-  const hardcodedHtml = tasks.map(([account, title, status, color]) => {
+  // Collect all statuses: hardcoded tasks (synced with contents) + content items
+  const allStatuses = [];
+  tasks.forEach(([, title, status]) => {
     const match = contents.find((c) => title.includes(c.title?.slice(0, 8)) || c.title?.includes(title.slice(0, 8)));
-    const liveStatus = match ? match.status : status;
-    const liveColor = match ? statusColor(match.status) : color;
-    return `
-      <div class="task-row">
-        <strong>${account}</strong>
-        <span>${title}</span>
-        ${badge(liveStatus, liveColor)}
-        <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">处理</button>
-      </div>`;
+    allStatuses.push(match ? match.status : status);
+  });
+  const matchedTitles = tasks.map(([, t]) => t);
+  contents.forEach((c) => {
+    if (!matchedTitles.some((t) => t.includes(c.title?.slice(0, 8)) || c.title?.includes(t.slice(0, 8)))) {
+      allStatuses.push(c.status);
+    }
   });
 
-  // 2. Append user-created content with actionable statuses
-  const actionableStatuses = ["草稿", "待审核", "已驳回", "可发布", "待回填"];
-  const matchedTitles = tasks.map(([, t]) => t);
-  const dynamicHtml = contents
-    .filter((c) => actionableStatuses.includes(c.status) && !matchedTitles.some((t) => t.includes(c.title?.slice(0, 8)) || c.title?.includes(t.slice(0, 8))))
-    .map((c) => `
-      <div class="task-row">
-        <strong>${c.account || "—"}</strong>
-        <span>${escapeHtml(c.title)}</span>
-        ${badge(c.status, statusColor(c.status))}
-        <button class="ghost-button row-action" type="button" data-title="${escapeHtml(c.title)}" data-kind="任务处理">处理</button>
-      </div>`);
+  // Count by status group
+  const draft = allStatuses.filter((s) => s === "草稿").length;
+  const pending = allStatuses.filter((s) => s === "待审核").length;
+  const rejected = allStatuses.filter((s) => s === "已驳回").length;
+  const ready = allStatuses.filter((s) => s === "可发布" || s === "审核通过").length;
+  const backfill = allStatuses.filter((s) => s === "待回填").length;
+  const published = allStatuses.filter((s) => s === "已发布" || s === "Posted" || s === "已复盘").length;
 
-  target.innerHTML = hardcodedHtml.concat(dynamicHtml).join("");
+  target.innerHTML = `
+    <div class="status-summary-row">
+      ${draft ? `<div class="status-chip blue"><strong>${draft}</strong><span>草稿</span></div>` : ""}
+      ${pending ? `<div class="status-chip amber"><strong>${pending}</strong><span>待审核</span></div>` : ""}
+      ${rejected ? `<div class="status-chip red"><strong>${rejected}</strong><span>已驳回</span></div>` : ""}
+      ${ready ? `<div class="status-chip green"><strong>${ready}</strong><span>可发布</span></div>` : ""}
+      ${backfill ? `<div class="status-chip amber"><strong>${backfill}</strong><span>待回填</span></div>` : ""}
+      ${published ? `<div class="status-chip muted"><strong>${published}</strong><span>已发布</span></div>` : ""}
+    </div>
+  `;
 }
 
 function renderPublishing() {
