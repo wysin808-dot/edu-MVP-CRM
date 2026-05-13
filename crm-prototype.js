@@ -381,6 +381,7 @@ const accounts = [
     leads: 8,
   },
   {
+    platform: "公众号",
     accountName: "BCI国际学校",
     status: "增长",
     contentCount: 36,
@@ -1566,6 +1567,26 @@ async function saveModalRecord() {
     }
     const score = contentScore({ reads, likes, comments, shares, privateMessages, leads });
     showToast(`数据已保存，综合分：${Math.round(score)}`);
+    return true;
+  }
+
+  if (currentModalAction === "new-lead") {
+    const lead = {
+      name: `${values[1] || "G"} ${values[0] || "学生家长"}`,
+      source: `来自${values[4] || "平台"}：${values[5] || "IP"}`,
+      stage: "新线索",
+      assignee: "",
+      date: new Date().toISOString().slice(0, 10),
+      grade: values[1] || "",
+      parentName: values[2] || "",
+      course: values[3] || "",
+      notes: values[6] || "",
+    };
+    crmLeads.unshift(lead);
+    renderCrm();
+    renderNotifications();
+    switchToView("crm");
+    showToast("新线索已添加，请分配招生顾问。");
     return true;
   }
 
