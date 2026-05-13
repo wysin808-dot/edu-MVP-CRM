@@ -2291,6 +2291,45 @@ function wireActions() {
           openModal("metrics-backfill", `数据回填：${contentItem.title.slice(0, 15)}`, buildMetricsForm(contentItem));
           return;
         }
+        // Fallback: no matching content record — infer status from hardcoded task
+        if (!contentItem) {
+          const taskEntry = tasks.find(([, t]) => t === title);
+          const inferredStatus = taskEntry ? taskEntry[2] : "草稿";
+          const inferredAccount = taskEntry ? taskEntry[0] : "—";
+          if (inferredStatus === "可发布") {
+            openModal("upload-post");
+            return;
+          }
+          if (inferredStatus === "待回填") {
+            openModal("metrics-backfill", `数据回填：${title.slice(0, 15)}`, buildMetricsForm({ title, account: inferredAccount, metrics: {} }));
+            return;
+          }
+          // 草稿 / 待审核: show info + status-appropriate button
+          const statusBadge = badge(inferredStatus, statusColor(inferredStatus));
+          openModal("content-detail", title, `
+            <div class="detail-list">
+              <div><strong>内容标题</strong><span>${escapeHtml(title)}</span></div>
+              <div><strong>账号</strong><span>${inferredAccount}</span></div>
+              <div><strong>当前状态</strong><span>${statusBadge}</span></div>
+            </div>
+            <div class="modal-section">
+              <h3>审核记录</h3>
+              <p style="color:var(--muted)">暂无审核记录。</p>
+            </div>
+          `);
+          const confirmBtn = document.querySelector("#modal-confirm");
+          const draftBtn = document.querySelector("#modal-draft");
+          draftBtn.style.display = "none";
+          if (inferredStatus === "草稿" && currentRole !== "lead" && currentRole !== "admin") {
+            confirmBtn.style.display = "";
+            confirmBtn.textContent = "提交审核";
+          } else if (inferredStatus === "待审核" && currentRole !== "lead" && currentRole !== "admin") {
+            confirmBtn.style.display = "none";
+          } else {
+            confirmBtn.style.display = "";
+          }
+          return;
+        }
       }
       openModal(
         "record-detail",
