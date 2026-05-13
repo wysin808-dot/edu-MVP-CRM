@@ -1097,13 +1097,13 @@ textarea {
 
 .calendar-legend {
   display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-  padding: 8px 14px;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 5px 12px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--surface);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
 }
 
@@ -1115,8 +1115,8 @@ textarea {
 
 .dot {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
 }
 
@@ -1137,17 +1137,17 @@ textarea {
 }
 
 .cal-header {
-  padding: 8px;
+  padding: 4px;
   background: #f5f5f5;
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--muted);
 }
 
 .cal-cell {
-  min-height: 100px;
-  padding: 6px;
+  min-height: 64px;
+  padding: 4px;
   background: var(--surface);
   vertical-align: top;
 }
@@ -1162,10 +1162,11 @@ textarea {
 }
 
 .cal-date {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   color: var(--muted);
+  line-height: 1;
 }
 
 .cal-cell.today .cal-date {
@@ -1175,10 +1176,10 @@ textarea {
 .cal-item {
   display: block;
   width: 100%;
-  padding: 3px 5px;
-  margin-bottom: 2px;
+  padding: 2px 4px;
+  margin-bottom: 1px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -1186,6 +1187,7 @@ textarea {
   border: none;
   cursor: pointer;
   text-align: left;
+  line-height: 1.3;
 }
 
 .cal-item:hover { filter: brightness(0.92); }
@@ -1196,22 +1198,22 @@ textarea {
 .cal-item.enroll { background: #ffe0e0; color: #8f1a1a; }
 
 .calendar-summary {
-  margin-top: 14px;
+  margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 
 .cal-stat {
-  padding: 12px;
+  padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--surface);
 }
 
-.cal-stat span { color: var(--muted); font-size: 12px; display: block; }
-.cal-stat strong { font-size: 18px; display: block; margin-top: 4px; }
-.cal-stat small { color: var(--muted); font-size: 11px; }
+.cal-stat span { color: var(--muted); font-size: 11px; display: block; }
+.cal-stat strong { font-size: 15px; display: block; margin-top: 2px; }
+.cal-stat small { color: var(--muted); font-size: 10px; }
 
 /* Strategy health grid */
 .strategy-health-grid {
