@@ -1565,6 +1565,91 @@ function buildContentDetailHtml(item) {
   `;
 }
 
+function renderKpiCards() {
+  const target = document.querySelector("#kpi-cards");
+  if (!target) return;
+
+  const currentRole = document.querySelector("#role-select").value;
+  const isReviewer = currentRole === "lead" || currentRole === "admin";
+  const filtered = getFilteredContents();
+
+  // 1. 今日待发布 — count from dailyTasks with same filter logic as renderDailyTasks
+  const visibleDailyTasks = isReviewer
+    ? dailyTasks
+    : dailyTasks.filter(([, , account]) => {
+        const myNames = getMyAccountNames();
+        return myNames.length === 0 ? true : myNames.includes(account);
+      });
+  const todayPublishCount = visibleDailyTasks.length;
+
+  // 2. 待审核 — items needing review (different meaning per role)
+  const pendingReviewCount = filtered.filter((c) => c.status === "待审核").length;
+
+  // 3. 待回填数据 — published but no metrics backfill yet
+  const backfillCount = filtered.filter(
+    (c) => c.status === "待回填" || (c.status === "已发布" && c.metrics && c.metrics.reads === 0 && c.metrics.leads === 0)
+  ).length;
+
+  // 4. 本周新线索 — count from CRM "新线索" column
+  const newLeadsCount = crmColumns.find(([stage]) => stage === "新线索")?.[1]?.length || 0;
+
+  // Role-specific card sets
+  const cards = [];
+
+  cards.push({
+    label: "今日任务",
+    value: todayPublishCount,
+    desc: "条待处理",
+    color: todayPublishCount > 0 ? "var(--brand)" : "var(--muted)",
+  });
+
+  if (isReviewer) {
+    cards.push({
+      label: "待审核",
+      value: pendingReviewCount,
+      desc: "条内容",
+      color: pendingReviewCount > 0 ? "#e67700" : "var(--muted)",
+    });
+  } else if (currentRole !== "admission") {
+    cards.push({
+      label: "待审核",
+      value: pendingReviewCount,
+      desc: "条等待中",
+      color: pendingReviewCount > 0 ? "#e67700" : "var(--muted)",
+    });
+  }
+
+  if (currentRole !== "admission") {
+    cards.push({
+      label: "待回填数据",
+      value: backfillCount,
+      desc: "条需补数据",
+      color: backfillCount > 0 ? "#e67700" : "var(--muted)",
+    });
+  }
+
+  if (currentRole !== "ai") {
+    cards.push({
+      label: "本周新线索",
+      value: newLeadsCount,
+      desc: "条新线索",
+      color: newLeadsCount > 0 ? "var(--brand)" : "var(--muted)",
+    });
+  }
+
+  target.innerHTML = cards
+    .map(
+      (c) => `
+    <article class="metric-card card">
+      <span>${c.label}</span>
+      <strong style="color:${c.color}">${c.value}</strong>
+      <small>${c.desc}</small>
+    </article>
+  `
+    )
+    .join("");
+}
+
 function renderTasks() {
   const target = document.querySelector("#task-summary");
   if (!target) return;
@@ -2155,6 +2240,7 @@ function wireRoleSwitch() {
     title.textContent = roleCopy[role].title;
     summary.textContent = roleCopy[role].summary;
     applyRoleNav(role);
+    renderKpiCards();
     renderContent();
     renderTasks();
     renderDailyTasks();
@@ -2986,6 +3072,7 @@ function wireNotifications() {
 }
 
 function renderApp() {
+  renderKpiCards();
   renderTasks();
   renderPublishing();
   renderDailyTasks();
