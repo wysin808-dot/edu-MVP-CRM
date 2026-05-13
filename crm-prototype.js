@@ -1791,6 +1791,47 @@ function renderKpiCards() {
     .join("");
 }
 
+function renderPublishingProgress() {
+  const target = document.querySelector("#publishing-progress");
+  if (!target) return;
+
+  const currentRole = document.querySelector("#role-select").value;
+  const isReviewer = currentRole === "lead" || currentRole === "admin";
+
+  // Compute visible daily tasks (same logic as renderKpiCards)
+  const visibleDailyTasks = isReviewer
+    ? dailyTasks
+    : dailyTasks.filter(([, , account]) => {
+        const myNames = getMyAccountNames();
+        return myNames.length === 0 ? true : myNames.includes(account);
+      });
+
+  const totalPlanned = visibleDailyTasks.length;
+  const postedCount = visibleDailyTasks.filter(([, , , , , status]) => status === "已发布" || status === "已复盘").length;
+  const pendingCount = visibleDailyTasks.filter(([, , , , , status]) => status === "待审核").length;
+  const backfillCount = visibleDailyTasks.filter(([, , , , , status]) => status === "待回填").length;
+  const draftCount = visibleDailyTasks.filter(([, , , , , status]) => status === "待发布" || status === "草稿" || status === "可发布").length;
+
+  target.innerHTML = `
+    <div><span>计划发布</span><strong>${totalPlanned} 条</strong></div>
+    <div><span>已发布归档</span><strong>${postedCount} 条</strong></div>
+    <div><span>待审核</span><strong>${pendingCount} 条</strong></div>
+    <div><span>待回填数据</span><strong>${backfillCount} 条</strong></div>
+  `;
+
+  // Also update sidebar daily goal
+  const sidebar = document.querySelector("#sidebar-daily-goal");
+  if (sidebar) {
+    const goalCount = totalPlanned;
+    const doneCount = postedCount;
+    sidebar.innerHTML = `
+      <span>今日目标</span>
+      <strong>${goalCount} 条内容归档</strong>
+      <p>已完成 ${doneCount}/${goalCount}，所有已发布内容必须上传正文、图片、链接和截图。</p>
+    `;
+  }
+}
+
 function renderTasks() {
   const target = document.querySelector("#task-summary");
   if (!target) return;
@@ -2414,6 +2455,7 @@ function wireRoleSwitch() {
     summary.textContent = roleCopy[role].summary;
     applyRoleNav(role);
     renderKpiCards();
+    renderPublishingProgress();
     renderContent();
     renderTasks();
     renderDailyTasks();
@@ -3234,6 +3276,7 @@ function wireNotifications() {
 
 function renderApp() {
   renderKpiCards();
+  renderPublishingProgress();
   renderTasks();
   renderPublishing();
   renderDailyTasks();
