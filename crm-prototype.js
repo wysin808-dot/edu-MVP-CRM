@@ -1257,6 +1257,9 @@ function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
   } else if (action === "resubmit-review") {
     draftBtn.style.display = "none";
     confirmBtn.textContent = "重新提交";
+  } else if (action === "resubmit-edit") {
+    draftBtn.style.display = "none";
+    confirmBtn.textContent = "保存修改并重新提交";
   } else if (action === "review-action") {
     draftBtn.style.display = "none";
     confirmBtn.textContent = "提交审核意见";
@@ -1453,6 +1456,35 @@ async function saveModalRecord() {
     return true;
   }
 
+  if (currentModalAction === "resubmit-edit") {
+    const item = window._contentDetailItem;
+    if (item) {
+      const newTitle = document.querySelector("#edit-title")?.value.trim();
+      const newNotes = document.querySelector("#edit-notes")?.value.trim();
+      const newCta = document.querySelector("#edit-cta")?.value.trim();
+      const newContentType = document.querySelector("#edit-content-type")?.value;
+      const newEmotionalTrigger = document.querySelector("#edit-emotional-trigger")?.value;
+      const comment = document.querySelector("#edit-comment")?.value.trim() || "已修改内容";
+
+      const changes = [];
+      if (newTitle && newTitle !== item.title) { item.title = newTitle; changes.push("标题"); }
+      if (newNotes !== undefined && newNotes !== item.notes) { item.notes = newNotes; changes.push("备注"); }
+      if (newCta && newCta !== item.cta) { item.cta = newCta; changes.push("CTA"); }
+      if (newContentType && newContentType !== item.contentType) { item.contentType = newContentType; changes.push("内容类型"); }
+      if (newEmotionalTrigger && newEmotionalTrigger !== item.emotionalTrigger) { item.emotionalTrigger = newEmotionalTrigger; changes.push("情绪钩子"); }
+
+      item.status = "待审核";
+      item.reviewHistory = item.reviewHistory || [];
+      const changeNote = changes.length > 0 ? `修改了${changes.join("、")}。${comment}` : comment;
+      item.reviewHistory.push({ reviewer: "运营人员", action: "resubmit", comment: changeNote, timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") });
+      persistContentUpdate(item);
+      renderContent();
+      renderApp();
+    }
+    showToast("已保存修改并重新提交审核。");
+    return true;
+  }
+
   if (currentModalAction === "metrics-backfill") {
     const reads = parseInt(document.querySelector("#bf-reads")?.value) || 0;
     const likes = parseInt(document.querySelector("#bf-likes")?.value) || 0;
@@ -1549,6 +1581,43 @@ async function saveModalRecord() {
 function statusColor(s) {
   const map = { "待审核": "red", "已驳回": "red", "草稿": "blue", "待回填": "amber", "可发布": "green", "审核通过": "green", "Posted": "green", "已发布": "green" };
   return map[s] || "blue";
+}
+
+function buildResubmitEditForm(item) {
+  const lastReject = (item.reviewHistory || []).filter((r) => r.action === "reject").pop();
+  return `
+    ${lastReject ? `
+    <div class="modal-section" style="background:#fef2f2;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+      <h3 style="color:#dc2626;margin:0 0 6px">驳回原因</h3>
+      <p style="margin:0;color:#dc2626">${escapeHtml(lastReject.comment || "未填写原因")}</p>
+      <small style="color:var(--muted)">${lastReject.reviewer} · ${lastReject.timestamp}</small>
+    </div>` : ""}
+    <div class="modal-section">
+      <h3>修改内容</h3>
+      <label>标题<input type="text" id="edit-title" value="${escapeHtml(item.title)}" /></label>
+      <label>备注 / 正文要点<textarea id="edit-notes" rows="3">${escapeHtml(item.notes || "")}</textarea></label>
+      <label>CTA 引导语<input type="text" id="edit-cta" value="${escapeHtml(item.cta || "")}" /></label>
+      <label>内容类型
+        <select id="edit-content-type">
+          ${["干货", "情绪", "案例", "校园", "对比", "政策", "升学科普", "视频口播"].map(
+            (t) => `<option${t === item.contentType ? " selected" : ""}>${t}</option>`
+          ).join("")}
+        </select>
+      </label>
+      <label>情绪钩子
+        <select id="edit-emotional-trigger">
+          ${["反常识", "焦虑共鸣", "向往", "痛点直击", "好奇驱动", "数字震撼", "案例代入", "理性避坑"].map(
+            (t) => `<option${t === item.emotionalTrigger ? " selected" : ""}>${t}</option>`
+          ).join("")}
+        </select>
+      </label>
+      <label>修改说明<textarea id="edit-comment" rows="2" placeholder="说明本次修改了什么…"></textarea></label>
+    </div>
+    <div class="modal-section">
+      <h3>审核记录</h3>
+      ${buildReviewTimeline(item.reviewHistory)}
+    </div>
+  `;
 }
 
 function buildContentDetailHtml(item) {
@@ -2351,10 +2420,9 @@ function wireActions() {
             currentModalAction = "content-submit-review";
             window._contentDetailItem = item;
           } else if (item.status === "已驳回") {
-            confirmBtn.style.display = "";
-            confirmBtn.textContent = "重新提交";
-            currentModalAction = "content-resubmit";
+            openModal("resubmit-edit", `修改并重新提交：${item.title.slice(0, 15)}`, buildResubmitEditForm(item));
             window._contentDetailItem = item;
+            return;
           } else if (item.status === "可发布" || item.status === "审核通过") {
             confirmBtn.style.display = "";
             confirmBtn.textContent = "发布归档";
@@ -2501,19 +2569,8 @@ function wireActions() {
           if (isReviewer) {
             openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
           } else {
-            const lastReject = (contentItem.reviewHistory || []).filter((r) => r.action === "reject").pop();
-            openModal("resubmit-review", `重新提交：${contentItem.title.slice(0, 20)}`, `
-              <div class="detail-list">
-                <div><strong>内容标题</strong><span>${escapeHtml(contentItem.title)}</span></div>
-                <div><strong>当前状态</strong><span>${badge("已驳回", "red")}</span></div>
-                ${lastReject ? `<div><strong>驳回原因</strong><span style="color:#dc2626">${escapeHtml(lastReject.comment || "未填写原因")}</span></div>` : ""}
-                ${lastReject ? `<div><strong>驳回时间</strong><span>${lastReject.timestamp}</span></div>` : ""}
-              </div>
-              <div class="modal-section">
-                <h3>修改并重新提交</h3>
-                <label>修改说明<textarea rows="3" placeholder="说明本次修改了什么内容…"></textarea></label>
-              </div>
-            `);
+            openModal("resubmit-edit", `修改并重新提交：${contentItem.title.slice(0, 15)}`, buildResubmitEditForm(contentItem));
+            window._contentDetailItem = contentItem;
           }
           return;
         }
