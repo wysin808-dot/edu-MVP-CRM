@@ -125,6 +125,27 @@
               </div>
             </section>
           </div>
+
+          <div class="archive-brief" style="margin-top:20px">
+            <strong>发布查询</strong>
+            <span>按日期、平台、账号查看已发布内容，关联数据表现和招生线索。</span>
+          </div>
+          <div class="toolbar">
+            <input id="archive-date" type="date" value="2026-05-11" />
+            <select id="archive-platform"><option>全部平台</option><option>小红书</option><option>视频号</option><option>公众号</option></select>
+            <select id="archive-account"><option>全部账号</option><option>BCI升学顾问号</option><option>BCI官方视频号</option><option>BCI招生老师号</option></select>
+            <input id="archive-search" type="search" placeholder="搜索标题、IP" />
+            <button class="primary-button" id="archive-query" type="button">查询</button>
+          </div>
+          <div class="query-result" id="query-result"></div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr><th>日期</th><th>平台</th><th>账号</th><th>IP</th><th>内容</th><th>状态</th><th>数据</th></tr>
+              </thead>
+              <tbody id="publishing-table"></tbody>
+            </table>
+          </div>
         </section>
 
         <section class="view" id="publishing-view">
@@ -162,27 +183,6 @@
                 <div><span>待回填数据</span><strong>1 条</strong></div>
               </div>
             </section>
-          </div>
-
-          <div class="archive-brief">
-            <strong>查询入口</strong>
-            <span>按某一天、某个平台、某个账号查看所有已发布内容。每条记录关联内容资产、IP、数据表现和招生线索。</span>
-          </div>
-          <div class="toolbar">
-            <input id="archive-date" type="date" value="2026-05-11" />
-            <select id="archive-platform"><option>全部平台</option><option>小红书</option><option>视频号</option><option>公众号</option></select>
-            <select id="archive-account"><option>全部账号</option><option>BCI升学顾问号</option><option>BCI官方视频号</option><option>BCI招生老师号</option></select>
-            <input id="archive-search" type="search" placeholder="搜索标题、IP" />
-            <button class="primary-button" id="archive-query" type="button">查询</button>
-          </div>
-          <div class="query-result" id="query-result"></div>
-          <div class="table-card">
-            <table>
-              <thead>
-                <tr><th>日期</th><th>平台</th><th>账号</th><th>IP</th><th>内容</th><th>状态</th><th>数据</th></tr>
-              </thead>
-              <tbody id="publishing-table"></tbody>
-            </table>
           </div>
         </section>
 
