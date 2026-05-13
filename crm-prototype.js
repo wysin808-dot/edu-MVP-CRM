@@ -1198,6 +1198,18 @@ function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
   document.querySelector("#modal-title").textContent = template.title;
   document.querySelector("#modal-body").innerHTML = typeof template.body === "function" ? template.body() : template.body;
   wireUploadInputs();
+
+  // Show draft/submit buttons for new-content
+  const draftBtn = document.querySelector("#modal-draft");
+  const confirmBtn = document.querySelector("#modal-confirm");
+  if (action === "new-content") {
+    draftBtn.style.display = "";
+    confirmBtn.textContent = "保存并提交审核";
+  } else {
+    draftBtn.style.display = "none";
+    confirmBtn.textContent = "保存到系统";
+  }
+
   const backdrop = document.querySelector("#modal-backdrop");
   backdrop.classList.add("open");
   backdrop.setAttribute("aria-hidden", "false");
@@ -1266,7 +1278,9 @@ async function saveModalRecord() {
     return true;
   }
 
-  if (currentModalAction === "new-content") {
+  if (currentModalAction === "new-content" || currentModalAction === "new-content-draft") {
+    const isDraft = currentModalAction === "new-content-draft";
+    const status = isDraft ? "草稿" : "待审核";
     const record = {
       title: values[0] || "未命名内容",
       aiSearchReady: values[1] === "是",
@@ -1281,7 +1295,7 @@ async function saveModalRecord() {
       promptsUsed: values[10] || "未使用",
       publishDate: values[11] || new Date().toISOString().slice(0, 10),
       repurposeStatus: values[12] || "原稿",
-      status: values[13] || "草稿",
+      status,
       topicCluster: values[14] || "未分类",
       waceFocus: values[15] === "是",
       cta: values[16] || "待补充 CTA",
@@ -1295,15 +1309,18 @@ async function saveModalRecord() {
         privateMessages: parseInt(values[23]) || 0,
         leads: parseInt(values[24]) || 0,
       },
-      reviewHistory: [],
+      reviewHistory: isDraft ? [] : [{ reviewer: "运营人员", action: "resubmit", comment: "新建内容，提交审核", timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") }],
       repurposeSourceTitle: null,
       repurposeChildren: [],
     };
     contents.unshift(record);
     const mode = await persistRecordOnline("contents", record);
     renderContent();
+    renderApp();
     switchToView("content");
-    showToast(mode === "cloud" ? "内容资产已保存到云端数据库。" : "内容资产已临时保存到本机。");
+    showToast(isDraft
+      ? (mode === "cloud" ? "草稿已保存到云端。" : "草稿已临时保存到本机。")
+      : (mode === "cloud" ? "内容已提交审核，等待部门负责人处理。" : "内容已提交审核（本地保存）。"));
     return true;
   }
 
@@ -2198,6 +2215,14 @@ function wireActions() {
     closeModal();
     if (!(await saveModalRecord())) {
       showToast("已保存到系统，并记录本次操作。");
+    }
+  });
+
+  document.querySelector("#modal-draft").addEventListener("click", async () => {
+    currentModalAction = "new-content-draft";
+    closeModal();
+    if (!(await saveModalRecord())) {
+      showToast("草稿已保存。");
     }
   });
 
