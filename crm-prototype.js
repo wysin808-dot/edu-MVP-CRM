@@ -1204,7 +1204,7 @@ function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
   const confirmBtn = document.querySelector("#modal-confirm");
   if (action === "new-content") {
     draftBtn.style.display = "";
-    confirmBtn.textContent = "保存并提交审核";
+    confirmBtn.textContent = "提交审核";
   } else {
     draftBtn.style.display = "none";
     confirmBtn.textContent = "保存到系统";
