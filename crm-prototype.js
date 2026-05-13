@@ -100,7 +100,7 @@ const contents = [
     repurposeStatus: "可二改",
     repurposeSourceTitle: null,
     repurposeChildren: [],
-    status: "Posted",
+    status: "已发布",
     topicCluster: "国际学校择校",
     waceFocus: false,
     metrics: { reads: 3420, likes: 156, comments: 47, shares: 28, privateMessages: 12, leads: 4 },
@@ -155,7 +155,7 @@ const contents = [
     repurposeStatus: "已转小红书标题",
     repurposeSourceTitle: "WACE 可以申请 NUS 吗？家长最容易误解这一点",
     repurposeChildren: [],
-    status: "审核通过",
+    status: "可发布",
     topicCluster: "WACE升学",
     waceFocus: true,
     metrics: { reads: 8760, likes: 312, comments: 89, shares: 67, privateMessages: 31, leads: 7 },
@@ -1482,7 +1482,7 @@ async function saveModalRecord() {
     if (item) {
       item.reviewHistory = item.reviewHistory || [];
       item.reviewHistory.push({ reviewer, action, comment, timestamp });
-      if (action === "approve") item.status = "审核通过";
+      if (action === "approve") item.status = "可发布";
       else if (action === "reject") item.status = "已驳回";
       persistContentUpdate(item);
       renderContent();
@@ -1807,10 +1807,10 @@ function renderPublishingProgress() {
       });
 
   const totalPlanned = visibleDailyTasks.length;
-  const postedCount = visibleDailyTasks.filter(([, , , , , status]) => status === "已发布" || status === "已复盘").length;
+  const postedCount = visibleDailyTasks.filter(([, , , , , status]) => status === "已发布" || status === "已复盘" || status === "待归档").length;
   const pendingCount = visibleDailyTasks.filter(([, , , , , status]) => status === "待审核").length;
   const backfillCount = visibleDailyTasks.filter(([, , , , , status]) => status === "待回填").length;
-  const draftCount = visibleDailyTasks.filter(([, , , , , status]) => status === "待发布" || status === "草稿" || status === "可发布").length;
+  const draftCount = visibleDailyTasks.filter(([, , , , , status]) => status === "待发布" || status === "草稿" || status === "草稿修改" || status === "可发布").length;
 
   target.innerHTML = `
     <div><span>计划发布</span><strong>${totalPlanned} 条</strong></div>
