@@ -1404,7 +1404,11 @@ async function saveModalRecord() {
     const mode = await persistRecordOnline("posts", record);
     renderPublishing();
     queryArchive();
-    switchToView("publishing");
+    switchToView("dashboard");
+    setTimeout(() => {
+      const el = document.querySelector("#publishing-table");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 200);
     showToast(mode === "cloud" ? "发布归档已保存到云端数据库。" : "发布归档已临时保存到本机。");
     return true;
   }
