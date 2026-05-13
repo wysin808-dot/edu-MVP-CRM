@@ -3191,42 +3191,87 @@ function renderAbTestPanel() {
 function generateNotifications() {
   const notifs = [];
   const now = new Date();
-  // 1. WACE weekly check
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay());
-  const weekStartStr = weekStart.toISOString().slice(0, 10);
-  const waceCount = contents.filter((c) => c.waceFocus && c.publishDate >= weekStartStr).length;
-  if (waceCount < 2) {
-    notifs.push({ type: "warn", icon: "⚠️", title: `WACE 内容本周仅 ${waceCount} 条`, desc: `铁律要求每周 ≥ 2 条，还差 ${2 - waceCount} 条。`, time: "实时", targetView: "content" });
+  const role = document.querySelector("#role-select").value;
+  const isManager = role === "lead" || role === "admin";
+  const isContent = role === "operator" || role === "lead" || role === "admin" || role === "ai";
+  const isAdmission = role === "admission";
+
+  // ── Operator-specific: your submitted content status ──
+  if (role === "operator") {
+    const myName = roleCopy[role]?.user || "";
+    const myPending = contents.filter((c) => c.author === myName && c.status === "待审核").length;
+    if (myPending > 0) {
+      notifs.push({ type: "info", icon: "⏳", title: `你有 ${myPending} 条内容在审核中`, desc: "已提交等待部门负责人审核，请关注审核结果。", time: "实时", targetView: "content", filterStatus: "待审核" });
+    }
+    const myRejected = contents.filter((c) => c.author === myName && c.status === "草稿修改").length;
+    if (myRejected > 0) {
+      notifs.push({ type: "action", icon: "✏️", title: `${myRejected} 条内容被退回修改`, desc: "审核未通过，请查看修改意见并重新提交。", time: "实时", targetView: "content", filterStatus: "草稿修改" });
+    }
   }
-  // 2. Pending review count
-  const pendingReview = contents.filter((c) => c.status === "待审核").length;
-  if (pendingReview > 0) {
-    notifs.push({ type: "action", icon: "📋", title: `${pendingReview} 条内容待审核`, desc: "部门负责人请及时处理审核队列。", time: "实时", targetView: "content", filterStatus: "待审核" });
+
+  // ── Manager-specific: pending review queue ──
+  if (isManager) {
+    const pendingReview = contents.filter((c) => c.status === "待审核").length;
+    if (pendingReview > 0) {
+      notifs.push({ type: "action", icon: "📋", title: `${pendingReview} 条内容待审核`, desc: "请及时处理审核队列，避免发布延误。", time: "实时", targetView: "content", filterStatus: "待审核" });
+    }
   }
-  // 3. Metrics backfill needed
-  const needBackfill = contents.filter((c) => (c.status === "已发布") && c.metrics && c.metrics.reads === 0).length;
-  if (needBackfill > 0) {
-    notifs.push({ type: "action", icon: "📊", title: `${needBackfill} 条内容待回填数据`, desc: "已发布但未录入表现数据，影响复盘准确性。", time: "实时", targetView: "content", filterStatus: "已发布" });
+
+  // ── Content roles: backfill & WACE ──
+  if (isContent) {
+    // WACE weekly check
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    const weekStartStr = weekStart.toISOString().slice(0, 10);
+    const waceCount = contents.filter((c) => c.waceFocus && c.publishDate >= weekStartStr).length;
+    if (waceCount < 2) {
+      notifs.push({ type: "warn", icon: "⚠️", title: `WACE 内容本周仅 ${waceCount} 条`, desc: `铁律要求每周 ≥ 2 条，还差 ${2 - waceCount} 条。`, time: "实时", targetView: "content" });
+    }
+
+    // Top content congratulation
+    const topItem = contents.filter((c) => c.metrics).sort((a, b) => contentScore(b.metrics) - contentScore(a.metrics))[0];
+    if (topItem && contentScore(topItem.metrics) > 500) {
+      notifs.push({ type: "info", icon: "🎉", title: `爆款预警：${topItem.title.slice(0, 15)}…`, desc: `综合分 ${Math.round(contentScore(topItem.metrics))}，建议复用到更多平台。`, time: "今日", targetView: "content", filterStatus: "已发布" });
+    }
+
+    // Repurpose reminder
+    const canRepurpose = contents.filter((c) => c.repurposeStatus && c.repurposeStatus.includes("可") && (!c.repurposeChildren || c.repurposeChildren.length === 0)).length;
+    if (canRepurpose > 0) {
+      notifs.push({ type: "info", icon: "🔄", title: `${canRepurpose} 条内容可跨平台复用`, desc: "已标记可复用但尚未衍生新内容，建议安排改写。", time: "本周", targetView: "content", filterStatus: "可发布" });
+    }
   }
-  // 4. Funnel imbalance
-  const funnelCounts = {};
-  contents.forEach((c) => { if (c.funnelStage) funnelCounts[c.funnelStage] = (funnelCounts[c.funnelStage] || 0) + 1; });
-  const trustCount = funnelCounts["Trust"] || 0;
-  const visitCount = funnelCounts["Visit"] || 0;
-  if (trustCount === 0 && visitCount === 0) {
-    notifs.push({ type: "warn", icon: "🔻", title: "漏斗中段缺失", desc: "Trust 和 Visit 阶段内容为 0，容易导致线索转化断层。", time: "策略建议", targetView: "analytics", fallbackView: "content" });
+
+  // ── Operator & Manager: metrics backfill ──
+  if (role === "operator" || isManager) {
+    const needBackfill = contents.filter((c) => c.status === "已发布" && c.metrics && c.metrics.reads === 0).length;
+    if (needBackfill > 0) {
+      notifs.push({ type: "action", icon: "📊", title: `${needBackfill} 条内容待回填数据`, desc: "已发布但未录入表现数据，影响复盘准确性。", time: "实时", targetView: "content", filterStatus: "已发布" });
+    }
   }
-  // 5. Top content congratulation
-  const topItem = contents.filter((c) => c.metrics).sort((a, b) => contentScore(b.metrics) - contentScore(a.metrics))[0];
-  if (topItem && contentScore(topItem.metrics) > 500) {
-    notifs.push({ type: "info", icon: "🎉", title: `爆款预警：${topItem.title.slice(0, 15)}…`, desc: `综合分 ${Math.round(contentScore(topItem.metrics))}，建议复用到更多平台。`, time: "今日", targetView: "content", filterStatus: "已发布" });
+
+  // ── Manager-only: strategy insights ──
+  if (isManager) {
+    const funnelCounts = {};
+    contents.forEach((c) => { if (c.funnelStage) funnelCounts[c.funnelStage] = (funnelCounts[c.funnelStage] || 0) + 1; });
+    const trustCount = funnelCounts["Trust"] || 0;
+    const visitCount = funnelCounts["Visit"] || 0;
+    if (trustCount === 0 && visitCount === 0) {
+      notifs.push({ type: "warn", icon: "🔻", title: "漏斗中段缺失", desc: "Trust 和 Visit 阶段内容为 0，容易导致线索转化断层。", time: "策略建议", targetView: "analytics", fallbackView: "content" });
+    }
   }
-  // 6. Repurpose reminder
-  const canRepurpose = contents.filter((c) => c.repurposeStatus && c.repurposeStatus.includes("可") && (!c.repurposeChildren || c.repurposeChildren.length === 0)).length;
-  if (canRepurpose > 0) {
-    notifs.push({ type: "info", icon: "🔄", title: `${canRepurpose} 条内容可跨平台复用`, desc: "已标记可复用但尚未衍生新内容，建议安排改写。", time: "本周", targetView: "content", filterStatus: "可发布" });
+
+  // ── Admission-specific: lead reminders ──
+  if (isAdmission) {
+    const newLeads = typeof crmLeads !== "undefined" ? crmLeads.filter((l) => l.status === "新线索").length : 0;
+    if (newLeads > 0) {
+      notifs.push({ type: "action", icon: "🎯", title: `${newLeads} 条新线索待跟进`, desc: "请及时联系，避免线索冷却流失。", time: "实时", targetView: "crm" });
+    }
+    const todayVisits = typeof crmLeads !== "undefined" ? crmLeads.filter((l) => l.status === "预约到访").length : 0;
+    if (todayVisits > 0) {
+      notifs.push({ type: "info", icon: "🏫", title: `${todayVisits} 组家庭预约到访`, desc: "请提前准备接待材料和校园参观路线。", time: "今日", targetView: "crm" });
+    }
   }
+
   return notifs;
 }
 
