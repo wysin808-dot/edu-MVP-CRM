@@ -1658,10 +1658,12 @@ function renderDailyTasks() {
     return `${detail}`;
   }
 
-  const myAccountNames = getMyAccountNames();
-  const visibleTasks = dailyTasks.filter(([, , account]) =>
-    myAccountNames.length === 0 && currentRole !== "admission" ? true : myAccountNames.includes(account)
-  );
+  const visibleTasks = (currentRole === "lead" || currentRole === "admin")
+    ? dailyTasks
+    : dailyTasks.filter(([, , account]) => {
+        const myNames = getMyAccountNames();
+        return myNames.length === 0 ? true : myNames.includes(account);
+      });
 
   if (visibleTasks.length === 0) {
     target.innerHTML = `<p style="color:var(--muted);padding:20px 0">今日暂无分配给你的任务。</p>`;
