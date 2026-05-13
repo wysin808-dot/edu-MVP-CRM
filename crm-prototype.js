@@ -3235,10 +3235,9 @@ function renderNotifications() {
   if (!list) return;
   const notifs = generateNotifications();
   const btn = document.querySelector('[data-action="notifications"]');
-  // Show badge dot if there are warn/action notifications
+  // Show red dot if there are warn/action notifications
   const urgent = notifs.filter((n) => n.type === "warn" || n.type === "action").length;
   if (btn) {
-    btn.textContent = urgent > 0 ? urgent : "!";
     btn.classList.toggle("has-notif", urgent > 0);
   }
   if (notifs.length === 0) {
