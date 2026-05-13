@@ -2111,6 +2111,7 @@ function wireRoleSwitch() {
     applyRoleNav(role);
     renderContent();
     renderTasks();
+    renderDailyTasks();
   });
 }
 
