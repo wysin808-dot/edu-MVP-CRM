@@ -1205,10 +1205,21 @@ function openModal(action, fallbackTitle = "操作详情", fallbackBody = "") {
   if (action === "new-content") {
     draftBtn.style.display = "";
     confirmBtn.textContent = "提交审核";
+  } else if (action === "resubmit-review") {
+    draftBtn.style.display = "none";
+    confirmBtn.textContent = "重新提交";
+  } else if (action === "review-action") {
+    draftBtn.style.display = "none";
+    confirmBtn.textContent = "提交审核意见";
+  } else if (action === "metrics-backfill") {
+    draftBtn.style.display = "none";
+    confirmBtn.textContent = "保存数据";
   } else {
     draftBtn.style.display = "none";
     confirmBtn.textContent = "保存到系统";
   }
+  // Ensure confirm button is visible by default (detail handlers may hide it after)
+  confirmBtn.style.display = "";
 
   const backdrop = document.querySelector("#modal-backdrop");
   backdrop.classList.add("open");
@@ -1489,6 +1500,38 @@ async function saveModalRecord() {
 function statusColor(s) {
   const map = { "待审核": "red", "已驳回": "red", "草稿": "blue", "待回填": "amber", "可发布": "green", "审核通过": "green", "Posted": "green", "已发布": "green" };
   return map[s] || "blue";
+}
+
+function buildContentDetailHtml(item) {
+  const chainHtml = buildRepurposeChainHtml(item);
+  return `
+    <div class="detail-list">
+      <div><strong>Account</strong><span>${item.account}</span></div>
+      <div><strong>Status</strong><span>${item.status}</span></div>
+      <div><strong>Funnel Stage</strong><span>${item.funnelStage}</span></div>
+      <div><strong>Emotional Trigger</strong><span>${item.emotionalTrigger}</span></div>
+      <div><strong>Content Type</strong><span>${item.contentType}</span></div>
+      <div><strong>Lead Magnet</strong><span>${item.leadMagnet}</span></div>
+      <div><strong>Audience Persona</strong><span>${(item.audiencePersona || []).join(" / ")}</span></div>
+      <div><strong>CTA</strong><span>${item.cta}</span></div>
+      <div><strong>Publish Date</strong><span>${item.publishDate}</span></div>
+      <div><strong>Primary Keyword</strong><span>${item.primaryKeyword}</span></div>
+      <div><strong>Topic Cluster</strong><span>${item.topicCluster}</span></div>
+      <div><strong>Repurpose Status</strong><span>${item.repurposeStatus}</span></div>
+      <div><strong>References</strong><span>${item.references}</span></div>
+      <div><strong>WACE Focus</strong><span>${item.waceFocus ? "是" : "否"}</span></div>
+      <div><strong>Notes</strong><span>${item.notes}</span></div>
+    </div>
+    <div class="modal-section">
+      <h3>内容表现</h3>
+      ${renderMetricsDetail(item.metrics)}
+    </div>
+    ${chainHtml ? `<div class="modal-section"><h3>复用链</h3>${chainHtml}</div>` : ""}
+    <div class="modal-section">
+      <h3>审核记录</h3>
+      ${buildReviewTimeline(item.reviewHistory)}
+    </div>
+  `;
 }
 
 function renderTasks() {
@@ -2045,39 +2088,7 @@ function wireActions() {
     if (contentButton) {
       const item = contents.find((entry) => entry.title === contentButton.dataset.title);
       if (item) {
-        const chainHtml = buildRepurposeChainHtml(item);
-        openModal(
-          "content-detail",
-          item.title,
-          `
-            <div class="detail-list">
-              <div><strong>Account</strong><span>${item.account}</span></div>
-              <div><strong>Status</strong><span>${item.status}</span></div>
-              <div><strong>Funnel Stage</strong><span>${item.funnelStage}</span></div>
-              <div><strong>Emotional Trigger</strong><span>${item.emotionalTrigger}</span></div>
-              <div><strong>Content Type</strong><span>${item.contentType}</span></div>
-              <div><strong>Lead Magnet</strong><span>${item.leadMagnet}</span></div>
-              <div><strong>Audience Persona</strong><span>${(item.audiencePersona || []).join(" / ")}</span></div>
-              <div><strong>CTA</strong><span>${item.cta}</span></div>
-              <div><strong>Publish Date</strong><span>${item.publishDate}</span></div>
-              <div><strong>Primary Keyword</strong><span>${item.primaryKeyword}</span></div>
-              <div><strong>Topic Cluster</strong><span>${item.topicCluster}</span></div>
-              <div><strong>Repurpose Status</strong><span>${item.repurposeStatus}</span></div>
-              <div><strong>References</strong><span>${item.references}</span></div>
-              <div><strong>WACE Focus</strong><span>${item.waceFocus ? "是" : "否"}</span></div>
-              <div><strong>Notes</strong><span>${item.notes}</span></div>
-            </div>
-            <div class="modal-section">
-              <h3>内容表现</h3>
-              ${renderMetricsDetail(item.metrics)}
-            </div>
-            ${chainHtml ? `<div class="modal-section"><h3>复用链</h3>${chainHtml}</div>` : ""}
-            <div class="modal-section">
-              <h3>审核记录</h3>
-              ${buildReviewTimeline(item.reviewHistory)}
-            </div>
-          `,
-        );
+        openModal("content-detail", item.title, buildContentDetailHtml(item));
         // Status-aware footer buttons for content detail
         const confirmBtn = document.querySelector("#modal-confirm");
         const draftBtn = document.querySelector("#modal-draft");
@@ -2248,11 +2259,35 @@ function wireActions() {
           openModal("upload-post");
           return;
         }
-        if (contentItem && (contentItem.status === "待审核" || contentItem.status === "草稿")) {
-          openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
+        const currentRole = document.querySelector("#role-select").value;
+        if (contentItem && contentItem.status === "草稿") {
+          if (currentRole === "lead" || currentRole === "admin") {
+            openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
+          } else {
+            // Operator: show content detail with submit button
+            openModal("content-detail", contentItem.title, buildContentDetailHtml(contentItem));
+            const confirmBtn = document.querySelector("#modal-confirm");
+            const draftBtn = document.querySelector("#modal-draft");
+            draftBtn.style.display = "none";
+            confirmBtn.style.display = "";
+            confirmBtn.textContent = "提交审核";
+            currentModalAction = "content-submit-review";
+            window._contentDetailItem = contentItem;
+          }
           return;
         }
-        if (contentItem && (contentItem.status === "已发布" || contentItem.status === "Posted" || contentItem.status === "已复盘")) {
+        if (contentItem && contentItem.status === "待审核") {
+          if (currentRole === "lead" || currentRole === "admin") {
+            openModal("review-action", `审核：${contentItem.title.slice(0, 20)}`, buildReviewForm(contentItem));
+          } else {
+            // Operator: read-only, waiting for review
+            openModal("content-detail", contentItem.title, buildContentDetailHtml(contentItem));
+            document.querySelector("#modal-confirm").style.display = "none";
+            document.querySelector("#modal-draft").style.display = "none";
+          }
+          return;
+        }
+        if (contentItem && (contentItem.status === "已发布" || contentItem.status === "Posted" || contentItem.status === "已复盘" || contentItem.status === "待回填")) {
           openModal("metrics-backfill", `数据回填：${contentItem.title.slice(0, 15)}`, buildMetricsForm(contentItem));
           return;
         }
