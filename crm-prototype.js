@@ -1636,7 +1636,8 @@ function renderDailyTasks() {
           <div class="daily-task-actions">
             <button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">详情</button>
             ${isReviewer
-              ? `<button class="primary-button row-action" type="button" data-title="${title}" data-kind="任务处理">审核</button>`
+              ? `<button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">审核</button>
+                 <button class="primary-button action-button" type="button" data-action="upload-post">发布归档</button>`
               : `<button class="ghost-button row-action" type="button" data-title="${title}" data-kind="任务处理">提交审核</button>
                  <button class="primary-button action-button" type="button" data-action="upload-post">发布归档</button>`
             }
@@ -2140,19 +2141,22 @@ function wireActions() {
       };
       const matchFn = statusMap[filterStatus] || (() => false);
       const matched = filtered.filter((c) => matchFn(c.status));
-      const actionLabel = isReviewer && (filterStatus === "待审核" || filterStatus === "草稿" || filterStatus === "已驳回") ? "审核" : "查看";
+      const myName = roleCopy[currentRole]?.user || "";
       const listHtml = matched.length
-        ? matched.map((c) => `
+        ? matched.map((c) => {
+            const isOwn = c.author === myName || c.author === "当前用户";
+            const label = isReviewer && !isOwn && (filterStatus === "待审核" || filterStatus === "草稿" || filterStatus === "已驳回") ? "审核" : "查看";
+            return `
             <article class="review-list-item content-detail" data-title="${escapeHtml(c.title)}" style="cursor:pointer">
               <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)">
                 <div>
                   <strong>${escapeHtml(c.title)}</strong>
                   <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.account} · ${c.author || "—"} · ${c.publishDate || "—"}</div>
                 </div>
-                <span class="ghost-button" style="white-space:nowrap">${actionLabel} →</span>
+                <span class="ghost-button" style="white-space:nowrap">${label} →</span>
               </div>
             </article>
-          `).join("")
+          `;}).join("")
         : `<p style="color:var(--muted);padding:20px 0">暂无${filterStatus}内容。</p>`;
 
       const modalTitle = isReviewer && filterStatus === "待审核"
@@ -2171,9 +2175,11 @@ function wireActions() {
       if (item) {
         const currentRole = document.querySelector("#role-select").value;
         const isReviewer = currentRole === "lead" || currentRole === "admin";
+        const myName = roleCopy[currentRole]?.user || "";
+        const isOwnContent = item.author === myName || item.author === "当前用户";
 
-        if (isReviewer) {
-          // Lead / Admin: review-oriented actions
+        if (isReviewer && !isOwnContent) {
+          // Lead / Admin reviewing others' content
           if (item.status === "待审核" || item.status === "草稿" || item.status === "已驳回" || item.status === "可发布" || item.status === "审核通过") {
             openModal("review-action", `审核：${item.title.slice(0, 20)}`, buildReviewForm(item));
           } else if (item.status === "已发布" || item.status === "Posted" || item.status === "已复盘" || item.status === "待回填") {
