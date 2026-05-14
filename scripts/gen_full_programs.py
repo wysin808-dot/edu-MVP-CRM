@@ -392,6 +392,7 @@ add(*U, 'Business Analytics', '商业分析', 'School of Computing', 'data_scien
 add(*U, 'Information Security', '信息安全', 'School of Computing', 'cs', 91)
 add(*U, 'Computer Engineering', '计算机工程', 'School of Computing / CDE', 'cs', 92)
 add(*U, 'Information Systems', '信息系统', 'School of Computing', 'computing', 88)
+add(*U, 'Artificial Intelligence', '人工智能', 'School of Computing', 'cs', 94)
 
 # College of Design and Engineering
 add(*U, 'Architecture', '建筑学', 'College of Design and Engineering', 'architecture', 83)
@@ -401,8 +402,8 @@ add(*U, 'Biomedical Engineering', '生物医学工程', 'College of Design and E
 add(*U, 'Chemical Engineering', '化学工程', 'College of Design and Engineering', 'eng_chem', 83)
 add(*U, 'Civil Engineering', '土木工程', 'College of Design and Engineering', 'eng_civil', 80)
 add(*U, 'Electrical Engineering', '电子工程', 'College of Design and Engineering', 'eng_elec', 85)
-add(*U, 'Environmental Engineering', '环境工程', 'College of Design and Engineering', 'eng_chem', 78)
-add(*U, 'Industrial Systems Engineering', '工业系统工程', 'College of Design and Engineering', 'eng_general', 82)
+add(*U, 'Environmental and Sustainability Engineering', '环境与可持续工程', 'College of Design and Engineering', 'eng_chem', 78)
+add(*U, 'Industrial and Systems Engineering', '工业与系统工程', 'College of Design and Engineering', 'eng_general', 82)
 add(*U, 'Materials Science Engineering', '材料科学工程', 'College of Design and Engineering', 'eng_chem', 80)
 add(*U, 'Mechanical Engineering', '机械工程', 'College of Design and Engineering', 'eng_mech', 85)
 add(*U, 'Engineering Science', '工程科学', 'College of Design and Engineering', 'eng_mech', 88)
@@ -468,11 +469,15 @@ U = ('ntu', 'NTU', '南洋理工大学')
 # College of Business
 add(*U, 'Business', '商学', 'Nanyang Business School', 'business', 87)
 add(*U, 'Accountancy', '会计学', 'Nanyang Business School', 'accounting', 85)
+add(*U, 'Accountancy (Sustainability)', '会计学（可持续管理）', 'Nanyang Business School', 'accounting', 83)
 
 # CCDS
 add(*U, 'Computer Science', '计算机科学', 'College of Computing and Data Science', 'cs', 92)
 add(*U, 'Data Science & AI', '数据科学与人工智能', 'College of Computing and Data Science', 'data_science', 90)
 add(*U, 'Computer Engineering', '计算机工程', 'College of Engineering', 'cs', 88)
+add(*U, 'Artificial Intelligence and Society', '人工智能与社会', 'College of Computing and Data Science', 'cs', 88)
+add(*U, 'Applied Computing in Finance', '应用计算与金融', 'College of Computing and Data Science / NBS', 'computing', 85)
+add(*U, 'Mathematical and Computer Sciences', '数学与计算机科学', 'SPMS / CCDS', 'cs', 85)
 
 # College of Engineering
 add(*U, 'Aerospace Engineering', '航空航天工程', 'College of Engineering', 'eng_mech', 85)
@@ -485,12 +490,13 @@ add(*U, 'Information Engineering & Media', '信息工程与媒体', 'College of 
 add(*U, 'Materials Engineering', '材料工程', 'College of Engineering', 'eng_chem', 78)
 add(*U, 'Mechanical Engineering', '机械工程', 'College of Engineering', 'eng_mech', 80)
 add(*U, 'Robotics', '机器人', 'College of Engineering', 'eng_elec', 85)
+add(*U, 'Maritime Studies', '海事研究', 'School of Civil and Environmental Engineering', 'eng_civil', 75)
 
 # Medicine
 add(*U, 'Medicine (LKCMedicine)', '医学', 'Lee Kong Chian School of Medicine', 'medicine', 98)
 
 # CoHASS
-add(*U, 'Art, Design & Media', '艺术设计与媒体', 'School of Art, Design and Media', 'art_design', 78)
+add(*U, 'Fine Arts', '美术', 'School of Art, Design and Media', 'art_design', 78)
 add(*U, 'Communication Studies', '传播学', 'Wee Kim Wee School of Communication', 'comm_media', 80)
 add(*U, 'Economics', '经济学', 'School of Social Sciences', 'economics', 85)
 add(*U, 'Psychology', '心理学', 'School of Social Sciences', 'psychology', 82)
@@ -502,6 +508,8 @@ add(*U, 'English', '英语', 'School of Humanities', 'humanities', 75)
 add(*U, 'Chinese', '中文', 'School of Humanities', 'chinese_studies', 73)
 add(*U, 'History', '历史', 'School of Humanities', 'humanities', 75)
 add(*U, 'Philosophy', '哲学', 'School of Humanities', 'humanities', 73)
+add(*U, 'Economics and Data Science', '经济学与数据科学', 'SSS / CCDS / SPMS', 'data_science', 85)
+add(*U, 'Sport Science and Management', '运动科学与管理', 'NIE', 'bio_sci', 75)
 
 # College of Science
 add(*U, 'Biological Sciences', '生物科学', 'School of Biological Sciences', 'bio_sci', 78)
@@ -578,6 +586,7 @@ add(*U, 'Occupational Therapy', '职业治疗', 'Health and Social Sciences', 'b
 add(*U, 'Physiotherapy', '物理治疗', 'Health and Social Sciences', 'bio_sci', 80)
 add(*U, 'Speech & Language Therapy', '言语治疗', 'Health and Social Sciences', 'bio_sci', 78)
 add(*U, 'Nursing', '护理学', 'Health and Social Sciences', 'nursing', 72)
+add(*U, 'Radiation Therapy', '放射治疗', 'Health and Social Sciences', 'health_sci', 78)
 
 # Business & Others
 add(*U, 'Accountancy', '会计学', 'Business, Communication and Design', 'accounting', 73)
