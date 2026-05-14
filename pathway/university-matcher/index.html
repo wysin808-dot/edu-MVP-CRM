@@ -439,6 +439,99 @@
     .exam-detail strong { color: var(--ink); }
     .exam-detail span { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
 
+    /* ── Subject Grid (Step 2 v2) ── */
+    .subject-section { margin-bottom: 24px; }
+    .subject-section-title {
+      font-size: 14px; font-weight: 700; color: var(--ink);
+      padding: 10px 0 8px;
+      border-bottom: 2px solid var(--brand);
+      margin-bottom: 10px;
+    }
+    .subject-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    @media (max-width: 640px) { .subject-grid { grid-template-columns: 1fr; } }
+    .subject-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--wash);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      transition: border-color 0.15s;
+    }
+    .subject-row:focus-within { border-color: var(--brand); }
+    .subject-name {
+      font-size: 13px; font-weight: 600; color: var(--ink);
+      flex: 1; min-width: 0;
+    }
+    .subject-name small {
+      display: block;
+      font-size: 10px; font-weight: 400; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .subject-grade {
+      width: 80px; min-width: 80px;
+      padding: 6px 8px;
+      background: #fff;
+      border: 1.5px solid var(--line);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      text-align: center;
+    }
+    .subject-grade:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(198,40,40,0.1);
+    }
+
+    /* ── Program Selection (Step 3 v2) ── */
+    .program-uni-group { margin-bottom: 20px; }
+    .program-uni-header {
+      font-size: 18px; font-weight: 800; color: var(--ink);
+      padding: 8px 0 6px;
+      border-bottom: 2px solid var(--brand);
+      margin-bottom: 8px;
+    }
+    .program-uni-header small {
+      font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 8px;
+    }
+    .program-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 8px;
+    }
+    .program-opt { text-align: left; }
+    .program-opt .opt-req {
+      font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.4;
+    }
+    .program-opt.selected .opt-req { color: var(--brand); }
+
+    /* ── Result v2 extras ── */
+    .result-program-name {
+      font-size: 17px; font-weight: 700; color: var(--brand); margin-bottom: 2px;
+    }
+    .result-program-name span { font-weight: 400; font-size: 13px; color: var(--muted); }
+    .result-faculty { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .result-reasons {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
+    }
+    .reason-tag {
+      font-size: 10px; font-weight: 600;
+      padding: 3px 8px;
+      background: var(--wash);
+      border: 1px solid var(--line);
+      border-radius: 100px;
+      color: var(--muted);
+    }
+
     /* ── FAQ (tool-specific) ── */
     .tool-faq { padding: 40px clamp(20px, 6vw, 80px) 20px; }
     .tool-faq h2 { font-size: 24px; font-weight: 800; margin-bottom: 20px; }
@@ -575,8 +668,8 @@
       <div class="matcher">
         <div class="matcher-tabs">
           <div class="matcher-tab active"><span class="step-num">1</span> 选择考试体系</div>
-          <div class="matcher-tab"><span class="step-num">2</span> 输入成绩</div>
-          <div class="matcher-tab"><span class="step-num">3</span> 选择专业方向</div>
+          <div class="matcher-tab"><span class="step-num">2</span> 选择科目与成绩</div>
+          <div class="matcher-tab"><span class="step-num">3</span> 选择大学专业</div>
         </div>
 
         <!-- Step 1 -->
@@ -594,29 +687,20 @@
           </div>
         </div>
 
-        <!-- Step 2 -->
+        <!-- Step 2: Subject-level input -->
         <div class="matcher-body hidden" id="step2">
-          <div class="matcher-q" id="step2Q">输入你的<em>成绩</em></div>
-          <div class="score-input-row" id="scoreInputs"></div>
+          <div class="matcher-q" id="step2Q">选择你的<em>科目与成绩</em></div>
+          <div id="scoreInputs"></div>
           <div class="matcher-actions">
             <button class="btn-m-secondary" id="backStep1">← 上一步</button>
             <button class="btn-m-primary" id="toStep3">下一步 →</button>
           </div>
         </div>
 
-        <!-- Step 3 -->
+        <!-- Step 3: Program selection -->
         <div class="matcher-body hidden" id="step3">
-          <div class="matcher-q">你感兴趣的<em>专业方向</em>？</div>
-          <div class="option-grid">
-            <button class="opt" data-major="medicine"><div class="opt-label">医学 / 牙医</div><div class="opt-sub">Medicine</div></button>
-            <button class="opt" data-major="law"><div class="opt-label">法律</div><div class="opt-sub">Law</div></button>
-            <button class="opt" data-major="cs"><div class="opt-label">计算机 / AI</div><div class="opt-sub">Computer Science</div></button>
-            <button class="opt" data-major="engineering"><div class="opt-label">工程</div><div class="opt-sub">Engineering</div></button>
-            <button class="opt" data-major="business"><div class="opt-label">商科 / 金融</div><div class="opt-sub">Business</div></button>
-            <button class="opt" data-major="design"><div class="opt-label">设计 / 建筑</div><div class="opt-sub">Design</div></button>
-            <button class="opt" data-major="humanities"><div class="opt-label">人文社科</div><div class="opt-sub">Humanities</div></button>
-            <button class="opt" data-major="science"><div class="opt-label">理科</div><div class="opt-sub">Science</div></button>
-          </div>
+          <div class="matcher-q">选择感兴趣的<em>大学专业</em>（可多选，或留空匹配全部）</div>
+          <div id="programGrid"></div>
           <div class="matcher-actions">
             <button class="btn-m-secondary" id="backStep2">← 上一步</button>
             <button class="btn-m-primary" id="runMatch">开始 AI 匹配 →</button>
@@ -724,99 +808,284 @@
 
   <script src="/seda-site.js"></script>
   <script>
-  /* ============== DATA ============== */
-  const UNIS = [
-    {
-      id:'nus', name:'NUS', nameFull:'National University of Singapore', nameCN:'新加坡国立大学',
-      tag:'QS #8 全球', tagline:'综合性研究型旗舰，几乎所有学科都属亚洲第一梯队。',
-      stats:[{n:'40K+',l:'在校生'},{n:'#8',l:'QS 全球'}],
-      requirements:{
-        'a-level':{grade:'AAA/A · 3H2+H1',note:'顶级专业（Law, Med, CS）需 4A · 工程 BBC/C 起步'},
-        'ib':{grade:'36 – 42+',note:'IB Diploma 必须 · 医学 42+ · 计算机 39+ · 工程 36–38'},
-        'ap':{grade:'5 AP · 多个 5 分',note:'或 SAT/ACT + 3 AP · AP Calc BC 通常必修'},
-        'wace':{grade:'ATAR 90 / 94+',note:'最低 ATAR 90 · 竞争性 94+ · 须含英语'},
-        'gaokao':{grade:'省 Top 1–5%',note:'IELTS 7.0 / TOEFL 100 必需'}
-      }
+  /* ============================================================
+     SEDA University Matcher v2 — Subject-Level Matching
+     ============================================================ */
+
+  /* ── EXAM SYSTEMS & SUBJECTS ── */
+  const EXAM_LABEL={'a-level':'A-Level','ib':'IB Diploma','ap':'AP','wace':'WACE / ATAR','gaokao':'中国高考'};
+  const GRADES_AL=['A','B','C','D','E','未选'];
+  const GRADES_IB=['7','6','5','4','3','2','1','未选'];
+  const GRADES_AP=['5','4','3','2','1','未选'];
+
+  const EXAM_SUBJECTS={
+    'a-level':{
+      note:'选择你修读的科目并输入成绩（H2 至少 3 门 + H1/GP）',
+      sections:[
+        {title:'H2 科目（至少选 3 门）',type:'H2',subjects:[
+          {key:'h2_math',name:'H2 Mathematics',cn:'数学'},
+          {key:'h2_fm',name:'H2 Further Mathematics',cn:'高等数学'},
+          {key:'h2_physics',name:'H2 Physics',cn:'物理'},
+          {key:'h2_chemistry',name:'H2 Chemistry',cn:'化学'},
+          {key:'h2_biology',name:'H2 Biology',cn:'生物'},
+          {key:'h2_economics',name:'H2 Economics',cn:'经济学'},
+          {key:'h2_computing',name:'H2 Computing',cn:'计算机'},
+          {key:'h2_history',name:'H2 History',cn:'历史'},
+          {key:'h2_geography',name:'H2 Geography',cn:'地理'},
+          {key:'h2_literature',name:'H2 Literature in English',cn:'英文文学'},
+          {key:'h2_chinese',name:'H2 Chinese Language & Lit',cn:'华文与文学'},
+          {key:'h2_art',name:'H2 Art',cn:'美术'},
+          {key:'h2_theatre',name:'H2 Theatre Studies',cn:'戏剧'},
+          {key:'h2_music',name:'H2 Music',cn:'音乐'},
+          {key:'h2_management',name:'H2 Management of Business',cn:'商业管理'},
+          {key:'h2_translation',name:'H2 Translation (Chinese)',cn:'翻译（中文）'}
+        ],grades:GRADES_AL},
+        {title:'H1 科目 / GP',type:'H1',subjects:[
+          {key:'h1_gp',name:'H1 General Paper (GP)',cn:'综合卷'},
+          {key:'h1_math',name:'H1 Mathematics',cn:'数学'},
+          {key:'h1_economics',name:'H1 Economics',cn:'经济学'},
+          {key:'h1_history',name:'H1 History',cn:'历史'},
+          {key:'h1_geography',name:'H1 Geography',cn:'地理'},
+          {key:'h1_chinese',name:'H1 Chinese',cn:'华文'},
+          {key:'h1_literature',name:'H1 Literature',cn:'文学'},
+          {key:'h1_project_work',name:'H1 Project Work (PW)',cn:'专题作业'}
+        ],grades:GRADES_AL}
+      ]
     },
-    {
-      id:'ntu', name:'NTU', nameFull:'Nanyang Technological University', nameCN:'南洋理工大学',
-      tag:'QS #15 · 工程王者', tagline:'工科与商科双强，以 Renaissance Engineering 等顶尖项目著称。',
-      stats:[{n:'33K+',l:'在校生'},{n:'#15',l:'QS 全球'}],
-      requirements:{
-        'a-level':{grade:'3 × A-Level',note:'12 月内 ≤ 2 次考试 · 工程需 A-Level Math'},
-        'ib':{grade:'36 – 42+',note:'医学 LKCMed 须 42+ · CS 38+'},
-        'ap':{grade:'3 × AP @ 4–5',note:'AP Calc BC 工程/CS 强制 · 须附 SAT 1250+'},
-        'wace':{grade:'ATAR 90+',note:'奥赛金/银/铜牌可优先录取'},
-        'gaokao':{grade:'省一本以上',note:'综合评估 · IELTS 6.0+ · AST 加分'}
-      }
+    'ib':{
+      note:'选择你的 HL 和 SL 科目并输入预估/实际分数（1-7）',
+      sections:[
+        {title:'HL 科目（选 3-4 门）',type:'HL',subjects:[
+          {key:'hl_math_aa',name:'HL Math Analysis & Approaches',cn:'数学AA'},
+          {key:'hl_math_ai',name:'HL Math Applications & Interpretation',cn:'数学AI'},
+          {key:'hl_physics',name:'HL Physics',cn:'物理'},
+          {key:'hl_chemistry',name:'HL Chemistry',cn:'化学'},
+          {key:'hl_biology',name:'HL Biology',cn:'生物'},
+          {key:'hl_economics',name:'HL Economics',cn:'经济学'},
+          {key:'hl_business',name:'HL Business Management',cn:'商业管理'},
+          {key:'hl_history',name:'HL History',cn:'历史'},
+          {key:'hl_geography',name:'HL Geography',cn:'地理'},
+          {key:'hl_english_a',name:'HL English A: Lang & Lit',cn:'英文A'},
+          {key:'hl_chinese_a',name:'HL Chinese A: Lang & Lit',cn:'中文A'},
+          {key:'hl_cs',name:'HL Computer Science',cn:'计算机科学'},
+          {key:'hl_psychology',name:'HL Psychology',cn:'心理学'},
+          {key:'hl_visual_arts',name:'HL Visual Arts',cn:'视觉艺术'},
+          {key:'hl_film',name:'HL Film',cn:'电影'},
+          {key:'hl_global_politics',name:'HL Global Politics',cn:'全球政治'}
+        ],grades:GRADES_IB},
+        {title:'SL 科目（选 2-3 门）',type:'SL',subjects:[
+          {key:'sl_math_aa',name:'SL Math Analysis & Approaches',cn:'数学AA'},
+          {key:'sl_math_ai',name:'SL Math Applications',cn:'数学AI'},
+          {key:'sl_physics',name:'SL Physics',cn:'物理'},
+          {key:'sl_chemistry',name:'SL Chemistry',cn:'化学'},
+          {key:'sl_biology',name:'SL Biology',cn:'生物'},
+          {key:'sl_economics',name:'SL Economics',cn:'经济学'},
+          {key:'sl_english_a',name:'SL English A',cn:'英文A'},
+          {key:'sl_chinese_a',name:'SL Chinese A',cn:'中文A'},
+          {key:'sl_chinese_b',name:'SL Chinese B',cn:'中文B'},
+          {key:'sl_tok',name:'Theory of Knowledge (TOK)',cn:'知识论'},
+          {key:'sl_ess',name:'SL Environmental Systems',cn:'环境系统'}
+        ],grades:GRADES_IB},
+        {title:'核心组件',type:'Core',subjects:[
+          {key:'ib_ee',name:'Extended Essay (EE)',cn:'拓展论文',grades:['A','B','C','D','E','未选']},
+          {key:'ib_tok_grade',name:'TOK',cn:'知识论评估',grades:['A','B','C','D','E','未选']}
+        ],grades:['A','B','C','D','E','未选']}
+      ]
     },
-    {
-      id:'smu', name:'SMU', nameFull:'Singapore Management University', nameCN:'新加坡管理大学',
-      tag:'商科 · 法律强校', tagline:'美式小班讨论 + 城市校园 + 强制实习的独特定位。',
-      stats:[{n:'12K+',l:'在校生'},{n:'1st',l:'城市校园'}],
-      requirements:{
-        'a-level':{grade:'3 H2 + GP',note:'国际 A-Level 须附加 SAT / ACT / IELTS'},
-        'ib':{grade:'36 – 40+',note:'综合评估侧重领导力与课外'},
-        'ap':{grade:'3+ AP',note:'需附 SAT / ACT · 法律须额外面试'},
-        'wace':{grade:'ATAR 90+',note:'holistic 个案审查 · 重视课外活动'},
-        'gaokao':{grade:'省 Top 5%',note:'英语证明 + 面试'}
-      }
+    'ap':{
+      note:'选择你考过的 AP 科目并输入分数（1-5 分）',
+      sections:[
+        {title:'数理类',type:'STEM',subjects:[
+          {key:'ap_calc_bc',name:'AP Calculus BC',cn:'微积分BC'},
+          {key:'ap_calc_ab',name:'AP Calculus AB',cn:'微积分AB'},
+          {key:'ap_stats',name:'AP Statistics',cn:'统计学'},
+          {key:'ap_physics_c_mech',name:'AP Physics C: Mechanics',cn:'物理C力学'},
+          {key:'ap_physics_c_em',name:'AP Physics C: E&M',cn:'物理C电磁'},
+          {key:'ap_physics_1',name:'AP Physics 1',cn:'物理1'},
+          {key:'ap_chemistry',name:'AP Chemistry',cn:'化学'},
+          {key:'ap_biology',name:'AP Biology',cn:'生物'},
+          {key:'ap_cs_a',name:'AP Computer Science A',cn:'计算机A'},
+          {key:'ap_cs_principles',name:'AP CS Principles',cn:'计算机原理'}
+        ],grades:GRADES_AP},
+        {title:'人文商科类',type:'Humanities',subjects:[
+          {key:'ap_macro',name:'AP Macroeconomics',cn:'宏观经济'},
+          {key:'ap_micro',name:'AP Microeconomics',cn:'微观经济'},
+          {key:'ap_psychology',name:'AP Psychology',cn:'心理学'},
+          {key:'ap_world_history',name:'AP World History',cn:'世界历史'},
+          {key:'ap_us_history',name:'AP US History',cn:'美国历史'},
+          {key:'ap_human_geography',name:'AP Human Geography',cn:'人文地理'},
+          {key:'ap_english_lang',name:'AP English Language',cn:'英语语言'},
+          {key:'ap_english_lit',name:'AP English Literature',cn:'英语文学'},
+          {key:'ap_chinese',name:'AP Chinese Language',cn:'中文语言'}
+        ],grades:GRADES_AP}
+      ],
+      extra:[
+        {key:'ap_sat',name:'SAT 总分',type:'number',min:400,max:1600,step:10},
+        {key:'ap_act',name:'ACT 总分（如有）',type:'number',min:1,max:36,step:1}
+      ]
     },
-    {
-      id:'sutd', name:'SUTD', nameFull:'Singapore University of Technology and Design', nameCN:'新加坡科技设计大学',
-      tag:'MIT 合作 · 设计+科技', tagline:'与 MIT 共同设立，主打设计驱动的工程教育。',
-      stats:[{n:'2009',l:'建校'},{n:'MIT',l:'核心合作'}],
-      requirements:{
-        'a-level':{grade:'3 H2 + GP',note:'含数学 · 通常须参加 SUTD 入学考'},
-        'ib':{grade:'综合评估',note:'建议 HL Math + HL Physics / Chemistry'},
-        'ap':{grade:'3+ AP',note:'AP Calc + AP Physics 强烈建议 · portfolio 加分'},
-        'wace':{grade:'ATAR 90+',note:'portfolio + Personal Insight + 面试'},
-        'gaokao':{grade:'省一本以上',note:'须参加 SUTD UEE + 英语证明'}
-      }
+    'wace':{
+      note:'选择你的 ATAR 科目并输入 Scaled Score（0-100）或等级',
+      sections:[
+        {title:'ATAR 科目（至少 4 门）',type:'ATAR',subjects:[
+          {key:'wace_math_methods',name:'Mathematics Methods',cn:'数学方法'},
+          {key:'wace_math_specialist',name:'Mathematics Specialist',cn:'高等数学'},
+          {key:'wace_math_applications',name:'Mathematics Applications',cn:'应用数学'},
+          {key:'wace_physics',name:'Physics',cn:'物理'},
+          {key:'wace_chemistry',name:'Chemistry',cn:'化学'},
+          {key:'wace_biology',name:'Human Biology',cn:'人体生物'},
+          {key:'wace_economics',name:'Economics',cn:'经济学'},
+          {key:'wace_accounting',name:'Accounting & Finance',cn:'会计与金融'},
+          {key:'wace_business',name:'Business Management & Enterprise',cn:'商业管理'},
+          {key:'wace_english',name:'English',cn:'英语'},
+          {key:'wace_chinese_sl',name:'Chinese: Second Language',cn:'中文'},
+          {key:'wace_cs',name:'Computer Science',cn:'计算机科学'},
+          {key:'wace_design',name:'Design (Photography/Graphics)',cn:'设计'},
+          {key:'wace_geography',name:'Geography',cn:'地理'},
+          {key:'wace_history',name:'Modern History',cn:'现代历史'},
+          {key:'wace_media',name:'Media Production & Analysis',cn:'媒体'}
+        ],grades:['A','B','C','D','E','未选']}
+      ],
+      extra:[
+        {key:'wace_atar',name:'ATAR 总分',type:'number',min:0,max:99.95,step:0.05}
+      ]
     },
-    {
-      id:'sit', name:'SIT', nameFull:'Singapore Institute of Technology', nameCN:'新加坡理工大学',
-      tag:'应用型 · 行业合作', tagline:'与海外名校合办的应用型本科，专业紧贴产业链。',
-      stats:[{n:'10K+',l:'在校生'},{n:'12+',l:'海外合作校'}],
-      requirements:{
-        'a-level':{grade:'2 H2 + GP/KI',note:'个案审查 · 部分专业接受'},
-        'ib':{grade:'2 HL + 1 SL @ 5',note:'须取得 IB Diploma · 含英语'},
-        'ap':{grade:'案例审查',note:'需附 SAT / ACT + AP 成绩'},
-        'wace':{grade:'案例审查',note:'通常需附行业经历或作品集'},
-        'gaokao':{grade:'视专业而定',note:'部分应用型专业接受 · 须英语证明'}
-      }
-    },
-    {
-      id:'suss', name:'SUSS', nameFull:'Singapore University of Social Sciences', nameCN:'新跃社科大学',
-      tag:'社科 · 终身学习', tagline:'以社会科学为核心，提供全日制与在职多种学习路径。',
-      stats:[{n:'14K+',l:'在校生'},{n:'PT',l:'多元路径'}],
-      requirements:{
-        'a-level':{grade:'2 H2 + GP',note:'含 MTL 母语 · 全日制较开放'},
-        'ib':{grade:'IB Diploma',note:'SL / HL 母语须达标'},
-        'ap':{grade:'案例审查',note:'国际生比例低 · 须英语证明'},
-        'wace':{grade:'案例审查',note:'部分专业接受 · 须 ATAR + 个人陈述'},
-        'gaokao':{grade:'视专业而定',note:'国际生招生有限 · 建议先咨询'}
-      }
+    'gaokao':{
+      note:'输入你的高考科目成绩',
+      sections:[
+        {title:'必考科目',type:'Required',subjects:[
+          {key:'gk_chinese',name:'语文',cn:'语文',type:'number',min:0,max:150},
+          {key:'gk_math',name:'数学',cn:'数学',type:'number',min:0,max:150},
+          {key:'gk_english',name:'英语',cn:'英语',type:'number',min:0,max:150}
+        ],grades:null},
+        {title:'选考科目（新高考 3 选）',type:'Elective',subjects:[
+          {key:'gk_physics',name:'物理',cn:'物理',type:'number',min:0,max:100},
+          {key:'gk_chemistry',name:'化学',cn:'化学',type:'number',min:0,max:100},
+          {key:'gk_biology',name:'生物',cn:'生物',type:'number',min:0,max:100},
+          {key:'gk_history',name:'历史',cn:'历史',type:'number',min:0,max:100},
+          {key:'gk_geography',name:'地理',cn:'地理',type:'number',min:0,max:100},
+          {key:'gk_politics',name:'政治',cn:'政治',type:'number',min:0,max:100}
+        ],grades:null}
+      ],
+      extra:[
+        {key:'gk_total',name:'高考总分',type:'number',min:0,max:750,step:1},
+        {key:'gk_province_rank',name:'省内排名百分位（如 Top 1 填 1）',type:'number',min:0.1,max:100,step:0.1},
+        {key:'gk_ielts',name:'雅思 IELTS（如有）',type:'number',min:0,max:9,step:0.5},
+        {key:'gk_toefl',name:'托福 TOEFL（如有）',type:'number',min:0,max:120,step:1}
+      ]
     }
-  ];
-
-  const EXAM_LABEL = {'a-level':'A-Level','ib':'IB Diploma','ap':'AP','wace':'WACE / ATAR','gaokao':'中国高考'};
-  const MAJOR_LABEL = {medicine:'医学 / 牙医',law:'法律',cs:'计算机 / AI',engineering:'工程',business:'商科 / 金融',design:'设计 / 建筑',humanities:'人文社科',science:'理科'};
-  const MAJOR_TO_UNIS = {medicine:['nus','ntu'],law:['nus','smu','suss'],cs:['nus','ntu','smu','sutd','sit'],engineering:['nus','ntu','sutd','sit'],business:['nus','ntu','smu','sit','suss'],design:['nus','sutd'],humanities:['nus','ntu','smu','suss'],science:['nus','ntu']};
-
-  const SCORE_INPUTS = {
-    'a-level':[{key:'h2_1',label:'H2 科目 1',type:'select',opts:['A','B','C','D','E']},{key:'h2_2',label:'H2 科目 2',type:'select',opts:['A','B','C','D','E']},{key:'h2_3',label:'H2 科目 3',type:'select',opts:['A','B','C','D','E']},{key:'h1',label:'H1 科目 / GP',type:'select',opts:['A','B','C','D','E']}],
-    'ib':[{key:'total',label:'IB 总分 (24–45)',type:'number',min:24,max:45},{key:'hl_math',label:'HL 数学',type:'select',opts:['7','6','5','4','3','—']}],
-    'ap':[{key:'count',label:'AP 数量',type:'number',min:0,max:12},{key:'avg',label:'平均分 (1–5)',type:'select',opts:['5','4','3','2','—']}],
-    'wace':[{key:'atar',label:'ATAR (0–99.95)',type:'number',min:0,max:100,step:0.05},{key:'english',label:'英语等级',type:'select',opts:['A','B','C','D']}],
-    'gaokao':[{key:'rank',label:'省内排名百分位 (例: 1)',type:'number',min:0.1,max:100,step:0.1},{key:'ielts',label:'IELTS (0–9)',type:'number',min:0,max:9,step:0.5}]
   };
 
-  /* ============== STATE ============== */
-  const state = {exam:null, scores:{}, major:null};
+  /* ── UNIVERSITY PROGRAMS DATABASE ── */
+  const PROGRAMS=[
+    // ─── NUS ───
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Computer Science',cn:'计算机科学',faculty:'School of Computing',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_computing','h2_fm','h2_physics'],grade:'AAA/A',igp:'3.81'},'ib':{must:['hl_math_aa'],prefer:['hl_cs','hl_physics'],grade:'40+',igp:'40'},'ap':{must:['ap_calc_bc','ap_cs_a'],prefer:['ap_physics_c_mech'],grade:'5/5/5',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_cs','wace_math_specialist'],grade:'ATAR 92+',igp:'92'},'gaokao':{must:['gk_math'],prefer:['gk_physics'],grade:'省Top2%',igp:'—'}},diff:94},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Business Analytics',cn:'商业分析',faculty:'School of Computing',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_economics','h2_computing'],grade:'AAA/A',igp:'3.81'},'ib':{must:['hl_math_aa'],prefer:['hl_economics'],grade:'39+',igp:'39'},'ap':{must:['ap_calc_bc'],prefer:['ap_stats','ap_cs_a'],grade:'5/5',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_economics'],grade:'ATAR 90+',igp:'90'},'gaokao':{must:['gk_math'],prefer:['gk_english'],grade:'省Top3%',igp:'—'}},diff:92},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Medicine (Yong Loo Lin)',cn:'医学',faculty:'Yong Loo Lin School of Medicine',
+     req:{'a-level':{must:['h2_chemistry','h2_biology'],prefer:['h2_math','h2_physics'],grade:'AAA/A (4A)',igp:'—'},'ib':{must:['hl_chemistry','hl_biology'],prefer:['hl_math_aa'],grade:'43+',igp:'43'},'ap':{must:['ap_chemistry','ap_biology'],prefer:['ap_calc_bc'],grade:'5/5/5',igp:'—'},'wace':{must:['wace_chemistry'],prefer:['wace_biology','wace_math_methods'],grade:'ATAR 96+',igp:'96'},'gaokao':{must:['gk_chemistry_or_bio'],prefer:[],grade:'省Top0.5%',igp:'—'}},diff:98},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Law',cn:'法律',faculty:'Faculty of Law',
+     req:{'a-level':{must:[],prefer:['h2_literature','h2_history','h2_economics'],grade:'AAA/A (near 4A)',igp:'—'},'ib':{must:[],prefer:['hl_english_a','hl_history','hl_economics'],grade:'42+',igp:'42'},'ap':{must:['ap_english_lang'],prefer:['ap_us_history','ap_macro'],grade:'5/5/5',igp:'—'},'wace':{must:['wace_english'],prefer:['wace_history','wace_economics'],grade:'ATAR 95+',igp:'95'},'gaokao':{must:['gk_english'],prefer:[],grade:'省Top1%',igp:'—'}},diff:97},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Mechanical Engineering',cn:'机械工程',faculty:'College of Design and Engineering',
+     req:{'a-level':{must:['h2_math','h2_physics'],prefer:['h2_chemistry','h2_fm'],grade:'ABB/B',igp:'3.75'},'ib':{must:['hl_math_aa','hl_physics'],prefer:['hl_chemistry'],grade:'37+',igp:'37'},'ap':{must:['ap_calc_bc','ap_physics_c_mech'],prefer:['ap_chemistry'],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods','wace_physics'],prefer:['wace_math_specialist'],grade:'ATAR 87+',igp:'87'},'gaokao':{must:['gk_math','gk_physics'],prefer:[],grade:'省Top5%',igp:'—'}},diff:85},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Electrical Engineering',cn:'电子工程',faculty:'College of Design and Engineering',
+     req:{'a-level':{must:['h2_math','h2_physics'],prefer:['h2_fm','h2_computing'],grade:'ABB/B',igp:'3.75'},'ib':{must:['hl_math_aa','hl_physics'],prefer:[],grade:'37+',igp:'37'},'ap':{must:['ap_calc_bc','ap_physics_c_em'],prefer:[],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods','wace_physics'],prefer:[],grade:'ATAR 87+',igp:'87'},'gaokao':{must:['gk_math','gk_physics'],prefer:[],grade:'省Top5%',igp:'—'}},diff:85},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Business Administration',cn:'工商管理',faculty:'NUS Business School',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_economics','h2_management'],grade:'AAA/B',igp:'3.81'},'ib':{must:['hl_math_aa'],prefer:['hl_economics'],grade:'38+',igp:'38'},'ap':{must:['ap_calc_bc'],prefer:['ap_macro','ap_micro'],grade:'5/4+',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_economics','wace_accounting'],grade:'ATAR 90+',igp:'90'},'gaokao':{must:['gk_math'],prefer:['gk_english'],grade:'省Top3%',igp:'—'}},diff:92},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Architecture',cn:'建筑学',faculty:'College of Design and Engineering',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_art','h2_physics'],grade:'ABB/C',igp:'3.75'},'ib':{must:[],prefer:['hl_visual_arts','hl_math_aa'],grade:'36+',igp:'36'},'ap':{must:[],prefer:['ap_calc_ab'],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_design'],grade:'ATAR 85+',igp:'85'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top8%',igp:'—'}},diff:83},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Data Science & Analytics',cn:'数据科学与分析',faculty:'Faculty of Science',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_fm','h2_computing','h2_physics'],grade:'AAA/B',igp:'3.81'},'ib':{must:['hl_math_aa'],prefer:['hl_cs','hl_physics'],grade:'39+',igp:'39'},'ap':{must:['ap_calc_bc'],prefer:['ap_stats','ap_cs_a'],grade:'5/5',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_math_specialist'],grade:'ATAR 90+',igp:'90'},'gaokao':{must:['gk_math'],prefer:['gk_physics'],grade:'省Top3%',igp:'—'}},diff:91},
+    {uni:'nus',uniName:'NUS',uniCN:'新加坡国立大学',program:'Economics',cn:'经济学',faculty:'Faculty of Arts and Social Sciences',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_economics'],grade:'AAB/B',igp:'3.78'},'ib':{must:['hl_math_aa'],prefer:['hl_economics'],grade:'38+',igp:'38'},'ap':{must:['ap_calc_bc'],prefer:['ap_macro','ap_micro'],grade:'5/4',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_economics'],grade:'ATAR 88+',igp:'88'},'gaokao':{must:['gk_math'],prefer:['gk_english'],grade:'省Top4%',igp:'—'}},diff:89},
 
-  /* ============== STEP NAV ============== */
-  function showStep(n) {
+    // ─── NTU ───
+    {uni:'ntu',uniName:'NTU',uniCN:'南洋理工大学',program:'Computer Science',cn:'计算机科学',faculty:'School of Computer Science and Engineering',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_computing','h2_physics','h2_fm'],grade:'AAA/B',igp:'3.80'},'ib':{must:['hl_math_aa'],prefer:['hl_cs','hl_physics'],grade:'39+',igp:'39'},'ap':{must:['ap_calc_bc'],prefer:['ap_cs_a','ap_physics_c_mech'],grade:'5/5',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_cs','wace_physics'],grade:'ATAR 90+',igp:'90'},'gaokao':{must:['gk_math'],prefer:['gk_physics'],grade:'省Top3%',igp:'—'}},diff:92},
+    {uni:'ntu',uniName:'NTU',uniCN:'南洋理工大学',program:'Computer Engineering',cn:'计算机工程',faculty:'SCSE + EEE',
+     req:{'a-level':{must:['h2_math','h2_physics'],prefer:['h2_computing'],grade:'AAB/B',igp:'3.75'},'ib':{must:['hl_math_aa','hl_physics'],prefer:['hl_cs'],grade:'38+',igp:'38'},'ap':{must:['ap_calc_bc','ap_physics_c_mech'],prefer:['ap_cs_a'],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods','wace_physics'],prefer:['wace_cs'],grade:'ATAR 88+',igp:'88'},'gaokao':{must:['gk_math','gk_physics'],prefer:[],grade:'省Top5%',igp:'—'}},diff:88},
+    {uni:'ntu',uniName:'NTU',uniCN:'南洋理工大学',program:'Medicine (LKCMedicine)',cn:'医学',faculty:'Lee Kong Chian School of Medicine',
+     req:{'a-level':{must:['h2_chemistry','h2_biology'],prefer:['h2_math'],grade:'AAA/A',igp:'—'},'ib':{must:['hl_chemistry','hl_biology'],prefer:['hl_math_aa'],grade:'43+',igp:'43'},'ap':{must:['ap_chemistry','ap_biology'],prefer:['ap_calc_bc'],grade:'5/5/5',igp:'—'},'wace':{must:['wace_chemistry'],prefer:['wace_biology'],grade:'ATAR 96+',igp:'96'},'gaokao':{must:[],prefer:[],grade:'省Top0.5%',igp:'—'}},diff:98},
+    {uni:'ntu',uniName:'NTU',uniCN:'南洋理工大学',program:'Mechanical Engineering',cn:'机械工程',faculty:'School of Mechanical and Aerospace Engineering',
+     req:{'a-level':{must:['h2_math','h2_physics'],prefer:['h2_chemistry'],grade:'BBC/C',igp:'3.5'},'ib':{must:['hl_math_aa','hl_physics'],prefer:[],grade:'35+',igp:'35'},'ap':{must:['ap_calc_bc','ap_physics_c_mech'],prefer:[],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods','wace_physics'],prefer:[],grade:'ATAR 82+',igp:'82'},'gaokao':{must:['gk_math','gk_physics'],prefer:[],grade:'省Top8%',igp:'—'}},diff:80},
+    {uni:'ntu',uniName:'NTU',uniCN:'南洋理工大学',program:'Electrical & Electronic Engineering',cn:'电子电气工程',faculty:'School of EEE',
+     req:{'a-level':{must:['h2_math','h2_physics'],prefer:['h2_fm'],grade:'BBC/C',igp:'3.5'},'ib':{must:['hl_math_aa','hl_physics'],prefer:[],grade:'35+',igp:'35'},'ap':{must:['ap_calc_bc','ap_physics_c_em'],prefer:[],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods','wace_physics'],prefer:[],grade:'ATAR 82+',igp:'82'},'gaokao':{must:['gk_math','gk_physics'],prefer:[],grade:'省Top8%',igp:'—'}},diff:80},
+    {uni:'ntu',uniName:'NTU',uniCN:'南洋理工大学',program:'Business (Accountancy)',cn:'商科（会计）',faculty:'Nanyang Business School',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_economics','h2_management'],grade:'AAB/B',igp:'3.75'},'ib':{must:['hl_math_aa'],prefer:['hl_economics'],grade:'37+',igp:'37'},'ap':{must:['ap_calc_bc'],prefer:['ap_macro'],grade:'5/4',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_accounting','wace_economics'],grade:'ATAR 87+',igp:'87'},'gaokao':{must:['gk_math'],prefer:['gk_english'],grade:'省Top5%',igp:'—'}},diff:87},
+    {uni:'ntu',uniName:'NTU',uniCN:'南洋理工大学',program:'Data Science & AI',cn:'数据科学与人工智能',faculty:'SCSE',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_computing','h2_fm'],grade:'AAA/B',igp:'3.80'},'ib':{must:['hl_math_aa'],prefer:['hl_cs'],grade:'39+',igp:'39'},'ap':{must:['ap_calc_bc'],prefer:['ap_cs_a','ap_stats'],grade:'5/5',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_math_specialist','wace_cs'],grade:'ATAR 90+',igp:'90'},'gaokao':{must:['gk_math'],prefer:['gk_physics'],grade:'省Top3%',igp:'—'}},diff:92},
+    {uni:'ntu',uniName:'NTU',uniCN:'南洋理工大学',program:'Biological Sciences',cn:'生物科学',faculty:'School of Biological Sciences',
+     req:{'a-level':{must:['h2_biology','h2_chemistry'],prefer:['h2_math'],grade:'ABB/C',igp:'3.5'},'ib':{must:['hl_biology','hl_chemistry'],prefer:[],grade:'35+',igp:'35'},'ap':{must:['ap_biology','ap_chemistry'],prefer:[],grade:'4+',igp:'—'},'wace':{must:['wace_biology','wace_chemistry'],prefer:[],grade:'ATAR 80+',igp:'80'},'gaokao':{must:[],prefer:[],grade:'省Top10%',igp:'—'}},diff:78},
+
+    // ─── SMU ───
+    {uni:'smu',uniName:'SMU',uniCN:'新加坡管理大学',program:'Business Management',cn:'商业管理',faculty:'Lee Kong Chian School of Business',
+     req:{'a-level':{must:[],prefer:['h2_math','h2_economics'],grade:'AAB/B',igp:'3.75'},'ib':{must:[],prefer:['hl_math_aa','hl_economics'],grade:'36+',igp:'36'},'ap':{must:[],prefer:['ap_calc_bc','ap_macro'],grade:'4+',igp:'—'},'wace':{must:[],prefer:['wace_math_methods','wace_economics'],grade:'ATAR 87+',igp:'87'},'gaokao':{must:['gk_math'],prefer:['gk_english'],grade:'省Top5%',igp:'—'}},diff:87},
+    {uni:'smu',uniName:'SMU',uniCN:'新加坡管理大学',program:'Accountancy',cn:'会计学',faculty:'School of Accountancy',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_economics'],grade:'ABB/C',igp:'3.63'},'ib':{must:[],prefer:['hl_math_aa'],grade:'35+',igp:'35'},'ap':{must:['ap_calc_bc'],prefer:['ap_macro'],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_accounting'],grade:'ATAR 85+',igp:'85'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top8%',igp:'—'}},diff:84},
+    {uni:'smu',uniName:'SMU',uniCN:'新加坡管理大学',program:'Information Systems',cn:'信息系统',faculty:'School of Computing and Information Systems',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_computing','h2_economics'],grade:'AAB/B',igp:'3.75'},'ib':{must:['hl_math_aa'],prefer:['hl_cs'],grade:'37+',igp:'37'},'ap':{must:['ap_calc_bc'],prefer:['ap_cs_a'],grade:'5/4',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_cs'],grade:'ATAR 88+',igp:'88'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top5%',igp:'—'}},diff:88},
+    {uni:'smu',uniName:'SMU',uniCN:'新加坡管理大学',program:'Law',cn:'法律',faculty:'Yong Pung How School of Law',
+     req:{'a-level':{must:[],prefer:['h2_literature','h2_history','h2_economics'],grade:'AAA/A',igp:'—'},'ib':{must:[],prefer:['hl_english_a','hl_history'],grade:'40+',igp:'40'},'ap':{must:['ap_english_lang'],prefer:['ap_us_history'],grade:'5/5',igp:'—'},'wace':{must:['wace_english'],prefer:['wace_history'],grade:'ATAR 93+',igp:'93'},'gaokao':{must:['gk_english'],prefer:[],grade:'省Top2%',igp:'—'}},diff:95},
+    {uni:'smu',uniName:'SMU',uniCN:'新加坡管理大学',program:'Economics',cn:'经济学',faculty:'School of Economics',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_economics'],grade:'AAB/B',igp:'3.75'},'ib':{must:['hl_math_aa'],prefer:['hl_economics'],grade:'36+',igp:'36'},'ap':{must:['ap_calc_bc'],prefer:['ap_macro','ap_micro'],grade:'5/4',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_economics'],grade:'ATAR 87+',igp:'87'},'gaokao':{must:['gk_math'],prefer:['gk_english'],grade:'省Top5%',igp:'—'}},diff:87},
+    {uni:'smu',uniName:'SMU',uniCN:'新加坡管理大学',program:'Computer Science',cn:'计算机科学',faculty:'School of Computing and Information Systems',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_computing','h2_physics'],grade:'AAA/B',igp:'3.80'},'ib':{must:['hl_math_aa'],prefer:['hl_cs'],grade:'38+',igp:'38'},'ap':{must:['ap_calc_bc'],prefer:['ap_cs_a'],grade:'5/5',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_cs'],grade:'ATAR 90+',igp:'90'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top3%',igp:'—'}},diff:91},
+
+    // ─── SUTD ───
+    {uni:'sutd',uniName:'SUTD',uniCN:'新加坡科技设计大学',program:'Computer Science & Design',cn:'计算机科学与设计',faculty:'Information Systems Technology and Design',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_computing','h2_physics'],grade:'ABB/C',igp:'3.5'},'ib':{must:['hl_math_aa'],prefer:['hl_cs','hl_physics'],grade:'35+',igp:'35'},'ap':{must:['ap_calc_bc'],prefer:['ap_cs_a'],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_cs'],grade:'ATAR 85+',igp:'85'},'gaokao':{must:['gk_math'],prefer:['gk_physics'],grade:'省Top8%',igp:'—'}},diff:84},
+    {uni:'sutd',uniName:'SUTD',uniCN:'新加坡科技设计大学',program:'Engineering Product Development',cn:'工程产品开发',faculty:'Engineering Product Development',
+     req:{'a-level':{must:['h2_math','h2_physics'],prefer:['h2_chemistry'],grade:'ABB/C',igp:'3.5'},'ib':{must:['hl_math_aa','hl_physics'],prefer:[],grade:'35+',igp:'35'},'ap':{must:['ap_calc_bc','ap_physics_c_mech'],prefer:[],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods','wace_physics'],prefer:[],grade:'ATAR 85+',igp:'85'},'gaokao':{must:['gk_math','gk_physics'],prefer:[],grade:'省Top8%',igp:'—'}},diff:83},
+    {uni:'sutd',uniName:'SUTD',uniCN:'新加坡科技设计大学',program:'Architecture & Sustainable Design',cn:'建筑与可持续设计',faculty:'Architecture and Sustainable Design',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_art','h2_physics'],grade:'ABB/C',igp:'3.5'},'ib':{must:['hl_math_aa'],prefer:['hl_visual_arts'],grade:'34+',igp:'34'},'ap':{must:['ap_calc_ab'],prefer:[],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_design'],grade:'ATAR 82+',igp:'82'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top10%',igp:'—'}},diff:80},
+    {uni:'sutd',uniName:'SUTD',uniCN:'新加坡科技设计大学',program:'Design & AI',cn:'设计与人工智能',faculty:'ISTD + DAI',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_computing','h2_art'],grade:'ABB/C',igp:'3.5'},'ib':{must:['hl_math_aa'],prefer:['hl_cs','hl_visual_arts'],grade:'35+',igp:'35'},'ap':{must:['ap_calc_bc'],prefer:['ap_cs_a'],grade:'4+',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_cs','wace_design'],grade:'ATAR 85+',igp:'85'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top8%',igp:'—'}},diff:84},
+
+    // ─── SIT ───
+    {uni:'sit',uniName:'SIT',uniCN:'新加坡理工大学',program:'Software Engineering',cn:'软件工程',faculty:'Engineering',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_computing','h2_physics'],grade:'BCC/C',igp:'3.3'},'ib':{must:['hl_math_aa'],prefer:['hl_cs'],grade:'32+',igp:'32'},'ap':{must:['ap_calc_ab'],prefer:['ap_cs_a'],grade:'3+',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_cs'],grade:'ATAR 78+',igp:'78'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top15%',igp:'—'}},diff:75},
+    {uni:'sit',uniName:'SIT',uniCN:'新加坡理工大学',program:'Mechanical Engineering',cn:'机械工程',faculty:'Engineering',
+     req:{'a-level':{must:['h2_math','h2_physics'],prefer:[],grade:'BCC/C',igp:'3.3'},'ib':{must:['hl_math_aa','hl_physics'],prefer:[],grade:'32+',igp:'32'},'ap':{must:['ap_calc_ab','ap_physics_1'],prefer:[],grade:'3+',igp:'—'},'wace':{must:['wace_math_methods','wace_physics'],prefer:[],grade:'ATAR 75+',igp:'75'},'gaokao':{must:['gk_math','gk_physics'],prefer:[],grade:'省Top15%',igp:'—'}},diff:72},
+    {uni:'sit',uniName:'SIT',uniCN:'新加坡理工大学',program:'Accountancy',cn:'会计学',faculty:'Business',
+     req:{'a-level':{must:[],prefer:['h2_math','h2_economics'],grade:'BCC/C',igp:'3.3'},'ib':{must:[],prefer:['hl_math_aa'],grade:'30+',igp:'30'},'ap':{must:[],prefer:['ap_calc_ab'],grade:'3+',igp:'—'},'wace':{must:[],prefer:['wace_math_methods','wace_accounting'],grade:'ATAR 75+',igp:'75'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top15%',igp:'—'}},diff:72},
+    {uni:'sit',uniName:'SIT',uniCN:'新加坡理工大学',program:'Hospitality Business',cn:'酒店管理',faculty:'Business',
+     req:{'a-level':{must:[],prefer:['h2_economics'],grade:'BCC/C',igp:'3.0'},'ib':{must:[],prefer:[],grade:'28+',igp:'28'},'ap':{must:[],prefer:[],grade:'3+',igp:'—'},'wace':{must:[],prefer:['wace_business'],grade:'ATAR 72+',igp:'72'},'gaokao':{must:[],prefer:['gk_english'],grade:'省Top20%',igp:'—'}},diff:68},
+
+    // ─── SUSS ───
+    {uni:'suss',uniName:'SUSS',uniCN:'新跃社科大学',program:'Business Analytics',cn:'商业分析',faculty:'S R Nathan School of Human Development',
+     req:{'a-level':{must:[],prefer:['h2_math','h2_economics'],grade:'BCC/C',igp:'3.0'},'ib':{must:[],prefer:['hl_math_aa'],grade:'28+',igp:'28'},'ap':{must:[],prefer:['ap_calc_ab','ap_stats'],grade:'3+',igp:'—'},'wace':{must:[],prefer:['wace_math_methods'],grade:'ATAR 72+',igp:'72'},'gaokao':{must:[],prefer:['gk_math'],grade:'省Top20%',igp:'—'}},diff:70},
+    {uni:'suss',uniName:'SUSS',uniCN:'新跃社科大学',program:'Marketing',cn:'市场营销',faculty:'S R Nathan School of Human Development',
+     req:{'a-level':{must:[],prefer:['h2_economics','h2_management'],grade:'BCC/C',igp:'3.0'},'ib':{must:[],prefer:['hl_economics','hl_business'],grade:'28+',igp:'28'},'ap':{must:[],prefer:['ap_macro'],grade:'3+',igp:'—'},'wace':{must:[],prefer:['wace_business','wace_economics'],grade:'ATAR 72+',igp:'72'},'gaokao':{must:[],prefer:['gk_english'],grade:'省Top20%',igp:'—'}},diff:68},
+    {uni:'suss',uniName:'SUSS',uniCN:'新跃社科大学',program:'Human Resource Management',cn:'人力资源管理',faculty:'S R Nathan School of Human Development',
+     req:{'a-level':{must:[],prefer:['h2_economics'],grade:'CCC/C',igp:'2.5'},'ib':{must:[],prefer:[],grade:'26+',igp:'26'},'ap':{must:[],prefer:[],grade:'3+',igp:'—'},'wace':{must:[],prefer:[],grade:'ATAR 70+',igp:'70'},'gaokao':{must:[],prefer:['gk_english'],grade:'省Top25%',igp:'—'}},diff:65},
+    {uni:'suss',uniName:'SUSS',uniCN:'新跃社科大学',program:'Social Work',cn:'社会工作',faculty:'S R Nathan School of Human Development',
+     req:{'a-level':{must:[],prefer:['h2_geography','h2_history'],grade:'CCC/C',igp:'2.5'},'ib':{must:[],prefer:['hl_psychology'],grade:'26+',igp:'26'},'ap':{must:[],prefer:['ap_psychology'],grade:'3+',igp:'—'},'wace':{must:[],prefer:[],grade:'ATAR 70+',igp:'70'},'gaokao':{must:[],prefer:['gk_english'],grade:'省Top25%',igp:'—'}},diff:65},
+    {uni:'suss',uniName:'SUSS',uniCN:'新跃社科大学',program:'Finance',cn:'金融学',faculty:'School of Business',
+     req:{'a-level':{must:['h2_math'],prefer:['h2_economics'],grade:'BCC/C',igp:'3.0'},'ib':{must:[],prefer:['hl_math_aa','hl_economics'],grade:'30+',igp:'30'},'ap':{must:[],prefer:['ap_calc_ab','ap_macro'],grade:'3+',igp:'—'},'wace':{must:['wace_math_methods'],prefer:['wace_economics'],grade:'ATAR 75+',igp:'75'},'gaokao':{must:['gk_math'],prefer:[],grade:'省Top15%',igp:'—'}},diff:73}
+  ];
+
+  /* ── UNIS meta (for matrix & detail cards) ── */
+  const UNIS=[
+    {id:'nus',name:'NUS',nameFull:'National University of Singapore',nameCN:'新加坡国立大学',tag:'QS #8 全球',tagline:'综合性研究型旗舰，几乎所有学科都属亚洲第一梯队。',stats:[{n:'40K+',l:'在校生'},{n:'#8',l:'QS 全球'}],
+     requirements:{'a-level':{grade:'AAA/A · 3H2+H1',note:'顶级专业需 4A · 工程 BBC/C 起步'},'ib':{grade:'36 – 42+',note:'医学 42+ · 计算机 39+ · 工程 36–38'},'ap':{grade:'5 AP · 多个 5 分',note:'AP Calc BC 通常必修'},'wace':{grade:'ATAR 90 / 94+',note:'最低 ATAR 90 · 竞争性 94+'},'gaokao':{grade:'省 Top 1–5%',note:'IELTS 7.0 / TOEFL 100 必需'}}},
+    {id:'ntu',name:'NTU',nameFull:'Nanyang Technological University',nameCN:'南洋理工大学',tag:'QS #15 · 工程王者',tagline:'工科与商科双强，Renaissance Engineering 等顶尖项目。',stats:[{n:'33K+',l:'在校生'},{n:'#15',l:'QS 全球'}],
+     requirements:{'a-level':{grade:'3 × A-Level',note:'工程需 Math · 12 月内 ≤ 2 次'},'ib':{grade:'36 – 42+',note:'LKCMed 须 42+ · CS 38+'},'ap':{grade:'3 AP @ 4–5',note:'AP Calc BC 工程/CS 强制'},'wace':{grade:'ATAR 90+',note:'奥赛奖牌可优先'},'gaokao':{grade:'省一本以上',note:'IELTS 6.0+ · AST 加分'}}},
+    {id:'smu',name:'SMU',nameFull:'Singapore Management University',nameCN:'新加坡管理大学',tag:'商科 · 法律强校',tagline:'美式小班 + 城市校园 + 强制实习。',stats:[{n:'12K+',l:'在校生'},{n:'1st',l:'城市校园'}],
+     requirements:{'a-level':{grade:'3 H2 + GP',note:'国际 A-Level 须附 SAT/ACT'},'ib':{grade:'36 – 40+',note:'侧重领导力与课外'},'ap':{grade:'3+ AP',note:'需附 SAT/ACT · 法律须面试'},'wace':{grade:'ATAR 90+',note:'holistic 审查'},'gaokao':{grade:'省 Top 5%',note:'英语证明 + 面试'}}},
+    {id:'sutd',name:'SUTD',nameFull:'Singapore University of Technology and Design',nameCN:'新加坡科技设计大学',tag:'MIT 合作 · 设计+科技',tagline:'与 MIT 共同设立，设计驱动的工程教育。',stats:[{n:'2009',l:'建校'},{n:'MIT',l:'合作'}],
+     requirements:{'a-level':{grade:'3 H2 + GP',note:'含数学 · SUTD 入学考'},'ib':{grade:'综合评估',note:'HL Math + HL Physics 建议'},'ap':{grade:'3+ AP',note:'portfolio 加分'},'wace':{grade:'ATAR 90+',note:'portfolio + 面试'},'gaokao':{grade:'省一本以上',note:'SUTD UEE + 英语'}}},
+    {id:'sit',name:'SIT',nameFull:'Singapore Institute of Technology',nameCN:'新加坡理工大学',tag:'应用型 · 行业合作',tagline:'与海外名校合办应用型本科。',stats:[{n:'10K+',l:'在校生'},{n:'12+',l:'合作校'}],
+     requirements:{'a-level':{grade:'2 H2 + GP',note:'个案审查'},'ib':{grade:'2 HL @ 5',note:'须 IB Diploma'},'ap':{grade:'案例审查',note:'需 SAT/ACT'},'wace':{grade:'案例审查',note:'行业经历加分'},'gaokao':{grade:'视专业',note:'部分专业接受'}}},
+    {id:'suss',name:'SUSS',nameFull:'Singapore University of Social Sciences',nameCN:'新跃社科大学',tag:'社科 · 终身学习',tagline:'社会科学为核心，全日制与在职多路径。',stats:[{n:'14K+',l:'在校生'},{n:'PT',l:'多元路径'}],
+     requirements:{'a-level':{grade:'2 H2 + GP',note:'全日制较开放'},'ib':{grade:'IB Diploma',note:'母语须达标'},'ap':{grade:'案例审查',note:'须英语证明'},'wace':{grade:'案例审查',note:'须 ATAR + 个人陈述'},'gaokao':{grade:'视专业',note:'国际生有限'}}}
+  ];
+
+  /* ── STATE ── */
+  const state={exam:null,subjects:{},major:null};
+
+  /* ── STEP NAV ── */
+  function showStep(n){
     ['step1','step2','step3'].forEach((id,i)=>{
       document.getElementById(id).classList.toggle('hidden',(i+1)!==n);
     });
@@ -831,80 +1100,185 @@
     btn.addEventListener('click',()=>{
       document.querySelectorAll('[data-exam]').forEach(b=>b.classList.remove('selected'));
       btn.classList.add('selected');
-      state.exam = btn.dataset.exam;
-    });
-  });
-
-  document.querySelectorAll('[data-major]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('[data-major]').forEach(b=>b.classList.remove('selected'));
-      btn.classList.add('selected');
-      state.major = btn.dataset.major;
+      state.exam=btn.dataset.exam;
     });
   });
 
   document.getElementById('toStep2').addEventListener('click',()=>{
     if(!state.exam){alert('请先选择你的考试体系');return;}
-    buildScoreInputs(state.exam);
+    buildSubjectInputs(state.exam);
     showStep(2);
   });
   document.getElementById('backStep1').addEventListener('click',()=>showStep(1));
-  document.getElementById('toStep3').addEventListener('click',()=>{collectScores();showStep(3);});
+  document.getElementById('toStep3').addEventListener('click',()=>{collectSubjects();showStep(3);buildProgramList();});
   document.getElementById('backStep2').addEventListener('click',()=>showStep(2));
   document.getElementById('runMatch').addEventListener('click',()=>{
-    if(!state.major){alert('请选择你的专业方向');return;}
-    collectScores();runMatch();
+    collectSubjects();runMatch();
   });
   document.getElementById('resetMatch').addEventListener('click',()=>{
     document.getElementById('result').classList.remove('show');
     document.querySelectorAll('.opt').forEach(b=>b.classList.remove('selected'));
-    state.exam=null;state.scores={};state.major=null;
+    state.exam=null;state.subjects={};state.major=null;
     showStep(1);
   });
 
-  /* ============== INPUTS ============== */
-  function buildScoreInputs(exam) {
+  /* ── BUILD SUBJECT INPUTS (Step 2) ── */
+  function buildSubjectInputs(exam){
     const wrap=document.getElementById('scoreInputs');
     const q=document.getElementById('step2Q');
-    q.innerHTML=`输入你的 <em>${EXAM_LABEL[exam]}</em> 成绩`;
-    const cfg=SCORE_INPUTS[exam];
-    wrap.innerHTML=cfg.map(f=>{
-      if(f.type==='select'){
-        return `<div class="input-group"><label>${f.label}</label><select data-key="${f.key}">${f.opts.map(o=>`<option>${o}</option>`).join('')}</select></div>`;
-      }
-      return `<div class="input-group"><label>${f.label}</label><input type="number" data-key="${f.key}" min="${f.min||0}" max="${f.max||100}" step="${f.step||1}" placeholder="${f.min}–${f.max}"></div>`;
-    }).join('');
-  }
+    const cfg=EXAM_SUBJECTS[exam];
+    q.innerHTML=`选择你的 <em>${EXAM_LABEL[exam]}</em> 科目与成绩`;
 
-  function collectScores(){
-    state.scores={};
-    document.querySelectorAll('#scoreInputs [data-key]').forEach(el=>{state.scores[el.dataset.key]=el.value;});
-  }
+    let html=`<p style="font-size:13px;color:var(--muted);margin-bottom:20px">${cfg.note}</p>`;
 
-  /* ============== MATCH ENGINE ============== */
-  function score01(exam,scores){
-    switch(exam){
-      case 'a-level':{const m={A:5,B:4,C:3,D:1,E:0};return Math.min(100,((m[scores.h2_1]||0)+(m[scores.h2_2]||0)+(m[scores.h2_3]||0)+(m[scores.h1]||0))*5);}
-      case 'ib':{const t=parseFloat(scores.total)||0;return Math.max(0,Math.min(100,(t-24)*4.76));}
-      case 'ap':{const c=parseFloat(scores.count)||0;const a=parseFloat(scores.avg)||0;return Math.min(100,c*8+a*8);}
-      case 'wace':{return Math.max(0,Math.min(100,(parseFloat(scores.atar||0)-70)*3.33));}
-      case 'gaokao':{const r=parseFloat(scores.rank)||100;return Math.max(0,Math.min(100,100-r*10));}
-      default:return 50;
+    cfg.sections.forEach(sec=>{
+      html+=`<div class="subject-section"><div class="subject-section-title">${sec.title}</div><div class="subject-grid">`;
+      sec.subjects.forEach(sub=>{
+        const grades=sub.grades||sec.grades;
+        if(grades){
+          html+=`<div class="subject-row"><label class="subject-name" for="s_${sub.key}">${sub.cn}<small>${sub.name}</small></label><select class="subject-grade" id="s_${sub.key}" data-key="${sub.key}">${grades.map(g=>`<option value="${g}"${g==='未选'?' selected':''}>${g}</option>`).join('')}</select></div>`;
+        } else {
+          html+=`<div class="subject-row"><label class="subject-name" for="s_${sub.key}">${sub.cn}<small>${sub.name}</small></label><input class="subject-grade" id="s_${sub.key}" data-key="${sub.key}" type="number" min="${sub.min||0}" max="${sub.max||100}" placeholder="留空=未选"></div>`;
+        }
+      });
+      html+=`</div></div>`;
+    });
+
+    if(cfg.extra){
+      html+=`<div class="subject-section"><div class="subject-section-title">补充信息</div><div class="subject-grid">`;
+      cfg.extra.forEach(f=>{
+        html+=`<div class="subject-row"><label class="subject-name" for="s_${f.key}">${f.name}</label><input class="subject-grade" id="s_${f.key}" data-key="${f.key}" type="number" min="${f.min||0}" max="${f.max||9999}" step="${f.step||1}" placeholder="${f.min}–${f.max}"></div>`;
+      });
+      html+=`</div></div>`;
     }
+    wrap.innerHTML=html;
   }
 
-  const UNI_DIFFICULTY={nus:95,ntu:90,smu:88,sutd:85,sit:75,suss:70};
-  const MAJOR_DIFFICULTY={medicine:20,law:17,cs:15,engineering:8,business:12,design:10,humanities:5,science:9};
+  function collectSubjects(){
+    state.subjects={};
+    document.querySelectorAll('#scoreInputs [data-key]').forEach(el=>{
+      const v=el.value;
+      if(v&&v!=='未选'&&v!=='') state.subjects[el.dataset.key]=v;
+    });
+  }
 
-  function calcMatch(uniId,exam,scores,major){
-    const base=score01(exam,scores);
-    const targetMid=UNI_DIFFICULTY[uniId]+(MAJOR_DIFFICULTY[major]||0);
-    const targetMin=targetMid-12;
-    let pct;
-    if(base>=targetMid)pct=70+Math.min(25,(base-targetMid)*1.2);
-    else if(base>=targetMin)pct=30+(base-targetMin)*40/(targetMid-targetMin);
-    else pct=Math.max(5,30-(targetMin-base)*1.4);
-    return Math.round(Math.max(3,Math.min(95,pct)));
+  /* ── BUILD PROGRAM LIST (Step 3) ── */
+  function buildProgramList(){
+    const grid=document.getElementById('programGrid');
+    if(!grid)return;
+    const exam=state.exam;
+    const available=PROGRAMS.filter(p=>p.req[exam]);
+    const byUni={};
+    available.forEach(p=>{
+      if(!byUni[p.uni])byUni[p.uni]={uniName:p.uniName,uniCN:p.uniCN,programs:[]};
+      byUni[p.uni].programs.push(p);
+    });
+    let html='';
+    for(const uid of ['nus','ntu','smu','sutd','sit','suss']){
+      const g=byUni[uid];
+      if(!g)continue;
+      html+=`<div class="program-uni-group"><div class="program-uni-header">${g.uniName}<small>${g.uniCN}</small></div><div class="program-list">`;
+      g.programs.forEach(p=>{
+        const r=p.req[exam];
+        const mustNames=r.must.map(k=>subjectLabel(k)).filter(Boolean).join(', ');
+        html+=`<button class="opt program-opt" data-program="${p.uni}|${p.program}"><div class="opt-label">${p.cn}</div><div class="opt-sub">${p.program} · ${p.faculty}</div>${mustNames?`<div class="opt-req">必修：${mustNames}</div>`:''}<div class="opt-req">参考门槛：${r.grade}</div></button>`;
+      });
+      html+=`</div></div>`;
+    }
+    grid.innerHTML=html;
+    grid.querySelectorAll('.program-opt').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        btn.classList.toggle('selected');
+      });
+    });
+  }
+
+  function subjectLabel(key){
+    for(const exam of Object.values(EXAM_SUBJECTS)){
+      for(const sec of exam.sections){
+        const found=sec.subjects.find(s=>s.key===key);
+        if(found)return found.cn;
+      }
+    }
+    return '';
+  }
+
+  /* ── MATCH ENGINE v2 ── */
+  function gradeToNum(grade,exam){
+    if(exam==='a-level')return{A:5,B:4,C:3,D:2,E:1}[grade]||0;
+    if(exam==='ib')return parseInt(grade)||0;
+    if(exam==='ap')return parseInt(grade)||0;
+    if(exam==='wace')return{A:5,B:4,C:3,D:2,E:1}[grade]||0;
+    return 0;
+  }
+
+  function calcProgramMatch(prog){
+    const exam=state.exam;
+    const subs=state.subjects;
+    const r=prog.req[exam];
+    if(!r)return{pct:0,reason:'该考试体系不适用'};
+
+    let score=50;
+    let reasons=[];
+
+    const mustMet=r.must.filter(k=>subs[k]&&subs[k]!=='未选');
+    const mustMissing=r.must.filter(k=>!subs[k]||subs[k]==='未选');
+
+    if(mustMissing.length>0){
+      score-=mustMissing.length*18;
+      reasons.push('缺少必修科目：'+mustMissing.map(k=>subjectLabel(k)).join('、'));
+    } else if(r.must.length>0){
+      score+=10;
+      reasons.push('必修科目齐全');
+    }
+
+    const preferMet=r.prefer.filter(k=>subs[k]&&subs[k]!=='未选');
+    score+=preferMet.length*5;
+    if(preferMet.length>0)reasons.push('加分科目：'+preferMet.map(k=>subjectLabel(k)).join('、'));
+
+    if(exam==='a-level'||exam==='wace'){
+      const h2keys=Object.keys(subs).filter(k=>k.startsWith('h2_')||(exam==='wace'&&k.startsWith('wace_')&&k!=='wace_atar'));
+      const grades=h2keys.map(k=>gradeToNum(subs[k],exam)).filter(g=>g>0).sort((a,b)=>b-a);
+      const top4=grades.slice(0,4);
+      const avg=top4.length?top4.reduce((a,b)=>a+b,0)/top4.length:0;
+      score+=(avg-3)*12;
+      if(exam==='wace'&&subs.wace_atar){
+        const atar=parseFloat(subs.wace_atar)||0;
+        const target=prog.diff;
+        score+=(atar-target)*1.2;
+      }
+    } else if(exam==='ib'){
+      const hlKeys=Object.keys(subs).filter(k=>k.startsWith('hl_'));
+      const slKeys=Object.keys(subs).filter(k=>k.startsWith('sl_'));
+      const hlScores=hlKeys.map(k=>parseInt(subs[k])||0).filter(g=>g>0);
+      const slScores=slKeys.map(k=>parseInt(subs[k])||0).filter(g=>g>0);
+      const total=hlScores.reduce((a,b)=>a+b,0)+slScores.reduce((a,b)=>a+b,0);
+      const bonusPts={A:3,B:2,C:1}[(subs.ib_ee||'')]+({A:3,B:2,C:1}[(subs.ib_tok_grade||'')])||0;
+      const ibTotal=total+(bonusPts||0);
+      score+=(ibTotal-prog.diff*0.38)*1.5;
+    } else if(exam==='ap'){
+      const apKeys=Object.keys(subs).filter(k=>k.startsWith('ap_')&&k!=='ap_sat'&&k!=='ap_act');
+      const apScores=apKeys.map(k=>parseInt(subs[k])||0).filter(g=>g>0);
+      const count=apScores.length;
+      const avg=count?apScores.reduce((a,b)=>a+b,0)/count:0;
+      score+=(count-3)*6+(avg-3.5)*8;
+      if(subs.ap_sat){score+=((parseInt(subs.ap_sat)||0)-1200)*0.02;}
+    } else if(exam==='gaokao'){
+      if(subs.gk_province_rank){
+        const rank=parseFloat(subs.gk_province_rank)||50;
+        const target=100-prog.diff;
+        score+=(target-rank)*3;
+      }
+      if(subs.gk_total){score+=((parseInt(subs.gk_total)||0)-550)*0.08;}
+      if(subs.gk_ielts){score+=((parseFloat(subs.gk_ielts)||0)-6)*8;}
+      if(subs.gk_toefl){score+=((parseInt(subs.gk_toefl)||0)-80)*0.15;}
+    }
+
+    const diffPenalty=(prog.diff-75)*0.5;
+    score-=diffPenalty;
+
+    const pct=Math.round(Math.max(3,Math.min(95,score)));
+    return{pct,reasons};
   }
 
   function likelihoodTag(p){
@@ -914,43 +1288,75 @@
   }
 
   function runMatch(){
+    collectSubjects();
+    const selectedBtns=document.querySelectorAll('.program-opt.selected');
+    let targetPrograms;
+    if(selectedBtns.length>0){
+      targetPrograms=Array.from(selectedBtns).map(btn=>{
+        const [uid,pname]=btn.dataset.program.split('|');
+        return PROGRAMS.find(p=>p.uni===uid&&p.program===pname);
+      }).filter(Boolean);
+    } else {
+      targetPrograms=PROGRAMS.filter(p=>p.req[state.exam]);
+    }
+
     document.getElementById('thinking').classList.add('show');
     document.getElementById('result').classList.remove('show');
-    const texts=['正在比对 6 所大学数据库...','解析你的成绩信号...',`计算 ${EXAM_LABEL[state.exam]} → 各专业映射...`,'生成个人化建议...'];
+    const texts=['正在解析你的科目组合...','比对各大学各专业要求...',`分析 ${EXAM_LABEL[state.exam]} 科目匹配度...`,'生成个人化建议...'];
     let i=0;
     const ttl=setInterval(()=>{i=(i+1)%texts.length;document.getElementById('thinkingText').textContent=texts[i];},650);
-    setTimeout(()=>{clearInterval(ttl);renderResult();},2400);
+    setTimeout(()=>{clearInterval(ttl);renderResult(targetPrograms);},2400);
   }
 
-  function renderResult(){
+  function renderResult(targetPrograms){
     document.getElementById('thinking').classList.remove('show');
-    const targets=MAJOR_TO_UNIS[state.major]||['nus','ntu','smu','sutd'];
-    const items=targets.map(id=>{
-      const uni=UNIS.find(u=>u.id===id);
-      const p=calcMatch(id,state.exam,state.scores,state.major);
-      const lh=likelihoodTag(p);
-      const req=uni.requirements[state.exam];
-      return{p,html:`<div class="result-uni"><div class="result-uni-head"><div class="result-uni-name">${uni.name}<small>${uni.nameCN}</small></div><span class="result-likelihood ${lh.cls}">${p}% · ${lh.text}</span></div><div class="result-uni-detail">${MAJOR_LABEL[state.major]} 方向 · 该校 ${EXAM_LABEL[state.exam]} 典型要求：<strong style="color:var(--ink)">${req.grade}</strong>。${req.note}</div><div class="result-uni-meta"><span>${EXAM_LABEL[state.exam]}</span><span>${MAJOR_LABEL[state.major]}</span></div></div>`};
-    }).sort((a,b)=>b.p-a.p);
+    const items=targetPrograms.map(p=>{
+      const m=calcProgramMatch(p);
+      const lh=likelihoodTag(m.pct);
+      const r=p.req[state.exam];
+      const mustNames=r.must.map(k=>subjectLabel(k)).filter(Boolean);
+      const preferNames=r.prefer.map(k=>subjectLabel(k)).filter(Boolean);
+      return{pct:m.pct,reasons:m.reasons,html:`
+        <div class="result-uni">
+          <div class="result-uni-head">
+            <div class="result-uni-name">${p.uniName}<small>${p.uniCN}</small></div>
+            <span class="result-likelihood ${lh.cls}">${m.pct}% · ${lh.text}</span>
+          </div>
+          <div class="result-program-name">${p.cn} <span>${p.program}</span></div>
+          <div class="result-faculty">${p.faculty}</div>
+          <div class="result-uni-detail">
+            <strong>参考门槛：</strong>${r.grade}
+            ${mustNames.length?`<br><strong>必修科目：</strong>${mustNames.join('、')}`:''}
+            ${preferNames.length?`<br><strong>加分科目：</strong>${preferNames.join('、')}`:''}
+          </div>
+          <div class="result-reasons">${m.reasons.map(r=>`<span class="reason-tag">${r}</span>`).join('')}</div>
+          <div class="result-uni-meta"><span>${EXAM_LABEL[state.exam]}</span><span>${p.uniName}</span></div>
+        </div>`};
+    }).sort((a,b)=>b.pct-a.pct);
 
-    document.getElementById('resultSub').innerHTML=`基于你的 <strong style="color:var(--ink)">${EXAM_LABEL[state.exam]}</strong> 成绩与 <strong style="color:var(--ink)">${MAJOR_LABEL[state.major]}</strong> 方向，AI 推荐重点关注以下大学。匹配概率为指示性估算。`;
+    const selCount=document.querySelectorAll('.program-opt.selected').length;
+    document.getElementById('resultSub').innerHTML=`基于你的 <strong style="color:var(--ink)">${EXAM_LABEL[state.exam]}</strong> 科目成绩，AI 已匹配 <strong>${items.length}</strong> 个专业的录取概率。${selCount?'（仅显示你选择的专业）':'（显示全部专业，按匹配度排序）'}`;
     document.getElementById('resultGrid').innerHTML=items.map(i=>i.html).join('');
     document.getElementById('result').classList.add('show');
+    document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
   }
 
-  /* ============== MATRIX TABLE ============== */
+  /* ── MATRIX TABLE ── */
   const examKeys=['a-level','ib','ap','wace','gaokao'];
   document.getElementById('matrixBody').innerHTML=UNIS.map(u=>`<tr><td class="uni-cell"><span class="uni-name-big">${u.name}</span><span class="uni-name-cn">${u.nameCN}</span><span class="uni-rank">${u.tag}</span></td>${examKeys.map(k=>{const r=u.requirements[k];return`<td class="req-cell"><span class="req-grade">${r.grade}</span><span class="req-note">${r.note}</span></td>`;}).join('')}</tr>`).join('');
 
-  /* ============== UNI DETAIL CARDS ============== */
-  document.getElementById('uniDetailGrid').innerHTML=UNIS.map(u=>`<div class="uni-card" data-uni="${u.id}"><div class="uni-card-head"><div><div class="uni-card-name">${u.name}</div><div class="uni-card-cn">${u.nameFull} · ${u.nameCN}</div></div><span class="uni-card-tag">${u.tag}</span></div><p class="uni-card-desc">${u.tagline}</p><div class="uni-card-stats">${u.stats.map(s=>`<div><div class="uni-card-stat-num">${s.n}</div><div class="uni-card-stat-label">${s.l}</div></div>`).join('')}</div><div class="expand-toggle">查看 5 种考试体系要求</div><div class="uni-expand"><div class="exam-req-list">${Object.entries(u.requirements).map(([k,v])=>`<div class="exam-req"><div class="exam-name">${EXAM_LABEL[k]}</div><div class="exam-detail"><strong>${v.grade}</strong><span>${v.note}</span></div></div>`).join('')}</div></div></div>`).join('');
+  /* ── UNI DETAIL CARDS ── */
+  document.getElementById('uniDetailGrid').innerHTML=UNIS.map(u=>{
+    const progs=PROGRAMS.filter(p=>p.uni===u.id);
+    return`<div class="uni-card" data-uni="${u.id}"><div class="uni-card-head"><div><div class="uni-card-name">${u.name}</div><div class="uni-card-cn">${u.nameFull} · ${u.nameCN}</div></div><span class="uni-card-tag">${u.tag}</span></div><p class="uni-card-desc">${u.tagline}</p><div class="uni-card-stats">${u.stats.map(s=>`<div><div class="uni-card-stat-num">${s.n}</div><div class="uni-card-stat-label">${s.l}</div></div>`).join('')}</div><div class="expand-toggle">查看 ${progs.length} 个专业录取要求</div><div class="uni-expand"><div class="exam-req-list">${progs.map(p=>`<div class="exam-req"><div class="exam-name">${p.cn}<br><small style="font-weight:400;color:var(--muted)">${p.program}</small></div><div class="exam-detail">${examKeys.map(k=>{const r=p.req[k];return r?`<div style="margin-bottom:4px"><strong style="font-size:11px;color:var(--brand)">${EXAM_LABEL[k]}：</strong>${r.grade}</div>`:''}).join('')}</div></div>`).join('')}</div></div></div>`;
+  }).join('');
 
   document.getElementById('uniDetailGrid').addEventListener('click',e=>{
     const card=e.target.closest('.uni-card');
     if(card)card.classList.toggle('open');
   });
 
-  /* ============== FAQ TOGGLE ============== */
+  /* ── FAQ TOGGLE ── */
   document.querySelectorAll('.faq-item').forEach(item=>{
     item.addEventListener('click',()=>item.classList.toggle('open'));
   });
