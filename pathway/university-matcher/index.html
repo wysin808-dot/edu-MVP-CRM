@@ -645,6 +645,14 @@
       max-width: 420px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
       text-align: center; position: relative;
     }
+    .lead-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; font-size: 24px; color: var(--muted);
+      cursor: pointer; width: 32px; height: 32px; display: flex;
+      align-items: center; justify-content: center; border-radius: 50%;
+      transition: background .15s, color .15s;
+    }
+    .lead-close:hover { background: var(--bg-alt); color: var(--ink); }
     .lead-modal-icon { font-size: 40px; margin-bottom: 12px; }
     .lead-modal h3 {
       font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 6px;
@@ -918,6 +926,7 @@
     <!-- ── Lead Gate Modal ── -->
     <div class="lead-overlay" id="leadOverlay">
       <div class="lead-modal">
+        <button class="lead-close" id="leadClose" type="button" aria-label="关闭">&times;</button>
         <div class="lead-modal-icon">💬</div>
         <h3>扫码加微信，查看你的专属匹配报告</h3>
         <p class="lead-sub">添加 SEDA 留学顾问微信，<strong>即刻获取个人化录取概率分析</strong><br>顾问还将提供 <strong>免费一对一升学规划</strong></p>
@@ -1637,6 +1646,9 @@
   });
 
   /* ── LEAD CAPTURE (WeChat gate) ── */
+  document.getElementById('leadClose').addEventListener('click',()=>{
+    document.getElementById('leadOverlay').classList.remove('show');
+  });
   document.getElementById('leadSubmit').addEventListener('click',()=>{
     _leadCaptured=true;
     document.getElementById('leadOverlay').classList.remove('show');
