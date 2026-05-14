@@ -908,7 +908,9 @@
       ],
       extra:[
         {key:'ial_sat',name:'SAT 总分（强烈建议提交）',type:'number',min:400,max:1600,step:10},
-        {key:'ial_act',name:'ACT 总分（如有）',type:'number',min:1,max:36,step:1}
+        {key:'ial_act',name:'ACT 总分（如有）',type:'number',min:1,max:36,step:1},
+        {key:'ial_ielts',name:'雅思 IELTS（NUS 要求 6.5+）',type:'number',min:0,max:9,step:0.5},
+        {key:'ial_toefl',name:'托福 TOEFL（NUS 要求 92+）',type:'number',min:0,max:120,step:1}
       ]
     },
     'ib':{
@@ -949,6 +951,10 @@
           {key:'ib_ee',name:'Extended Essay (EE)',cn:'拓展论文',grades:['A','B','C','D','E','未选'],required:true},
           {key:'ib_tok_grade',name:'TOK',cn:'知识论评估',grades:['A','B','C','D','E','未选'],required:true}
         ],grades:['A','B','C','D','E','未选']}
+      ],
+      extra:[
+        {key:'ib_ielts',name:'雅思 IELTS（如 English B 需提交）',type:'number',min:0,max:9,step:0.5},
+        {key:'ib_toefl',name:'托福 TOEFL（如 English B 需提交）',type:'number',min:0,max:120,step:1}
       ]
     },
     'ap':{
@@ -980,7 +986,9 @@
       ],
       extra:[
         {key:'ap_sat',name:'SAT 总分',type:'number',min:400,max:1600,step:10},
-        {key:'ap_act',name:'ACT 总分（如有）',type:'number',min:1,max:36,step:1}
+        {key:'ap_act',name:'ACT 总分（如有）',type:'number',min:1,max:36,step:1},
+        {key:'ap_ielts',name:'雅思 IELTS（NUS 要求 6.5+）',type:'number',min:0,max:9,step:0.5},
+        {key:'ap_toefl',name:'托福 TOEFL（NUS 要求 92+）',type:'number',min:0,max:120,step:1}
       ]
     },
     'wace':{
@@ -1006,7 +1014,9 @@
         ],grades:['A','B','C','D','E','未选']}
       ],
       extra:[
-        {key:'wace_atar',name:'ATAR 总分',type:'number',min:0,max:99.95,step:0.05}
+        {key:'wace_atar',name:'ATAR 总分',type:'number',min:0,max:99.95,step:0.05},
+        {key:'wace_ielts',name:'雅思 IELTS（中国学生建议提交）',type:'number',min:0,max:9,step:0.5},
+        {key:'wace_toefl',name:'托福 TOEFL（中国学生建议提交）',type:'number',min:0,max:120,step:1}
       ]
     },
     'gaokao':{
@@ -1305,7 +1315,8 @@
     if(preferMet.length>0)reasons.push('加分科目：'+preferMet.map(k=>subjectLabel(k)).join('、'));
 
     if(exam==='a-level'||exam==='wace'){
-      const h2keys=Object.keys(subs).filter(k=>k.startsWith('h2_')||(exam==='wace'&&k.startsWith('wace_')&&k!=='wace_atar'));
+      const waceExtra=new Set(['wace_atar','wace_ielts','wace_toefl']);
+      const h2keys=Object.keys(subs).filter(k=>k.startsWith('h2_')||(exam==='wace'&&k.startsWith('wace_')&&!waceExtra.has(k)));
       const grades=h2keys.map(k=>gradeToNum(subs[k],exam)).filter(g=>g>0).sort((a,b)=>b-a);
       const top4=grades.slice(0,4);
       const avg=top4.length?top4.reduce((a,b)=>a+b,0)/top4.length:0;
@@ -1315,8 +1326,13 @@
         const target=prog.diff;
         score+=(atar-target)*1.2;
       }
+      if(exam==='wace'){
+        if(subs.wace_ielts){score+=((parseFloat(subs.wace_ielts)||0)-6)*8;}
+        if(subs.wace_toefl){score+=((parseInt(subs.wace_toefl)||0)-80)*0.15;}
+      }
     } else if(exam==='ial'){
-      const alKeys=Object.keys(subs).filter(k=>k.startsWith('ial_')&&!k.startsWith('ial_as_')&&k!=='ial_sat'&&k!=='ial_act');
+      const ialExtra=new Set(['ial_sat','ial_act','ial_ielts','ial_toefl']);
+      const alKeys=Object.keys(subs).filter(k=>k.startsWith('ial_')&&!k.startsWith('ial_as_')&&!ialExtra.has(k));
       const grades=alKeys.map(k=>gradeToNum(subs[k],exam)).filter(g=>g>0).sort((a,b)=>b-a);
       const top3=grades.slice(0,3);
       const avg=top3.length?top3.reduce((a,b)=>a+b,0)/top3.length:0;
@@ -1324,6 +1340,8 @@
       if(subs.ial_sat){score+=((parseInt(subs.ial_sat)||0)-1300)*0.025;}
       if(subs.ial_act){score+=((parseInt(subs.ial_act)||0)-28)*1.5;}
       if(!subs.ial_sat&&!subs.ial_act){score-=5;reasons.push('建议提交 SAT/ACT 以增强申请');}
+      if(subs.ial_ielts){score+=((parseFloat(subs.ial_ielts)||0)-6)*8;}
+      if(subs.ial_toefl){score+=((parseInt(subs.ial_toefl)||0)-80)*0.15;}
     } else if(exam==='ib'){
       const hlKeys=Object.keys(subs).filter(k=>k.startsWith('hl_'));
       const slKeys=Object.keys(subs).filter(k=>k.startsWith('sl_'));
@@ -1333,13 +1351,18 @@
       const bonusPts={A:3,B:2,C:1}[(subs.ib_ee||'')]+({A:3,B:2,C:1}[(subs.ib_tok_grade||'')])||0;
       const ibTotal=total+(bonusPts||0);
       score+=(ibTotal-prog.diff*0.38)*1.5;
+      if(subs.ib_ielts){score+=((parseFloat(subs.ib_ielts)||0)-6)*8;}
+      if(subs.ib_toefl){score+=((parseInt(subs.ib_toefl)||0)-80)*0.15;}
     } else if(exam==='ap'){
-      const apKeys=Object.keys(subs).filter(k=>k.startsWith('ap_')&&k!=='ap_sat'&&k!=='ap_act');
+      const apExtra=new Set(['ap_sat','ap_act','ap_ielts','ap_toefl']);
+      const apKeys=Object.keys(subs).filter(k=>k.startsWith('ap_')&&!apExtra.has(k));
       const apScores=apKeys.map(k=>parseInt(subs[k])||0).filter(g=>g>0);
       const count=apScores.length;
       const avg=count?apScores.reduce((a,b)=>a+b,0)/count:0;
       score+=(count-3)*6+(avg-3.5)*8;
       if(subs.ap_sat){score+=((parseInt(subs.ap_sat)||0)-1200)*0.02;}
+      if(subs.ap_ielts){score+=((parseFloat(subs.ap_ielts)||0)-6)*8;}
+      if(subs.ap_toefl){score+=((parseInt(subs.ap_toefl)||0)-80)*0.15;}
     } else if(exam==='gaokao'){
       if(subs.gk_province_rank){
         const rank=parseFloat(subs.gk_province_rank)||50;
