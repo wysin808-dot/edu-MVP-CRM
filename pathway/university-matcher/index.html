@@ -512,27 +512,76 @@
       letter-spacing: 0.04em;
     }
 
-    /* ── Program Selection (Step 3 v2) ── */
-    .program-uni-group { margin-bottom: 20px; }
-    .program-uni-header {
-      font-size: 18px; font-weight: 800; color: var(--ink);
-      padding: 8px 0 6px;
-      border-bottom: 2px solid var(--brand);
-      margin-bottom: 8px;
+    /* ── Program Selection (Step 3 v3) ── */
+    .program-search-wrap {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--bg); padding: 8px 0 12px;
     }
+    .program-search {
+      width: 100%; padding: 10px 14px 10px 38px;
+      border: 2px solid var(--border); border-radius: 10px;
+      font-size: 15px; background: #fff;
+      outline: none; transition: border-color .2s;
+    }
+    .program-search:focus { border-color: var(--brand); }
+    .program-search-wrap::before {
+      content: '🔍'; position: absolute; left: 12px; top: 19px;
+      font-size: 15px; pointer-events: none;
+    }
+    .program-search-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 8px; font-size: 12px; color: var(--muted);
+    }
+    .program-selected-badge {
+      background: var(--brand); color: #fff; border-radius: 20px;
+      padding: 3px 12px; font-size: 12px; font-weight: 700;
+      display: none;
+    }
+    .program-selected-badge.show { display: inline-block; }
+
+    .program-uni-group { margin-bottom: 6px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .program-uni-header {
+      font-size: 15px; font-weight: 800; color: var(--ink);
+      padding: 12px 16px;
+      background: #fafafa;
+      cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+      user-select: none; transition: background .15s;
+    }
+    .program-uni-header:hover { background: #f3f3f3; }
     .program-uni-header small {
       font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 8px;
     }
+    .program-uni-header .uni-toggle {
+      font-size: 12px; color: var(--muted); transition: transform .2s;
+      flex-shrink: 0; margin-left: 8px;
+    }
+    .program-uni-header .uni-count {
+      background: var(--brand-light, #fff1f1); color: var(--brand);
+      border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 700;
+      margin-left: auto; margin-right: 8px;
+    }
+    .program-uni-group.open .uni-toggle { transform: rotate(180deg); }
+    .program-list-wrap {
+      max-height: 0; overflow: hidden; transition: max-height .3s ease;
+    }
+    .program-uni-group.open .program-list-wrap {
+      max-height: 3000px;
+    }
     .program-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 6px; padding: 10px 12px 14px;
     }
-    .program-opt { text-align: left; }
+    .program-opt { text-align: left; padding: 8px 10px; font-size: 13px; }
+    .program-opt .opt-label { font-size: 13px; }
+    .program-opt .opt-sub { font-size: 10px; }
     .program-opt .opt-req {
-      font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.4;
+      font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4;
     }
     .program-opt.selected .opt-req { color: var(--brand); }
+    .program-no-result {
+      text-align: center; padding: 32px 16px; color: var(--muted); font-size: 14px;
+    }
 
     /* ── Ineligible program (missing must subjects) ── */
     .program-opt.ineligible {
@@ -753,6 +802,13 @@
         <!-- Step 3: Program selection -->
         <div class="matcher-body hidden" id="step3">
           <div class="matcher-q">选择感兴趣的<em>大学专业</em>（可多选，或留空匹配全部）</div>
+          <div class="program-search-wrap">
+            <input type="text" class="program-search" id="programSearch" placeholder="搜索专业名称，如：计算机、Engineering、法律..." autocomplete="off" />
+            <div class="program-search-meta">
+              <span id="programCount"></span>
+              <span class="program-selected-badge" id="selectedBadge">已选 0 个专业</span>
+            </div>
+          </div>
           <div id="programGrid"></div>
           <div class="matcher-actions">
             <button class="btn-m-secondary" id="backStep2">← 上一步</button>
@@ -1519,39 +1575,94 @@
   }
 
   /* ── BUILD PROGRAM LIST (Step 3) ── */
+  let _programData=[];
   function buildProgramList(){
     const grid=document.getElementById('programGrid');
     if(!grid)return;
     const exam=state.exam;
-    const available=PROGRAMS.filter(p=>p.req[exam]);
+    _programData=PROGRAMS.filter(p=>p.req[exam]).map(p=>{
+      const r=p.req[exam];
+      const mustNames=r.must.map(k=>subjectLabel(k)).filter(Boolean);
+      const missingMust=r.must.filter(k=>!state.subjects[k]||state.subjects[k]==='未选');
+      const missingNames=missingMust.map(k=>subjectLabel(k)).filter(Boolean);
+      return {...p,mustNames,missingMust,missingNames,isIneligible:missingMust.length>0};
+    });
+    renderProgramGrid('');
+    const searchInput=document.getElementById('programSearch');
+    if(searchInput){
+      searchInput.value='';
+      searchInput.oninput=()=>renderProgramGrid(searchInput.value.trim());
+    }
+  }
+
+  function renderProgramGrid(query){
+    const grid=document.getElementById('programGrid');
+    const q=query.toLowerCase();
+    const filtered=q?_programData.filter(p=>
+      p.cn.toLowerCase().includes(q)||
+      p.program.toLowerCase().includes(q)||
+      p.faculty.toLowerCase().includes(q)||
+      p.uniName.toLowerCase().includes(q)||
+      p.uniCN.includes(q)
+    ):_programData;
+
     const byUni={};
-    available.forEach(p=>{
+    filtered.forEach(p=>{
       if(!byUni[p.uni])byUni[p.uni]={uniName:p.uniName,uniCN:p.uniCN,programs:[]};
       byUni[p.uni].programs.push(p);
     });
+
+    const exam=state.exam;
     let html='';
-    for(const uid of ['nus','ntu','smu','sutd','sit','suss']){
+    const uniOrder=['nus','ntu','smu','sutd','sit','suss'];
+    let visibleCount=0;
+    for(const uid of uniOrder){
       const g=byUni[uid];
       if(!g)continue;
-      html+=`<div class="program-uni-group"><div class="program-uni-header">${g.uniName}<small>${g.uniCN}</small></div><div class="program-list">`;
+      visibleCount+=g.programs.length;
+      const openClass=q?'open':(uid==='nus'?'open':'');
+      html+=`<div class="program-uni-group ${openClass}" data-uni="${uid}">`;
+      html+=`<div class="program-uni-header" onclick="this.parentElement.classList.toggle('open')">`;
+      html+=`<span>${g.uniName}<small>${g.uniCN}</small></span>`;
+      html+=`<span style="display:flex;align-items:center"><span class="uni-count">${g.programs.length} 个专业</span><span class="uni-toggle">▼</span></span>`;
+      html+=`</div><div class="program-list-wrap"><div class="program-list">`;
       g.programs.forEach(p=>{
         const r=p.req[exam];
-        const mustNames=r.must.map(k=>subjectLabel(k)).filter(Boolean).join(', ');
-        const missingMust=r.must.filter(k=>!state.subjects[k]||state.subjects[k]==='未选');
-        const missingNames=missingMust.map(k=>subjectLabel(k)).filter(Boolean);
-        const isIneligible=missingMust.length>0;
-        const cls=isIneligible?'opt program-opt ineligible':'opt program-opt';
-        const missingHtml=isIneligible?`<div class="opt-missing">⚠ 不具备申请资格 — 需修读：${missingNames.join('、')}</div>`:'';
-        html+=`<button class="${cls}" data-program="${p.uni}|${p.program}"><div class="opt-label">${p.cn}</div><div class="opt-sub">${p.program} · ${p.faculty}</div>${mustNames?`<div class="opt-req">必修：${mustNames}</div>`:''}<div class="opt-req">参考门槛：${r.grade}</div>${missingHtml}</button>`;
+        const cls=p.isIneligible?'opt program-opt ineligible':'opt program-opt';
+        const sel=state._selectedPrograms&&state._selectedPrograms.has(p.uni+'|'+p.program)?'selected':'';
+        const missingHtml=p.isIneligible?`<div class="opt-missing">⚠ 需修读：${p.missingNames.join('、')}</div>`:'';
+        html+=`<button class="${cls} ${sel}" data-program="${p.uni}|${p.program}"><div class="opt-label">${p.cn}</div><div class="opt-sub">${p.program}</div><div class="opt-req">${r.grade}</div>${missingHtml}</button>`;
       });
-      html+=`</div></div>`;
+      html+=`</div></div></div>`;
     }
+
+    if(visibleCount===0){
+      html=`<div class="program-no-result">没有找到匹配「${query}」的专业</div>`;
+    }
+
     grid.innerHTML=html;
+    document.getElementById('programCount').textContent=`共 ${visibleCount} 个专业`;
+    updateSelectedBadge();
+
     grid.querySelectorAll('.program-opt').forEach(btn=>{
       btn.addEventListener('click',()=>{
         btn.classList.toggle('selected');
+        if(!state._selectedPrograms)state._selectedPrograms=new Set();
+        const key=btn.dataset.program;
+        if(btn.classList.contains('selected'))state._selectedPrograms.add(key);
+        else state._selectedPrograms.delete(key);
+        updateSelectedBadge();
       });
     });
+  }
+
+  function updateSelectedBadge(){
+    const count=state._selectedPrograms?state._selectedPrograms.size:0;
+    const badge=document.getElementById('selectedBadge');
+    if(badge){
+      badge.textContent=`已选 ${count} 个专业`;
+      badge.classList.toggle('show',count>0);
+    }
   }
 
   function subjectLabel(key){
@@ -1673,11 +1784,10 @@
 
   function runMatch(){
     collectSubjects();
-    const selectedBtns=document.querySelectorAll('.program-opt.selected');
     let targetPrograms;
-    if(selectedBtns.length>0){
-      targetPrograms=Array.from(selectedBtns).map(btn=>{
-        const [uid,pname]=btn.dataset.program.split('|');
+    if(state._selectedPrograms&&state._selectedPrograms.size>0){
+      targetPrograms=Array.from(state._selectedPrograms).map(key=>{
+        const [uid,pname]=key.split('|');
         return PROGRAMS.find(p=>p.uni===uid&&p.program===pname);
       }).filter(Boolean);
     } else {
@@ -1724,7 +1834,7 @@
         </div>`};
     }).sort((a,b)=>{if(a.ineligible!==b.ineligible)return a.ineligible?1:-1;return b.pct-a.pct;});
 
-    const selCount=document.querySelectorAll('.program-opt.selected').length;
+    const selCount=state._selectedPrograms?state._selectedPrograms.size:0;
     document.getElementById('resultSub').innerHTML=`基于你的 <strong style="color:var(--ink)">${EXAM_LABEL[state.exam]}</strong> 科目成绩，AI 已匹配 <strong>${items.length}</strong> 个专业的录取概率。${selCount?'（仅显示你选择的专业）':'（显示全部专业，按匹配度排序）'}`;
     document.getElementById('resultGrid').innerHTML=items.map(i=>i.html).join('');
     document.getElementById('result').classList.add('show');
