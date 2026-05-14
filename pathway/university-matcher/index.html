@@ -534,6 +534,38 @@
     }
     .program-opt.selected .opt-req { color: var(--brand); }
 
+    /* ── Ineligible program (missing must subjects) ── */
+    .program-opt.ineligible {
+      opacity: 0.65;
+      border-color: rgba(198,40,40,0.25);
+      background: repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(198,40,40,0.03) 8px, rgba(198,40,40,0.03) 16px);
+    }
+    .program-opt.ineligible .opt-label { color: var(--muted); }
+    .program-opt.ineligible .opt-missing {
+      font-size: 10px; font-weight: 700; color: var(--brand); margin-top: 4px; line-height: 1.5;
+    }
+    .program-opt.ineligible.selected {
+      border-color: var(--brand);
+      opacity: 0.8;
+    }
+    .result-ineligible {
+      background: var(--brand-light, #fff1f1);
+      border-left: 4px solid var(--brand);
+      padding: 2px 10px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand);
+    }
+    .result-ineligible small {
+      font-weight: 400;
+      font-size: 12px;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+
     /* ── Result v2 extras ── */
     .result-program-name {
       font-size: 17px; font-weight: 700; color: var(--brand); margin-bottom: 2px;
@@ -1349,7 +1381,12 @@
       g.programs.forEach(p=>{
         const r=p.req[exam];
         const mustNames=r.must.map(k=>subjectLabel(k)).filter(Boolean).join(', ');
-        html+=`<button class="opt program-opt" data-program="${p.uni}|${p.program}"><div class="opt-label">${p.cn}</div><div class="opt-sub">${p.program} · ${p.faculty}</div>${mustNames?`<div class="opt-req">必修：${mustNames}</div>`:''}<div class="opt-req">参考门槛：${r.grade}</div></button>`;
+        const missingMust=r.must.filter(k=>!state.subjects[k]||state.subjects[k]==='未选');
+        const missingNames=missingMust.map(k=>subjectLabel(k)).filter(Boolean);
+        const isIneligible=missingMust.length>0;
+        const cls=isIneligible?'opt program-opt ineligible':'opt program-opt';
+        const missingHtml=isIneligible?`<div class="opt-missing">⚠ 不具备申请资格 — 需修读：${missingNames.join('、')}</div>`:'';
+        html+=`<button class="${cls}" data-program="${p.uni}|${p.program}"><div class="opt-label">${p.cn}</div><div class="opt-sub">${p.program} · ${p.faculty}</div>${mustNames?`<div class="opt-req">必修：${mustNames}</div>`:''}<div class="opt-req">参考门槛：${r.grade}</div>${missingHtml}</button>`;
       });
       html+=`</div></div>`;
     }
@@ -1503,18 +1540,24 @@
     document.getElementById('thinking').classList.remove('show');
     const items=targetPrograms.map(p=>{
       const m=calcProgramMatch(p);
-      const lh=likelihoodTag(m.pct);
       const r=p.req[state.exam];
+      const mustMissing=r.must.filter(k=>!state.subjects[k]||state.subjects[k]==='未选');
+      const missingNames=mustMissing.map(k=>subjectLabel(k)).filter(Boolean);
+      const isIneligible=mustMissing.length>0;
+      const lh=isIneligible?{cls:'lh-low',text:'不具备资格'}:likelihoodTag(m.pct);
       const mustNames=r.must.map(k=>subjectLabel(k)).filter(Boolean);
       const preferNames=r.prefer.map(k=>subjectLabel(k)).filter(Boolean);
-      return{pct:m.pct,reasons:m.reasons,html:`
-        <div class="result-uni">
+      const ineligibleBanner=isIneligible?`<div class="result-ineligible">⚠ 不具备申请资格<small>需修读：${missingNames.join('、')}</small></div>`:'';
+      const displayPct=isIneligible?0:m.pct;
+      return{pct:displayPct,ineligible:isIneligible,reasons:m.reasons,html:`
+        <div class="result-uni"${isIneligible?' style="opacity:0.7"':''}>
           <div class="result-uni-head">
             <div class="result-uni-name">${p.uniName}<small>${p.uniCN}</small></div>
-            <span class="result-likelihood ${lh.cls}">${m.pct}% · ${lh.text}</span>
+            <span class="result-likelihood ${lh.cls}">${isIneligible?'— 不具备资格':`${m.pct}% · ${lh.text}`}</span>
           </div>
           <div class="result-program-name">${p.cn} <span>${p.program}</span></div>
           <div class="result-faculty">${p.faculty}</div>
+          ${ineligibleBanner}
           <div class="result-uni-detail">
             <strong>参考门槛：</strong>${r.grade}
             ${mustNames.length?`<br><strong>必修科目：</strong>${mustNames.join('、')}`:''}
@@ -1523,7 +1566,7 @@
           <div class="result-reasons">${m.reasons.map(r=>`<span class="reason-tag">${r}</span>`).join('')}</div>
           <div class="result-uni-meta"><span>${EXAM_LABEL[state.exam]}</span><span>${p.uniName}</span></div>
         </div>`};
-    }).sort((a,b)=>b.pct-a.pct);
+    }).sort((a,b)=>{if(a.ineligible!==b.ineligible)return a.ineligible?1:-1;return b.pct-a.pct;});
 
     const selCount=document.querySelectorAll('.program-opt.selected').length;
     document.getElementById('resultSub').innerHTML=`基于你的 <strong style="color:var(--ink)">${EXAM_LABEL[state.exam]}</strong> 科目成绩，AI 已匹配 <strong>${items.length}</strong> 个专业的录取概率。${selCount?'（仅显示你选择的专业）':'（显示全部专业，按匹配度排序）'}`;
