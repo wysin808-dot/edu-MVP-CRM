@@ -492,6 +492,26 @@
       box-shadow: 0 0 0 2px rgba(198,40,40,0.1);
     }
 
+    .subject-row-required {
+      background: var(--brand-light, #fff1f1);
+      border-color: rgba(198,40,40,0.2);
+    }
+    .subject-row-required .subject-grade {
+      border-color: rgba(198,40,40,0.3);
+    }
+    .req-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--brand, #c62828);
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      letter-spacing: 0.04em;
+    }
+
     /* ── Program Selection (Step 3 v2) ── */
     .program-uni-group { margin-bottom: 20px; }
     .program-uni-header {
@@ -845,14 +865,14 @@
           {key:'h2_translation',name:'H2 Translation (Chinese)',cn:'翻译（中文）'}
         ],grades:GRADES_AL},
         {title:'H1 科目 / GP',type:'H1',subjects:[
-          {key:'h1_gp',name:'H1 General Paper (GP)',cn:'综合卷'},
+          {key:'h1_gp',name:'H1 General Paper (GP)',cn:'综合卷',required:true},
           {key:'h1_math',name:'H1 Mathematics',cn:'数学'},
           {key:'h1_economics',name:'H1 Economics',cn:'经济学'},
           {key:'h1_history',name:'H1 History',cn:'历史'},
           {key:'h1_geography',name:'H1 Geography',cn:'地理'},
           {key:'h1_chinese',name:'H1 Chinese',cn:'华文'},
           {key:'h1_literature',name:'H1 Literature',cn:'文学'},
-          {key:'h1_project_work',name:'H1 Project Work (PW)',cn:'专题作业'}
+          {key:'h1_project_work',name:'H1 Project Work (PW)',cn:'专题作业',required:true}
         ],grades:GRADES_AL}
       ]
     },
@@ -926,8 +946,8 @@
           {key:'sl_ess',name:'SL Environmental Systems',cn:'环境系统'}
         ],grades:GRADES_IB},
         {title:'核心组件',type:'Core',subjects:[
-          {key:'ib_ee',name:'Extended Essay (EE)',cn:'拓展论文',grades:['A','B','C','D','E','未选']},
-          {key:'ib_tok_grade',name:'TOK',cn:'知识论评估',grades:['A','B','C','D','E','未选']}
+          {key:'ib_ee',name:'Extended Essay (EE)',cn:'拓展论文',grades:['A','B','C','D','E','未选'],required:true},
+          {key:'ib_tok_grade',name:'TOK',cn:'知识论评估',grades:['A','B','C','D','E','未选'],required:true}
         ],grades:['A','B','C','D','E','未选']}
       ]
     },
@@ -976,7 +996,7 @@
           {key:'wace_economics',name:'Economics',cn:'经济学'},
           {key:'wace_accounting',name:'Accounting & Finance',cn:'会计与金融'},
           {key:'wace_business',name:'Business Management & Enterprise',cn:'商业管理'},
-          {key:'wace_english',name:'English',cn:'英语'},
+          {key:'wace_english',name:'English',cn:'英语',required:true},
           {key:'wace_chinese_sl',name:'Chinese: Second Language',cn:'中文'},
           {key:'wace_cs',name:'Computer Science',cn:'计算机科学'},
           {key:'wace_design',name:'Design (Photography/Graphics)',cn:'设计'},
@@ -993,9 +1013,9 @@
       note:'输入你的高考科目成绩',
       sections:[
         {title:'必考科目',type:'Required',subjects:[
-          {key:'gk_chinese',name:'语文',cn:'语文',type:'number',min:0,max:150},
-          {key:'gk_math',name:'数学',cn:'数学',type:'number',min:0,max:150},
-          {key:'gk_english',name:'英语',cn:'英语',type:'number',min:0,max:150}
+          {key:'gk_chinese',name:'语文',cn:'语文',type:'number',min:0,max:150,required:true},
+          {key:'gk_math',name:'数学',cn:'数学',type:'number',min:0,max:150,required:true},
+          {key:'gk_english',name:'英语',cn:'英语',type:'number',min:0,max:150,required:true}
         ],grades:null},
         {title:'选考科目（新高考 3 选）',type:'Elective',subjects:[
           {key:'gk_physics',name:'物理',cn:'物理',type:'number',min:0,max:100},
@@ -1174,10 +1194,18 @@
       html+=`<div class="subject-section"><div class="subject-section-title">${sec.title}</div><div class="subject-grid">`;
       sec.subjects.forEach(sub=>{
         const grades=sub.grades||sec.grades;
+        const isReq=!!sub.required;
+        const reqBadge=isReq?'<span class="req-badge">必修</span>':'';
+        const rowCls=isReq?'subject-row subject-row-required':'subject-row';
         if(grades){
-          html+=`<div class="subject-row"><label class="subject-name" for="s_${sub.key}">${sub.cn}<small>${sub.name}</small></label><select class="subject-grade" id="s_${sub.key}" data-key="${sub.key}">${grades.map(g=>`<option value="${g}"${g==='未选'?' selected':''}>${g}</option>`).join('')}</select></div>`;
+          const opts=isReq
+            ?grades.filter(g=>g!=='未选').map((g,i)=>`<option value="${g}"${i===0?' selected':''}>${g}</option>`).join('')
+            :grades.map(g=>`<option value="${g}"${g==='未选'?' selected':''}>${g}</option>`).join('');
+          html+=`<div class="${rowCls}"><label class="subject-name" for="s_${sub.key}">${sub.cn}${reqBadge}<small>${sub.name}</small></label><select class="subject-grade" id="s_${sub.key}" data-key="${sub.key}">${opts}</select></div>`;
         } else {
-          html+=`<div class="subject-row"><label class="subject-name" for="s_${sub.key}">${sub.cn}<small>${sub.name}</small></label><input class="subject-grade" id="s_${sub.key}" data-key="${sub.key}" type="number" min="${sub.min||0}" max="${sub.max||100}" placeholder="留空=未选"></div>`;
+          const reqAttr=isReq?' required':'';
+          const ph=isReq?'必填':'留空=未选';
+          html+=`<div class="${rowCls}"><label class="subject-name" for="s_${sub.key}">${sub.cn}${reqBadge}<small>${sub.name}</small></label><input class="subject-grade" id="s_${sub.key}" data-key="${sub.key}" type="number" min="${sub.min||0}" max="${sub.max||100}" placeholder="${ph}"${reqAttr}></div>`;
         }
       });
       html+=`</div></div>`;
