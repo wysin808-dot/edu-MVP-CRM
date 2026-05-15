@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BCI 自媒体矩阵获客系统</title>
+    <link rel="stylesheet" href="/crm-prototype.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">BCI</div>
+          <div>
+            <strong>自媒体矩阵</strong>
+            <span>Content to Enrollment</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="主导航">
+          <button class="nav-item active" data-view="dashboard"><span class="nav-icon">⚡</span>工作台</button>
+          <button class="nav-item" data-view="publishing"><span class="nav-icon">📋</span>今日发布</button>
+          <div class="nav-divider"></div>
+          <button class="nav-item" data-view="content"><span class="nav-icon">📝</span>内容库</button>
+          <button class="nav-item" data-view="knowledge"><span class="nav-icon">📚</span>资料库</button>
+          <button class="nav-item" data-view="ai"><span class="nav-icon">🤖</span>AI 内容</button>
+          <div class="nav-divider"></div>
+          <button class="nav-item" data-view="persona"><span class="nav-icon">👤</span>IP 矩阵</button>
+          <button class="nav-item" data-view="accounts"><span class="nav-icon">📱</span>账号矩阵</button>
+          <button class="nav-item" data-view="calendar"><span class="nav-icon">📅</span>内容日历</button>
+          <div class="nav-divider"></div>
+          <button class="nav-item" data-view="crm"><span class="nav-icon">🎯</span>招生 CRM</button>
+          <button class="nav-item" data-view="analytics"><span class="nav-icon">📈</span>数据复盘</button>
+          <button class="nav-item" data-view="team"><span class="nav-icon">⚙️</span>权限</button>
+        </nav>
+
+        <div class="sidebar-note" id="sidebar-daily-goal">
+          <span>今日目标</span>
+          <strong>12 条内容归档</strong>
+          <p>所有已发布内容必须上传正文、图片、链接和截图。</p>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">BCI WACE 7-12 招生增长系统</p>
+            <h1 id="view-title">⚡工作台</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="role-switch">
+              <span>当前角色</span>
+              <select id="role-select">
+                <option value="operator">运营人员</option>
+                <option value="lead">部门负责人</option>
+                <option value="admin">超级管理员</option>
+                <option value="ai">AI 内容编辑</option>
+                <option value="admission">招生顾问</option>
+              </select>
+            </label>
+            <button class="notif-bell" type="button" aria-label="通知" data-action="notifications">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span class="notif-dot"></span>
+            </button>
+          </div>
+        </header>
+
+        <section class="view active" id="dashboard-view">
+          <div class="role-panel">
+            <div>
+              <h2 id="role-title">运营人员</h2>
+              <p id="role-summary">负责账号内容生产、提交审核、发布归档和数据回填。</p>
+            </div>
+            <div class="role-actions">
+              <button class="ghost-button action-button" type="button" data-action="upload-post">上传发布</button>
+              <button class="primary-button action-button" type="button" data-action="new-content">创建计划</button>
+            </div>
+          </div>
+
+          <div class="metric-grid" id="kpi-cards"></div>
+
+          <div class="dashboard-grid">
+            <section class="panel wide" style="grid-column:1/-1">
+              <div class="panel-header">
+                <div>
+                  <h3>内容管道</h3>
+                  <p>点击查看各状态内容列表。</p>
+                </div>
+                <button class="ghost-button nav-shortcut" type="button" data-target-view="publishing">去今日发布 →</button>
+              </div>
+              <div class="task-summary" id="task-summary"></div>
+            </section>
+          </div>
+
+          <div class="archive-brief" style="margin-top:20px">
+            <strong>发布查询</strong>
+            <span>按日期、平台、账号查看已发布内容，关联数据表现和招生线索。</span>
+          </div>
+          <div class="toolbar">
+            <input id="archive-date" type="date" value="2026-05-11" />
+            <select id="archive-platform"><option>全部平台</option><option>小红书</option><option>视频号</option><option>公众号</option></select>
+            <select id="archive-account"><option>全部账号</option><option>BCI升学顾问号</option><option>BCI官方视频号</option><option>BCI招生老师号</option></select>
+            <input id="archive-search" type="search" placeholder="搜索标题、IP" />
+            <button class="primary-button" id="archive-query" type="button">查询</button>
+          </div>
+          <div class="query-result" id="query-result"></div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr><th>日期</th><th>平台</th><th>账号</th><th>IP</th><th>内容</th><th>状态</th><th>数据</th></tr>
+              </thead>
+              <tbody id="publishing-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view" id="publishing-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Daily Archive</p>
+              <h2>今日发布任务</h2>
+            </div>
+            <button class="primary-button action-button" type="button" data-action="upload-post">上传发布</button>
+          </div>
+
+          <div class="today-workflow">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>我的今日任务</h3>
+                  <p>运营人员每天先看这里：哪个账号、哪个 IP、要发什么内容、现在到哪一步。</p>
+                </div>
+                <button class="ghost-button action-button" type="button" data-action="all-tasks">查看全部任务</button>
+              </div>
+              <div class="daily-task-list" id="daily-task-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h3>今日完成度</h3>
+                  <p>发布后必须回填链接、截图和发布正文。</p>
+                </div>
+              </div>
+              <div class="progress-list" id="publishing-progress"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="content-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Content Assets</p>
+              <h2>内容资产库</h2>
+            </div>
+            <button class="primary-button action-button" type="button" data-action="new-content">创建计划</button>
+          </div>
+          <div class="library-search">
+            <input id="content-search" type="search" placeholder="搜索标题、账号、受众、CTA、关键词、主题簇" />
+            <button class="primary-button library-search-button" type="button" data-library="content">搜索</button>
+          </div>
+          <div class="strategy-filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">漏斗阶段</span>
+              <button class="strat-filter active" data-filter="funnel" data-value="">全部</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Awareness">Awareness</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Consideration">Consideration</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Trust">Trust</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Visit">Visit</button>
+              <button class="strat-filter" data-filter="funnel" data-value="Enroll">Enroll</button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">情绪钩子</span>
+              <button class="strat-filter active" data-filter="emotion" data-value="">全部</button>
+              <button class="strat-filter" data-filter="emotion" data-value="反常识">反常识</button>
+              <button class="strat-filter" data-filter="emotion" data-value="焦虑共鸣">焦虑共鸣</button>
+              <button class="strat-filter" data-filter="emotion" data-value="痛点">痛点</button>
+              <button class="strat-filter" data-filter="emotion" data-value="数字震撼">数字震撼</button>
+              <button class="strat-filter" data-filter="emotion" data-value="案例代入">案例代入</button>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">复用状态</span>
+              <button class="strat-filter active" data-filter="repurpose" data-value="">全部</button>
+              <button class="strat-filter" data-filter="repurpose" data-value="可二改">可二改</button>
+              <button class="strat-filter" data-filter="repurpose" data-value="可转">可转</button>
+              <button class="strat-filter" data-filter="repurpose" data-value="已">已复用</button>
+            </div>
+          </div>
+          <div class="asset-layout">
+            <div class="panel">
+              <h3>主题簇</h3>
+              <div class="filter-list">
+                <button class="filter active" type="button">全部</button>
+                <button class="filter" type="button">WACE</button>
+                <button class="filter" type="button">NUS / NTU</button>
+                <button class="filter" type="button">学费</button>
+                <button class="filter" type="button">签证</button>
+                <button class="filter" type="button">毕业生案例</button>
+              </div>
+            </div>
+            <div class="content-cards" id="content-cards"></div>
+          </div>
+        </section>
+
+        <section class="view" id="knowledge-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Knowledge Base</p>
+              <h2>真实资料库</h2>
+            </div>
+            <button class="primary-button action-button" type="button" data-action="new-knowledge">新增资料</button>
+          </div>
+          <div class="library-search">
+            <input id="knowledge-search" type="search" placeholder="搜索事实资料、来源、Subject、Type、Notes、Numeric Data" />
+            <button class="primary-button library-search-button" type="button" data-library="knowledge">搜索</button>
+          </div>
+          <div class="knowledge-grid" id="knowledge-grid"></div>
+        </section>
+
+        <section class="view" id="ai-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">AI Production</p>
+              <h2>AI 内容库 / Prompt 模板库</h2>
+            </div>
+            <button class="primary-button action-button" type="button" data-action="generate-ai">生成内容</button>
+          </div>
+          <div class="archive-brief">
+            <strong>AI 库定位</strong>
+            <span>这里保存 prompt 模板、标题公式、改写规则、输出示例、质量评分和使用次数。内容资产库只保存最终作品。</span>
+          </div>
+          <div class="library-search">
+            <input id="ai-search" type="search" placeholder="搜索 prompt、模板、平台、阶段、目标 IP、输出示例" />
+            <button class="primary-button library-search-button" type="button" data-library="ai">搜索</button>
+          </div>
+          <div class="ai-workbench">
+            <section class="panel">
+              <h3>调用设置</h3>
+              <label>资料主题<select><option>NUS 接受 WACE ATAR</option><option>WACE 课程结构</option><option>新加坡陪读签证</option></select></label>
+              <label>目标 IP<select><option>升学顾问 IP</option><option>校长 IP</option><option>招生老师 IP</option></select></label>
+              <label>目标平台<select><option>小红书</option><option>视频号</option><option>公众号</option></select></label>
+              <button class="primary-button full action-button" type="button" data-action="generate-ai">生成 3 个版本</button>
+            </section>
+            <section class="panel ai-output">
+              <h3>生成结果</h3>
+              <article>
+                <span>小红书版本</span>
+                <p>如果孩子未来想申请 NUS，WACE 路径到底能不能走？重点不是课程名字，而是 ATAR 成绩、科目组合和申请专业要求。</p>
+              </article>
+              <article>
+                <span>视频口播版本</span>
+                <p>很多家长问：在新加坡读 WACE，将来申请本地大学有没有认可度？我们用 NTU/NUS 的要求拆开讲。</p>
+              </article>
+            </section>
+          </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Prompt Library</p>
+              <h2>可复用模板</h2>
+            </div>
+            <button class="ghost-button action-button" type="button" data-action="generate-ai">新增模板</button>
+          </div>
+          <div class="knowledge-grid" id="ai-library"></div>
+        </section>
+
+        <section class="view" id="persona-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Persona Matrix</p>
+              <h2>IP 矩阵</h2>
+            </div>
+            <button class="primary-button action-button" type="button" data-action="new-persona">新增 IP</button>
+          </div>
+          <div class="library-search">
+            <input id="persona-search" type="search" placeholder="搜索 IP 名称、定位、渠道、线索表现" />
+            <button class="primary-button library-search-button" type="button" data-library="persona">搜索</button>
+          </div>
+          <div class="matrix-grid" id="persona-grid"></div>
+        </section>
+
+        <section class="view" id="accounts-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Account Matrix</p>
+              <h2>账号矩阵</h2>
+            </div>
+            <button class="primary-button action-button" type="button" data-action="new-account">新增账号</button>
+          </div>
+          <div class="library-search">
+            <input id="account-search" type="search" placeholder="搜索账号、平台、运营人、主体、IP、状态" />
+            <button class="primary-button library-search-button" type="button" data-library="account">搜索</button>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr><th>平台</th><th>账号</th><th>绑定 IP</th><th>负责人</th><th>阶段</th><th>本月发布</th><th>线索</th></tr>
+              </thead>
+              <tbody id="accounts-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view" id="calendar-view">
+          <div class="calendar-toolbar">
+            <div class="calendar-controls">
+              <button class="ghost-button" id="cal-prev" type="button">&larr;</button>
+              <strong id="cal-month-label">2026 年 5 月</strong>
+              <button class="ghost-button" id="cal-next" type="button">&rarr;</button>
+            </div>
+            <div class="calendar-legend">
+              <span><i class="dot dot-awareness"></i>Aw</span>
+              <span><i class="dot dot-consideration"></i>Co</span>
+              <span><i class="dot dot-trust"></i>Tr</span>
+              <span><i class="dot dot-visit"></i>Vi</span>
+              <span><i class="dot dot-enroll"></i>En</span>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+          <div class="calendar-summary" id="calendar-summary"></div>
+        </section>
+
+        <section class="view" id="crm-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Admissions CRM</p>
+              <h2>招生 CRM</h2>
+            </div>
+            <button class="primary-button action-button" type="button" data-action="new-lead">新增线索</button>
+          </div>
+          <div class="kanban" id="crm-kanban"></div>
+        </section>
+
+        <section class="view" id="analytics-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Review Dashboard</p>
+              <h2>数据复盘</h2>
+            </div>
+            <button class="ghost-button action-button" type="button" data-action="export-report">导出月报</button>
+          </div>
+          <div class="analytics-grid">
+            <section class="panel wide">
+              <h3>平台线索表现</h3>
+              <div class="bar-chart" id="platform-bars"></div>
+            </section>
+            <section class="panel">
+              <h3>招生漏斗</h3>
+              <div class="funnel">
+                <div><span>曝光</span><strong>128,400</strong></div>
+                <div><span>私信</span><strong>386</strong></div>
+                <div><span>有效线索</span><strong>143</strong></div>
+                <div><span>到访</span><strong>41</strong></div>
+                <div><span>报名</span><strong>9</strong></div>
+              </div>
+            </section>
+          </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Content Strategy Health</p>
+              <h2>内容策略体检</h2>
+            </div>
+          </div>
+          <div class="analytics-grid strategy-health-grid">
+            <section class="panel">
+              <h3>漏斗阶段分布</h3>
+              <p>内容是否覆盖了全漏斗？避免"头重脚轻"。</p>
+              <div class="bar-chart" id="funnel-dist-bars"></div>
+            </section>
+            <section class="panel">
+              <h3>情绪钩子分布</h3>
+              <p>哪种情绪钩子在用？避免单一打法。</p>
+              <div class="bar-chart" id="emotion-dist-bars"></div>
+            </section>
+            <section class="panel">
+              <h3>复用效率</h3>
+              <p>多少内容只在单平台发了？</p>
+              <div class="bar-chart" id="repurpose-dist-bars"></div>
+            </section>
+            <section class="panel">
+              <h3>WACE 内容追踪</h3>
+              <p>本周 WACE Focus 内容是否 ≥ 2 条？</p>
+              <div id="wace-tracker"></div>
+            </section>
+          </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">Top Content</p>
+              <h2>内容表现排行</h2>
+            </div>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr><th>#</th><th>内容标题</th><th>账号</th><th>阅读</th><th>赞</th><th>评论</th><th>私信</th><th>线索</th><th>综合分</th></tr>
+              </thead>
+              <tbody id="top-content-table"></tbody>
+            </table>
+          </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">SEO Tracking</p>
+              <h2>关键词表现追踪</h2>
+            </div>
+          </div>
+          <div class="table-card">
+            <table>
+              <thead>
+                <tr><th>关键词</th><th>内容数</th><th>总阅读</th><th>总线索</th><th>平均综合分</th><th>覆盖漏斗</th></tr>
+              </thead>
+              <tbody id="keyword-table"></tbody>
+            </table>
+          </div>
+          <div class="section-heading compact-heading">
+            <div>
+              <p class="eyebrow">A/B Testing</p>
+              <h2>内容 A/B 测试</h2>
+            </div>
+          </div>
+          <div id="ab-test-panel"></div>
+        </section>
+
+        <section class="view" id="team-view">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Access Control</p>
+              <h2>团队与权限</h2>
+            </div>
+            <button class="primary-button action-button" type="button" data-action="invite-member">邀请成员</button>
+          </div>
+          <div class="permission-grid" id="permission-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="notification-panel" id="notification-panel" aria-hidden="true">
+      <div class="notif-header">
+        <h3>通知与提醒</h3>
+        <button class="ghost-button" id="notif-close" type="button">关闭</button>
+      </div>
+      <div class="notif-list" id="notif-list"></div>
+    </div>
+    <div class="notification-overlay" id="notification-overlay"></div>
+
+    <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow" id="modal-kicker">System Action</p>
+            <h2 id="modal-title">操作</h2>
+          </div>
+          <button class="icon-button modal-close" type="button" aria-label="关闭">×</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer">
+          <button class="ghost-button modal-close" type="button">取消</button>
+          <button class="ghost-button" type="button" id="modal-draft" style="display:none">存草稿</button>
+          <button class="primary-button" type="button" id="modal-confirm">保存到系统</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/crm-prototype.js"></script>
+  </body>
+</html>
