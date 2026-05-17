@@ -3361,7 +3361,9 @@ function renderWaceTracker() {
   if (!target) return;
   const now = new Date();
   const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay());
+  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+  const diffToMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday-based week
+  weekStart.setDate(now.getDate() - diffToMon);
   const weekStartStr = weekStart.toISOString().slice(0, 10);
   const waceThisWeek = contents.filter((item) => item.waceFocus && item.publishDate >= weekStartStr).length;
   const statusClass = waceThisWeek >= 2 ? "ok" : waceThisWeek >= 1 ? "warn" : "fail";
@@ -3525,9 +3527,10 @@ function generateNotifications() {
 
   // ── Content roles: backfill & WACE ──
   if (isContent) {
-    // WACE weekly check
+    // WACE weekly check (Monday-based week)
     const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
+    const dowNotif = now.getDay();
+    weekStart.setDate(now.getDate() - (dowNotif === 0 ? 6 : dowNotif - 1));
     const weekStartStr = weekStart.toISOString().slice(0, 10);
     const waceCount = contents.filter((c) => c.waceFocus && c.publishDate >= weekStartStr).length;
     if (waceCount < 2) {
