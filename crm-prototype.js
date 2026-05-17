@@ -1891,22 +1891,28 @@ function renderPublishingProgress() {
     <div><span>待回填数据</span><strong>${backfillCount} 条</strong></div>
   `;
 
-  // Also update sidebar daily goal
-  const sidebar = document.querySelector("#sidebar-daily-goal");
-  if (sidebar) {
-    const goalCount = totalPlanned;
-    const doneCount = postedCount;
-    sidebar.innerHTML = `
-      <span>今日目标</span>
-      <strong>${goalCount} 条内容归档</strong>
-      <p>已完成 ${doneCount}/${goalCount}，所有已发布内容必须上传正文、图片、链接和截图。</p>
-    `;
+  // Also update sidebar daily goal — but only for content roles (admission/ai handled by renderDashboardForRole)
+  const sidebarRole = document.querySelector("#role-select").value;
+  if (sidebarRole !== "admission" && sidebarRole !== "ai") {
+    const sidebar = document.querySelector("#sidebar-daily-goal");
+    if (sidebar) {
+      const goalCount = totalPlanned;
+      const doneCount = postedCount;
+      sidebar.innerHTML = `
+        <span>今日目标</span>
+        <strong>${goalCount} 条内容归档</strong>
+        <p>已完成 ${doneCount}/${goalCount}，所有已发布内容必须上传正文、图片、链接和截图。</p>
+      `;
+    }
   }
 }
 
 function renderTasks() {
   const target = document.querySelector("#task-summary");
   if (!target) return;
+  // Admission role uses task-summary for CRM funnel (set by renderDashboardForRole) — don't overwrite
+  const taskRole = document.querySelector("#role-select").value;
+  if (taskRole === "admission") return;
 
   // Use role-filtered contents for status counts
   const filtered = getFilteredContents();
