@@ -3,14 +3,14 @@ const roleCopy = {
     title: "运营人员",
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
     nav: ["dashboard", "publishing", "content", "knowledge", "calendar", "crm"],
-    user: "Ocean Wang",
+    user: "运营 A",
     contentFilter: "all",
   },
   lead: {
     title: "部门负责人",
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
     nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics"],
-    user: "部门负责人",
+    user: "Ocean Wang",
     contentFilter: "all",
   },
   admin: {
@@ -31,7 +31,7 @@ const roleCopy = {
     title: "招生顾问",
     summary: "跟进分配线索，查看来源内容，记录到访、报名和流失结果。",
     nav: ["dashboard", "crm"],
-    user: "顾问 A",
+    user: "招生顾问",
     contentFilter: "none",
   },
 };
@@ -78,11 +78,11 @@ const posts = [
 ];
 
 const dailyTasks = [
-  ["09:30", "小红书", "BCI西澳课程中心", "升学顾问 IP", "新加坡高中不是越贵越好，真正要看这 3 点", "待发布", "green"],
+  ["09:30", "小红书", "BCI升学顾问号", "升学顾问 IP", "新加坡高中不是越贵越好，真正要看这 3 点", "待发布", "green"],
   ["10:30", "小红书", "BCI升学顾问号", "升学顾问 IP", "NTU 接受 WACE ATAR 作为录取参考吗", "待发布", "green"],
   ["11:00", "视频号", "BCI官方视频号", "校长 IP", "为什么 9 年级转轨国际课程要看科目组合", "待审核", "red"],
   ["14:00", "小红书", "BCI招生老师号", "招生老师 IP", "新加坡国际高中学费区间怎么判断", "草稿修改", "blue"],
-  ["15:00", "小红书", "BCI西澳课程中心", "王一样讲新加坡", "WACE 成绩可以申请哪些澳洲大学", "待审核", "red"],
+  ["15:00", "知乎", "BCI升学", "官方 IP", "WACE 成绩可以申请哪些澳洲大学", "待审核", "red"],
   ["16:30", "公众号", "BCI国际学校", "官方 IP", "WACE 课程结构：必修、选修和学分", "待归档", "amber"],
 ];
 
@@ -383,23 +383,6 @@ const personas = [
 
 const accounts = [
   {
-    platform: "公众号",
-    accountName: "BCI西澳课程中心",
-    status: "筹备",
-    contentCount: 0,
-    handle: "https://mp.weixin.qq.com/cgi-bin/home",
-    investmentTier: "辅助",
-    ownerType: "自营",
-    persona: "官方 IP",
-    talent: "空白",
-    entityName: "师云教育上海",
-    entityType: "企业",
-    operator: "Ocean Wang",
-    stage: "养号",
-    monthlyPosts: 0,
-    leads: 0,
-  },
-  {
     platform: "小红书",
     accountName: "BCI升学顾问号",
     status: "运营中",
@@ -415,6 +398,40 @@ const accounts = [
     stage: "增长号",
     monthlyPosts: 34,
     leads: 27,
+  },
+  {
+    platform: "小红书",
+    accountName: "BCI招生老师号",
+    status: "运营中",
+    contentCount: 29,
+    handle: "https://www.xiaohongshu.com/user/profile/bci-admission",
+    investmentTier: "主力",
+    ownerType: "自营",
+    persona: "招生老师 IP",
+    talent: "招生老师",
+    entityName: "BCI International",
+    entityType: "学校",
+    operator: "运营 B",
+    stage: "增长号",
+    monthlyPosts: 29,
+    leads: 23,
+  },
+  {
+    platform: "公众号",
+    accountName: "BCI国际学校",
+    status: "运营中",
+    contentCount: 36,
+    handle: "微信公众号",
+    investmentTier: "核心",
+    ownerType: "自营",
+    persona: "官方 IP",
+    talent: "校方品牌",
+    entityName: "BCI International",
+    entityType: "学校",
+    operator: "运营 A",
+    stage: "增长",
+    monthlyPosts: 8,
+    leads: 15,
   },
   {
     platform: "视频号",
@@ -434,46 +451,12 @@ const accounts = [
     leads: 11,
   },
   {
-    platform: "小红书",
-    accountName: "BCI招生老师号",
+    platform: "知乎",
+    accountName: "BCI升学",
     status: "运营中",
-    contentCount: 29,
-    handle: "https://www.xiaohongshu.com/user/profile/bci-admission",
-    investmentTier: "主力",
-    ownerType: "自营",
-    persona: "招生老师 IP",
-    talent: "招生老师",
-    entityName: "BCI International",
-    entityType: "学校",
-    operator: "运营 C",
-    stage: "增长号",
-    monthlyPosts: 29,
-    leads: 23,
-  },
-  {
-    platform: "抖音",
-    accountName: "BCI学生故事",
-    status: "养号",
     contentCount: 12,
-    handle: "抖音创作者中心",
+    handle: "https://www.zhihu.com/people/bci-edu",
     investmentTier: "辅助",
-    ownerType: "自营",
-    persona: "学生案例 IP",
-    talent: "学生案例",
-    entityName: "BCI International",
-    entityType: "学校",
-    operator: "运营 A",
-    stage: "养号",
-    monthlyPosts: 12,
-    leads: 8,
-  },
-  {
-    platform: "公众号",
-    accountName: "BCI国际学校",
-    status: "增长",
-    contentCount: 36,
-    handle: "微信公众号",
-    investmentTier: "核心",
     ownerType: "自营",
     persona: "官方 IP",
     talent: "校方品牌",
@@ -481,20 +464,20 @@ const accounts = [
     entityType: "学校",
     operator: "Ocean Wang",
     stage: "增长",
-    monthlyPosts: 8,
-    leads: 15,
+    monthlyPosts: 4,
+    leads: 9,
   },
 ];
 
 const crmLeads = [
   { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "新线索", assignee: "", date: "2026-05-13" },
   { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "新线索", assignee: "", date: "2026-05-12" },
-  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "已咨询", assignee: "顾问 A", date: "2026-05-10" },
-  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "已咨询", assignee: "顾问 B", date: "2026-05-09" },
-  { name: "G9 学生家长（张）", source: "周六开放日", stage: "预约到访", assignee: "顾问 A", date: "2026-05-08" },
-  { name: "G7 家庭", source: "校园参观", stage: "预约到访", assignee: "顾问 C", date: "2026-05-07" },
-  { name: "G10 学生", source: "已缴费", stage: "缴费", assignee: "顾问 B", date: "2026-04-28" },
-  { name: "G12 家庭", source: "流失：时间不匹配", stage: "流失", assignee: "顾问 A", date: "2026-05-01" },
+  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "已咨询", assignee: "招生顾问", date: "2026-05-10" },
+  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "已咨询", assignee: "招生顾问", date: "2026-05-09" },
+  { name: "G9 学生家长（张）", source: "周六开放日", stage: "预约到访", assignee: "招生顾问", date: "2026-05-08" },
+  { name: "G7 家庭", source: "校园参观", stage: "预约到访", assignee: "招生顾问", date: "2026-05-07" },
+  { name: "G10 学生", source: "已缴费", stage: "缴费", assignee: "招生顾问", date: "2026-04-28" },
+  { name: "G12 家庭", source: "流失：时间不匹配", stage: "流失", assignee: "招生顾问", date: "2026-05-01" },
 ];
 const crmStages = ["新线索", "已咨询", "预约到访", "缴费", "流失"];
 
@@ -507,15 +490,11 @@ const permissions = [
 ];
 
 const teamMembers = [
-  { name: "Ocean Wang", email: "ocean@bci.edu.sg", role: "运营人员", accounts: "BCI西澳课程中心, BCI国际学校", status: "在职", joinDate: "2026-01-15" },
-  { name: "运营 A", email: "opa@bci.edu.sg", role: "运营人员", accounts: "BCI升学顾问号, BCI学生故事", status: "在职", joinDate: "2026-02-01" },
-  { name: "运营 B", email: "opb@bci.edu.sg", role: "运营人员", accounts: "BCI官方视频号", status: "在职", joinDate: "2026-02-01" },
-  { name: "运营 C", email: "opc@bci.edu.sg", role: "运营人员", accounts: "BCI招生老师号", status: "在职", joinDate: "2026-03-10" },
-  { name: "部门负责人", email: "lead@bci.edu.sg", role: "部门负责人", accounts: "全部账号", status: "在职", joinDate: "2025-08-01" },
+  { name: "Ocean Wang", email: "ocean@bci.edu.sg", role: "部门负责人", accounts: "全部账号 + 知乎", status: "在职", joinDate: "2025-08-01" },
+  { name: "运营 A", email: "opa@bci.edu.sg", role: "运营人员", accounts: "BCI升学顾问号, BCI国际学校", status: "在职", joinDate: "2026-02-01" },
+  { name: "运营 B", email: "opb@bci.edu.sg", role: "运营人员", accounts: "BCI招生老师号, BCI官方视频号", status: "在职", joinDate: "2026-02-01" },
   { name: "AI 编辑", email: "ai@bci.edu.sg", role: "AI 内容编辑", accounts: "—", status: "在职", joinDate: "2026-03-01" },
-  { name: "顾问 A", email: "advisorA@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-01-20" },
-  { name: "顾问 B", email: "advisorB@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-02-15" },
-  { name: "顾问 C", email: "advisorC@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-03-01" },
+  { name: "招生顾问", email: "advisor@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-01-20" },
 ];
 
 const aiPromptLibrary = [
@@ -1187,8 +1166,8 @@ const modalTemplates = {
     title: "新增自媒体账号",
     body: () => `
       <div class="form-grid">
-        <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>抖音</option></select></label>
-        <label>账号名称<input value="BCI西澳课程中心" /></label>
+        <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>知乎</option></select></label>
+        <label>账号名称<input value="" placeholder="输入账号名称" /></label>
         <label>Account Status<select><option>筹备</option><option>养号</option><option>运营中</option><option>暂停</option></select></label>
         <label>Investment Tier<select><option>主力</option><option>辅助</option><option>测试</option></select></label>
         <label>Owner Type<select><option>自营</option><option>合作</option><option>外包</option></select></label>
@@ -1196,7 +1175,7 @@ const modalTemplates = {
         <label>Talent / 主理人<input value="空白" /></label>
         <label>主体名称<input value="师云教育上海" /></label>
         <label>主体类型<select><option>企业</option><option>学校</option><option>个人</option></select></label>
-        <label>运营人<select><option>Ocean Wang</option><option>运营 A</option><option>运营 B</option><option>运营 C</option></select></label>
+        <label>运营人<select><option>运营 A</option><option>运营 B</option><option>Ocean Wang</option></select></label>
         <label>发布频率<input value="每天 1 条" /></label>
         <label class="full-field">Handle / 后台链接<input value="https://mp.weixin.qq.com/cgi-bin/home" /></label>
       </div>
