@@ -2196,7 +2196,7 @@ function renderContent(items) {
                <span class="review-snippet-text">${escapeHtml(latestReview.comment).slice(0, 40)}${latestReview.comment.length > 40 ? "…" : ""}</span>
              </div>` : "";
         return `
-        <article class="content-card">
+        <article class="content-card content-detail" data-title="${escapeHtml(item.title)}" style="cursor:pointer">
           <h3>${escapeHtml(item.title)}</h3>
           <div class="card-meta">
             ${badge(item.contentType, "blue")}
@@ -2232,8 +2232,8 @@ function renderKnowledge(items = knowledge) {
   target.innerHTML = items
     .map(
       (item) => `
-        <article class="knowledge-card">
-          <h3>${item.title}</h3>
+        <article class="knowledge-card knowledge-detail" data-title="${escapeHtml(item.title)}" style="cursor:pointer">
+          <h3>${escapeHtml(item.title)}</h3>
           <div class="card-meta">
             ${item.subject.map((tag) => badge(tag, "blue")).join("")}
             ${badge(item.type)}
@@ -2260,7 +2260,7 @@ function renderPersonas(items = personas) {
   target.innerHTML = items
     .map(
       ([name, positioning, channels, volume, leads]) => `
-        <article class="matrix-card">
+        <article class="matrix-card persona-timeline" data-title="${name}" style="cursor:pointer">
           <h3>${name}</h3>
           <p>${positioning}</p>
           <div class="card-meta">${badge(channels)}${badge(volume, "blue")}</div>
@@ -2390,8 +2390,8 @@ function renderAiLibrary(items = aiPromptLibrary) {
   target.innerHTML = items
     .map(
       (item) => `
-        <article class="knowledge-card">
-          <h3>${item.title}</h3>
+        <article class="knowledge-card ai-detail" data-title="${escapeHtml(item.title)}" style="cursor:pointer">
+          <h3>${escapeHtml(item.title)}</h3>
           <div class="card-meta">
             ${badge(item.platform, "blue")}
             ${badge(item.stage, "red")}
