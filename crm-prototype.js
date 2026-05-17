@@ -1324,6 +1324,10 @@ function getModalValues() {
 }
 
 function switchToView(view) {
+  // Permission guard: only navigate to views the current role can access
+  const currentRole = document.querySelector("#role-select").value;
+  const allowedViews = roleCopy[currentRole]?.nav || [];
+  if (!allowedViews.includes(view)) return;
   const navButton = document.querySelector(`.nav-item[data-view="${view}"]`);
   if (navButton) navButton.click();
 }
@@ -1765,45 +1769,85 @@ function renderKpiCards() {
   // Role-specific card sets
   const cards = [];
 
-  cards.push({
-    label: "今日任务",
-    value: todayPublishCount,
-    desc: "条待处理",
-    color: todayPublishCount > 0 ? "var(--brand)" : "var(--muted)",
-  });
+  if (currentRole === "admission") {
+    // Admission: CRM-focused KPIs — no content metrics
+    const myName = roleCopy[currentRole].user;
+    const myLeads = crmLeads.filter((l) => l.assignee === myName || l.assignee === "");
+    const pendingFollow = myLeads.filter((l) => l.stage === "新线索" || l.stage === "已咨询").length;
+    const todayVisits = myLeads.filter((l) => l.stage === "预约到访").length;
+    const enrolled = myLeads.filter((l) => l.stage === "缴费").length;
 
-  if (isReviewer) {
     cards.push({
-      label: "待审核",
-      value: pendingReviewCount,
-      desc: "条内容",
-      color: pendingReviewCount > 0 ? "#e67700" : "var(--muted)",
+      label: "待跟进线索",
+      value: pendingFollow,
+      desc: "条需联系",
+      color: pendingFollow > 0 ? "var(--brand)" : "var(--muted)",
     });
-  } else if (currentRole !== "admission") {
     cards.push({
-      label: "待审核",
-      value: pendingReviewCount,
-      desc: "条等待中",
-      color: pendingReviewCount > 0 ? "#e67700" : "var(--muted)",
+      label: "今日预约到访",
+      value: todayVisits,
+      desc: "组待接待",
+      color: todayVisits > 0 ? "#e67700" : "var(--muted)",
     });
-  }
-
-  if (currentRole !== "admission") {
-    cards.push({
-      label: "待回填数据",
-      value: backfillCount,
-      desc: "条需补数据",
-      color: backfillCount > 0 ? "#e67700" : "var(--muted)",
-    });
-  }
-
-  if (currentRole !== "ai") {
     cards.push({
       label: "本周新线索",
       value: newLeadsCount,
       desc: "条新线索",
       color: newLeadsCount > 0 ? "var(--brand)" : "var(--muted)",
     });
+    cards.push({
+      label: "已缴费",
+      value: enrolled,
+      desc: "人已报名",
+      color: enrolled > 0 ? "#16a34a" : "var(--muted)",
+    });
+  } else {
+    // Content roles: operator, lead, admin, ai
+    cards.push({
+      label: "今日任务",
+      value: todayPublishCount,
+      desc: "条待处理",
+      color: todayPublishCount > 0 ? "var(--brand)" : "var(--muted)",
+    });
+
+    if (isReviewer) {
+      cards.push({
+        label: "待审核",
+        value: pendingReviewCount,
+        desc: "条内容",
+        color: pendingReviewCount > 0 ? "#e67700" : "var(--muted)",
+      });
+    } else if (currentRole === "ai") {
+      cards.push({
+        label: "我的待审核",
+        value: pendingReviewCount,
+        desc: "条提交中",
+        color: pendingReviewCount > 0 ? "#e67700" : "var(--muted)",
+      });
+    } else {
+      cards.push({
+        label: "待审核",
+        value: pendingReviewCount,
+        desc: "条等待中",
+        color: pendingReviewCount > 0 ? "#e67700" : "var(--muted)",
+      });
+    }
+
+    cards.push({
+      label: "待回填数据",
+      value: backfillCount,
+      desc: "条需补数据",
+      color: backfillCount > 0 ? "#e67700" : "var(--muted)",
+    });
+
+    if (currentRole !== "ai") {
+      cards.push({
+        label: "本周新线索",
+        value: newLeadsCount,
+        desc: "条新线索",
+        color: newLeadsCount > 0 ? "var(--brand)" : "var(--muted)",
+      });
+    }
   }
 
   target.innerHTML = cards
@@ -2517,6 +2561,95 @@ function applyRoleNav(role) {
   }
 }
 
+function renderDashboardForRole() {
+  const role = document.querySelector("#role-select").value;
+  const isContent = role === "operator" || role === "lead" || role === "admin";
+  const isAdmission = role === "admission";
+  const isAi = role === "ai";
+
+  // 1. Action buttons — role-specific
+  const actionsEl = document.getElementById("role-actions");
+  if (actionsEl) {
+    if (isAdmission) {
+      actionsEl.innerHTML = `<button class="primary-button action-button" type="button" data-action="new-lead">新增线索</button>`;
+    } else if (isAi) {
+      actionsEl.innerHTML = `<button class="primary-button action-button" type="button" data-action="new-content">生成内容</button>`;
+    } else {
+      actionsEl.innerHTML = `
+        <button class="ghost-button action-button" type="button" data-action="upload-post">上传发布</button>
+        <button class="primary-button action-button" type="button" data-action="new-content">创建计划</button>`;
+    }
+  }
+
+  // 2. Pipeline section — show CRM funnel for admission, content pipeline for others, hide for AI
+  const pipelineEl = document.getElementById("dashboard-pipeline");
+  const pipelineTitle = document.getElementById("pipeline-title");
+  const pipelineDesc = document.getElementById("pipeline-desc");
+  const pipelineShortcut = document.getElementById("pipeline-shortcut");
+  if (pipelineEl) {
+    if (isAdmission) {
+      pipelineTitle.textContent = "招生漏斗";
+      pipelineDesc.textContent = "查看各阶段线索分布。";
+      pipelineShortcut.textContent = "去招生 CRM →";
+      pipelineShortcut.dataset.targetView = "crm";
+      // Render CRM funnel summary in task-summary
+      const taskSummary = document.getElementById("task-summary");
+      if (taskSummary) {
+        const stages = ["新线索", "已咨询", "预约到访", "缴费", "流失"];
+        const myName = roleCopy[role].user;
+        const myLeads = crmLeads.filter((l) => l.assignee === myName || l.assignee === "");
+        taskSummary.innerHTML = `<div class="status-bar">${stages
+          .map((s) => {
+            const count = myLeads.filter((l) => l.stage === s).length;
+            const cls = s === "流失" ? "red" : s === "缴费" ? "green" : "";
+            return `<button class="status-chip ${cls}" data-filter-status="${s}"><strong>${count}</strong><span>${s}</span></button>`;
+          })
+          .join("")}</div>`;
+      }
+    } else if (isAi) {
+      pipelineTitle.textContent = "我的内容状态";
+      pipelineDesc.textContent = "AI 生成内容的审核进度。";
+      pipelineShortcut.textContent = "去内容库 →";
+      pipelineShortcut.dataset.targetView = "content";
+      renderTasks();
+    } else {
+      pipelineTitle.textContent = "内容管道";
+      pipelineDesc.textContent = "点击查看各状态内容列表。";
+      pipelineShortcut.textContent = "去今日发布 →";
+      pipelineShortcut.dataset.targetView = "publishing";
+      renderTasks();
+    }
+  }
+
+  // 3. Publish query section — only for content roles (operator/lead/admin)
+  const publishQueryEl = document.getElementById("dashboard-publish-query");
+  if (publishQueryEl) {
+    publishQueryEl.style.display = isContent ? "" : "none";
+  }
+
+  // 4. Sidebar daily goal — role-specific
+  const sidebar = document.querySelector("#sidebar-daily-goal");
+  if (sidebar) {
+    if (isAdmission) {
+      const myName = roleCopy[role].user;
+      const myLeads = crmLeads.filter((l) => l.assignee === myName);
+      const pending = myLeads.filter((l) => l.stage === "新线索" || l.stage === "已咨询").length;
+      const visits = myLeads.filter((l) => l.stage === "预约到访").length;
+      sidebar.innerHTML = `
+        <span>今日目标</span>
+        <strong>${pending} 条线索跟进</strong>
+        <p>有 ${visits} 个预约到访待确认，及时更新线索阶段。</p>`;
+    } else if (isAi) {
+      const aiDrafts = getFilteredContents().filter((c) => c.status === "草稿" || c.status === "待审核").length;
+      sidebar.innerHTML = `
+        <span>今日目标</span>
+        <strong>${aiDrafts} 条草稿待完善</strong>
+        <p>基于真实资料库生成内容，提交审核后交由运营发布。</p>`;
+    }
+    // For content roles, renderPublishingProgress already updates this
+  }
+}
+
 function wireRoleSwitch() {
   const select = document.querySelector("#role-select");
   const title = document.querySelector("#role-title");
@@ -2524,12 +2657,14 @@ function wireRoleSwitch() {
 
   // Apply on load
   applyRoleNav(select.value);
+  renderDashboardForRole();
 
   select.addEventListener("change", () => {
     const role = select.value;
     title.textContent = roleCopy[role].title;
     summary.textContent = roleCopy[role].summary;
     applyRoleNav(role);
+    renderDashboardForRole();
     renderKpiCards();
     renderPublishingProgress();
     renderContent();
