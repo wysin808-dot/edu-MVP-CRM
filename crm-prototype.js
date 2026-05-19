@@ -2359,6 +2359,7 @@ function applyAiReviewResult(result, btn, source) {
 }
 
 function buildReviewForm(item) {
+  window._currentReviewItem = item;
   return `
     <div class="detail-list">
       <div><strong>内容标题</strong><span>${escapeHtml(item.title)}</span></div>
@@ -3079,7 +3080,7 @@ function wireActions() {
     const aiReviewBtn = event.target.closest(".ai-review-btn");
     if (aiReviewBtn) {
       const title = aiReviewBtn.dataset.title;
-      const item = contents.find((c) => c.title === title);
+      const item = contents.find((c) => c.title === title) || window._currentReviewItem;
       if (item) {
         aiReviewBtn.disabled = true;
         aiReviewBtn.textContent = "🤖 DeepSeek 分析中...";
