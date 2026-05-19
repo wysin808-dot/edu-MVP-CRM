@@ -1,3 +1,14 @@
+/* ── Platform Configuration (editable via Settings) ── */
+let platformConfig = JSON.parse(localStorage.getItem("bci_platforms") || "null") || [
+  { name: "小红书", canBrowserOpen: true, icon: "📕" },
+  { name: "视频号", canBrowserOpen: false, icon: "📹" },
+  { name: "公众号", canBrowserOpen: true, icon: "📰" },
+  { name: "知乎", canBrowserOpen: true, icon: "💡" },
+];
+function savePlatformConfig() { localStorage.setItem("bci_platforms", JSON.stringify(platformConfig)); }
+function platformNames() { return platformConfig.map((p) => p.name); }
+function platformOptions() { return platformConfig.map((p) => `<option>${p.name}</option>`).join(""); }
+
 const roleCopy = {
   operator: {
     title: "运营人员",
@@ -9,14 +20,14 @@ const roleCopy = {
   lead: {
     title: "部门负责人",
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
-    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics"],
+    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "settings"],
     user: "Ocean Wang",
     contentFilter: "all",
   },
   admin: {
     title: "超级管理员",
     summary: "管理用户、角色、账号、IP、资料库和全局数据权限。",
-    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "team"],
+    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "team", "settings"],
     user: "管理员",
     contentFilter: "all",
   },
@@ -470,10 +481,10 @@ const accounts = [
 ];
 
 const crmLeads = [
-  { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "新线索", assignee: "", date: "2026-05-13" },
-  { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "新线索", assignee: "", date: "2026-05-12" },
-  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "已咨询", assignee: "招生顾问", date: "2026-05-10" },
-  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "已咨询", assignee: "招生顾问", date: "2026-05-09" },
+  { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "新线索", assignee: "", date: "2026-05-13", sourceLink: "https://www.xiaohongshu.com/explore/example001" },
+  { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "新线索", assignee: "", date: "2026-05-12", sourceLink: "" },
+  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "已咨询", assignee: "招生顾问", date: "2026-05-10", sourceLink: "https://www.xiaohongshu.com/explore/example002" },
+  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "已咨询", assignee: "招生顾问", date: "2026-05-09", sourceLink: "https://mp.weixin.qq.com/s/example003" },
   { name: "G9 学生家长（张）", source: "周六开放日", stage: "预约到访", assignee: "招生顾问", date: "2026-05-08" },
   { name: "G7 家庭", source: "校园参观", stage: "预约到访", assignee: "招生顾问", date: "2026-05-07" },
   { name: "G10 学生", source: "已缴费", stage: "缴费", assignee: "招生顾问", date: "2026-04-28" },
@@ -1089,7 +1100,7 @@ const modalTemplates = {
     body: () => `
       <div class="form-grid">
         <label>发布日期<input type="date" value="${new Date().toISOString().slice(0, 10)}" /></label>
-        <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>知乎</option></select></label>
+        <label>平台<select>${platformOptions()}</select></label>
         <label>发布账号<select>${optionList(accountNames(), "请先新增账号")}</select></label>
         <label>绑定 IP<select>${optionList(personaNames(), "请先新增 IP")}</select></label>
         <label>关联内容资产<select>${contents.map((c) => `<option>${escapeHtml(c.title)}</option>`).join("")}</select></label>
@@ -1141,7 +1152,7 @@ const modalTemplates = {
     body: `
       <div class="form-grid">
         <label>调用资料<select><option>NUS 接受 WACE ATAR</option><option>WACE 课程结构</option><option>新加坡陪读签证</option></select></label>
-        <label>目标平台<select><option>小红书</option><option>视频号</option><option>公众号</option></select></label>
+        <label>目标平台<select>${platformOptions()}</select></label>
         <label>目标 IP<select><option>升学顾问 IP</option><option>校长 IP</option><option>招生老师 IP</option></select></label>
         <label>目标人群<select><option>9-10 年级家长</option><option>7-8 年级转轨家庭</option><option>11-12 年级升学家庭</option></select></label>
         <label class="full-field">Prompt<textarea>基于选中的真实资料，生成 3 个适合中文自媒体的版本：一个小红书图文、一个视频口播、一个招生朋友圈。</textarea></label>
@@ -1166,7 +1177,7 @@ const modalTemplates = {
     title: "新增自媒体账号",
     body: () => `
       <div class="form-grid">
-        <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>知乎</option></select></label>
+        <label>平台<select>${platformOptions()}</select></label>
         <label>账号名称<input value="" placeholder="输入账号名称" /></label>
         <label>Account Status<select><option>筹备</option><option>养号</option><option>运营中</option><option>暂停</option></select></label>
         <label>Investment Tier<select><option>主力</option><option>辅助</option><option>测试</option></select></label>
@@ -1192,6 +1203,7 @@ const modalTemplates = {
         <label>意向课程<select><option>WACE</option><option>国际高中</option><option>插班</option><option>升学规划</option></select></label>
         <label>来源账号<select>${accountNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
         <label>来源 IP<select>${personaNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
+        <label class="full-field">来源链接<input placeholder="粘贴小红书/知乎/公众号文章链接" /></label>
         <label class="full-field">跟进备注<textarea>记录家长问题、学生情况、下次跟进动作。</textarea></label>
       </div>
     `,
@@ -1654,7 +1666,8 @@ async function saveModalRecord() {
       grade: values[1] || "",
       parentName: values[2] || "",
       course: values[3] || "",
-      notes: values[6] || "",
+      sourceLink: values[6] || "",
+      notes: values[7] || "",
     };
     crmLeads.unshift(lead);
     renderCrm();
@@ -2578,7 +2591,7 @@ function renderCrm() {
         ${leads.map((lead) => `
           <article class="lead-card row-action" data-title="${escapeHtml(lead.name)}" data-kind="线索详情">
             <strong>${escapeHtml(lead.name)}</strong>
-            <span>${escapeHtml(lead.source)}</span>
+            <span>${escapeHtml(lead.source)}${lead.sourceLink ? ` <a href="${escapeHtml(lead.sourceLink)}" target="_blank" rel="noopener" class="source-link" title="打开来源内容" onclick="event.stopPropagation()">🔗</a>` : ""}</span>
             <div class="lead-meta">
               ${lead.assignee
                 ? `<span class="lead-assignee">👤 ${escapeHtml(lead.assignee)}</span>`
@@ -2709,6 +2722,88 @@ function renderPermissions() {
       </table>
     </div>
   `;
+}
+
+function renderSettings() {
+  const target = document.querySelector("#settings-content");
+  if (!target) return;
+
+  target.innerHTML = `
+    <div class="table-card" style="margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px 0">
+        <div>
+          <h3 style="margin:0">自媒体平台管理</h3>
+          <p style="color:var(--muted);font-size:13px;margin:4px 0 0">添加或删除平台后，所有表单下拉框会自动同步更新。</p>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>图标</th><th>平台名称</th><th>浏览器可打开</th><th>操作</th></tr></thead>
+        <tbody>
+          ${platformConfig.map((p, i) => `
+            <tr>
+              <td style="font-size:20px;text-align:center">${p.icon || "📱"}</td>
+              <td><strong>${escapeHtml(p.name)}</strong></td>
+              <td>${p.canBrowserOpen ? badge("可直接打开", "green") : badge("需微信内打开", "amber")}</td>
+              <td><button class="ghost-button settings-delete-platform" data-index="${i}" style="color:var(--red);font-size:12px">删除</button></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+      <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <label style="flex:0 0 60px;font-size:13px">图标<input id="new-platform-icon" value="📱" style="width:50px;text-align:center" /></label>
+        <label style="flex:1;font-size:13px">平台名称<input id="new-platform-name" placeholder="例如：抖音、B站、微博" /></label>
+        <label style="flex:0 0 auto;font-size:13px;display:flex;align-items:center;gap:6px;padding-top:20px">
+          <input type="checkbox" id="new-platform-browser" checked /> 浏览器可打开
+        </label>
+        <button class="primary-button" id="add-platform-btn" type="button" style="flex:0 0 auto">添加平台</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div style="padding:16px 20px 0">
+        <h3 style="margin:0">数据说明</h3>
+        <p style="color:var(--muted);font-size:13px;margin:4px 0 0">平台配置保存在浏览器本地，更换设备后需重新配置。</p>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="font-size:14px;line-height:1.6;margin:0">
+          <strong>浏览器可打开</strong> = 链接在浏览器中直接查看（小红书、知乎、公众号文章）<br/>
+          <strong>需微信内打开</strong> = 链接只能在微信里查看（视频号）<br/>
+          CRM 线索卡片上，可打开的链接会显示 🔗 图标，点击直接跳转。
+        </p>
+      </div>
+    </div>
+  `;
+
+  // Wire delete buttons
+  target.querySelectorAll(".settings-delete-platform").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.index);
+      const name = platformConfig[idx]?.name;
+      if (confirm(`确定删除平台「${name}」吗？已有的内容和账号数据不会被删除。`)) {
+        platformConfig.splice(idx, 1);
+        savePlatformConfig();
+        renderSettings();
+        showToast(`已删除平台：${name}`);
+      }
+    });
+  });
+
+  // Wire add button
+  const addBtn = document.querySelector("#add-platform-btn");
+  if (addBtn) {
+    addBtn.addEventListener("click", () => {
+      const nameInput = document.querySelector("#new-platform-name");
+      const iconInput = document.querySelector("#new-platform-icon");
+      const browserCheck = document.querySelector("#new-platform-browser");
+      const name = (nameInput?.value || "").trim();
+      if (!name) { showToast("请输入平台名称"); return; }
+      if (platformConfig.some((p) => p.name === name)) { showToast("该平台已存在"); return; }
+      platformConfig.push({ name, icon: iconInput?.value || "📱", canBrowserOpen: browserCheck?.checked ?? true });
+      savePlatformConfig();
+      renderSettings();
+      showToast(`已添加平台：${name}`);
+    });
+  }
 }
 
 function wireNavigation() {
@@ -3825,6 +3920,7 @@ function renderApp() {
   renderBars();
   renderAiLibrary();
   renderPermissions();
+  renderSettings();
   queryArchive();
   renderCalendar();
   renderStrategyHealth();
