@@ -376,7 +376,7 @@ const personas = [
   ["校长 IP", "权威背书", "视频号 / 公众号", "本月 18 条", "线索 11"],
   ["升学顾问 IP", "路径规划", "小红书 / 视频号", "本月 34 条", "线索 27"],
   ["招生老师 IP", "咨询转化", "小红书 / 朋友圈", "本月 29 条", "线索 23"],
-  ["学生案例 IP", "真实故事", "小红书 / 抖音", "本月 12 条", "线索 8"],
+  ["学生案例 IP", "真实故事", "小红书 / 知乎", "本月 12 条", "线索 8"],
   ["家长故事 IP", "信任建立", "视频号 / 公众号", "本月 7 条", "线索 5"],
   ["BCI 官方 IP", "学校信息", "全平台", "本月 26 条", "线索 14"],
 ];
@@ -584,7 +584,7 @@ function createId() {
 
 function replaceRecords(target, records) {
   if (!records.length) return;
-  target.splice(0, 0, ...records);
+  target.splice(0, target.length, ...records);
 }
 
 function loadSavedState() {
@@ -1053,13 +1053,13 @@ const modalTemplates = {
   "new-content": {
     kicker: "Content Asset",
     title: "新建内容资产",
-    body: `
+    body: () => `
       <div class="form-grid">
         <label>标题<input placeholder="输入内容标题" /></label>
         <label>AI Search Ready<select><option>否</option><option>是</option></select></label>
-        <label>Account<select><option value="">选择账号</option><option>新加坡初高中留学-新闻·小红书</option><option>BCI升学顾问号</option><option>BCI官方视频号</option><option>BCI招生老师号</option></select></label>
+        <label>Account<select><option value="">选择账号</option>${accountNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
         <label>Audience Persona<input placeholder="如：P1 陪读妈妈, P2 国内待留学" /></label>
-        <label>Author<select><option value="">选择作者</option><option>Ocean Wang</option><option>AI 编辑</option><option>内容组</option><option>招生组</option></select></label>
+        <label>Author<select><option value="">选择作者</option>${teamMembers.map((m) => "<option>" + m.name + "</option>").join("")}<option>内容组</option></select></label>
         <label>Content Type<select><option value="">选择类型</option><option>干货</option><option>升学科普</option><option>视频口播</option><option>FAQ</option><option>情绪</option><option>案例</option><option>校园</option><option>对比</option><option>政策</option></select></label>
         <label>Emotional Trigger<select><option value="">选择情绪钩子</option><option>反常识</option><option>焦虑共鸣</option><option>向往</option><option>痛点直击</option><option>好奇驱动</option><option>数字震撼</option><option>案例代入</option><option>理性避坑</option><option>痛点反问</option></select></label>
         <label>Funnel Stage<select><option value="">选择漏斗阶段</option><option>Awareness</option><option>Consideration</option><option>Trust</option><option>Visit</option><option>Enroll</option></select></label>
@@ -1068,7 +1068,7 @@ const modalTemplates = {
         <label>Prompts Used<input placeholder="使用的 AI 模板" /></label>
         <label>Publish Date<input type="date" /></label>
         <label>Repurpose Status<select><option value="">选择复用状态</option><option>原稿</option><option>可二改</option><option>可转视频号</option><option>可转小红书</option><option>已转小红书标题</option><option>已复用多平台</option><option>归档</option></select></label>
-        <label>Status<select><option>草稿</option><option>待审核</option><option>审核通过</option><option>Posted</option></select></label>
+        <label>Status<select><option>草稿</option><option>待审核</option><option>审核通过</option><option>已发布</option></select></label>
         <label>Topic Cluster<select><option value="">选择主题簇</option><option>WACE</option><option>A-Level</option><option>IB</option><option>升学</option><option>择校</option><option>陪读</option><option>校园</option><option>签证</option><option>学费</option><option>NUS / NTU</option><option>毕业生案例</option></select></label>
         <label>WACE Focus<select><option>否</option><option>是</option></select></label>
         <label class="full-field">CTA<input placeholder="如：评论「关键词」，获取XXX" /></label>
@@ -1088,8 +1088,8 @@ const modalTemplates = {
     title: "上传今日发布",
     body: () => `
       <div class="form-grid">
-        <label>发布日期<input type="date" value="2026-05-11" /></label>
-        <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>抖音</option></select></label>
+        <label>发布日期<input type="date" value="${new Date().toISOString().slice(0, 10)}" /></label>
+        <label>平台<select><option>小红书</option><option>视频号</option><option>公众号</option><option>知乎</option></select></label>
         <label>发布账号<select>${optionList(accountNames(), "请先新增账号")}</select></label>
         <label>绑定 IP<select>${optionList(personaNames(), "请先新增 IP")}</select></label>
         <label>关联内容资产<select>${contents.map((c) => `<option>${escapeHtml(c.title)}</option>`).join("")}</select></label>
@@ -1105,7 +1105,7 @@ const modalTemplates = {
         </div>
         <div class="full-field upload-section">
           <span>视频文件</span>
-          <label class="upload-box">上传视频号 / 抖音视频<span class="upload-status">未选择文件</span><input type="file" accept="video/*" data-upload-field="video" /></label>
+          <label class="upload-box">上传视频号 / 知乎视频<span class="upload-status">未选择文件</span><input type="file" accept="video/*" data-upload-field="video" /></label>
         </div>
         <div class="full-field upload-section">
           <span>发布截图</span>
@@ -1184,14 +1184,14 @@ const modalTemplates = {
   "new-lead": {
     kicker: "Admissions CRM",
     title: "新增招生线索",
-    body: `
+    body: () => `
       <div class="form-grid">
         <label>学生姓名<input value="学生姓名" /></label>
         <label>当前年级<select><option>G7</option><option>G8</option><option>G9</option><option>G10</option><option>G11</option><option>G12</option></select></label>
         <label>家长姓名<input value="家长姓名" /></label>
         <label>意向课程<select><option>WACE</option><option>国际高中</option><option>插班</option><option>升学规划</option></select></label>
-        <label>来源账号<select><option>BCI升学顾问号</option><option>BCI官方视频号</option><option>BCI招生老师号</option></select></label>
-        <label>来源 IP<select><option>升学顾问 IP</option><option>招生老师 IP</option><option>校长 IP</option></select></label>
+        <label>来源账号<select>${accountNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
+        <label>来源 IP<select>${personaNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
         <label class="full-field">跟进备注<textarea>记录家长问题、学生情况、下次跟进动作。</textarea></label>
       </div>
     `,
@@ -1233,24 +1233,30 @@ const modalTemplates = {
   "all-tasks": {
     kicker: "Workflow",
     title: "全部待办",
-    body: `
-      <div class="detail-list">
-        <div><strong>待审核</strong><span>18 条内容等待部门负责人检查。</span></div>
-        <div><strong>审核通过待发布</strong><span>12 条内容可以由运营人员发布。</span></div>
-        <div><strong>待回填数据</strong><span>27 条已发布内容需要补充 3 日 / 7 日 / 30 日数据。</span></div>
-      </div>
-    `,
+    body: () => {
+      const pending = contents.filter((c) => c.status === "待审核").length;
+      const ready = contents.filter((c) => c.status === "可发布" || c.status === "审核通过").length;
+      const backfill = contents.filter((c) => c.status === "已发布" || c.status === "待回填").length;
+      return `<div class="detail-list">
+        <div><strong>待审核</strong><span>${pending} 条内容等待部门负责人检查。</span></div>
+        <div><strong>审核通过待发布</strong><span>${ready} 条内容可以由运营人员发布。</span></div>
+        <div><strong>待回填数据</strong><span>${backfill} 条已发布内容需要补充 3 日 / 7 日 / 30 日数据。</span></div>
+      </div>`;
+    },
   },
   notifications: {
     kicker: "Notifications",
     title: "通知中心",
-    body: `
-      <div class="detail-list">
-        <div><strong>3 条内容待审核</strong><span>负责人需要检查 WACE、学费、签证相关内容。</span></div>
-        <div><strong>5 条发布待回填</strong><span>小红书和视频号内容需要补充 3 日数据。</span></div>
-        <div><strong>2 条新线索待分配</strong><span>来源账号：BCI升学顾问号。</span></div>
-      </div>
-    `,
+    body: () => {
+      const pending = contents.filter((c) => c.status === "待审核").length;
+      const backfill = contents.filter((c) => c.status === "已发布" || c.status === "待回填").length;
+      const newLeads = crmLeads.filter((l) => l.stage === "新线索" && !l.assignee).length;
+      return `<div class="detail-list">
+        <div><strong>${pending} 条内容待审核</strong><span>负责人需要检查待审核内容。</span></div>
+        <div><strong>${backfill} 条发布待回填</strong><span>已发布内容需要补充数据。</span></div>
+        <div><strong>${newLeads} 条新线索待分配</strong><span>需要分配招生顾问。</span></div>
+      </div>`;
+    },
   },
 };
 
@@ -1381,12 +1387,9 @@ function closeModal() {
 }
 
 function getModalValues() {
-  return Array.from(document.querySelectorAll("#modal-body input, #modal-body select, #modal-body textarea")).map((field) => {
-    if (field.type === "file") {
-      return Array.from(field.files || []).map((file) => file.name).join(" / ");
-    }
-    return field.value.trim();
-  });
+  return Array.from(document.querySelectorAll("#modal-body input, #modal-body select, #modal-body textarea"))
+    .filter((field) => field.type !== "file")
+    .map((field) => field.value.trim());
 }
 
 function switchToView(view) {
@@ -1500,6 +1503,7 @@ async function saveModalRecord() {
       entityName: values[7] || "待填主体",
       entityType: values[8] || "企业",
       operator: values[9] || "未分配",
+      frequency: values[10] || "未设置",
       stage: values[2] || "筹备",
       monthlyPosts: 0,
       leads: 0,
@@ -1556,7 +1560,7 @@ async function saveModalRecord() {
     const timestamp = new Date().toISOString().slice(0, 16).replace("T", " ");
     const modalTitle = document.querySelector("#modal-title")?.textContent || "";
     const cleanTitle = modalTitle.replace("审核：", "");
-    const item = contents.find((c) => cleanTitle.includes(c.title.slice(0, 20)));
+    const item = contents.find((c) => c.title === cleanTitle) || contents.find((c) => cleanTitle.includes(c.title.slice(0, 20))) || window._currentReviewItem;
     if (item) {
       item.reviewHistory = item.reviewHistory || [];
       item.reviewHistory.push({ reviewer, action, comment, timestamp });
@@ -1574,7 +1578,7 @@ async function saveModalRecord() {
   if (currentModalAction === "resubmit-review") {
     const modalTitle = document.querySelector("#modal-title")?.textContent || "";
     const cleanTitle = modalTitle.replace("重新提交：", "");
-    const item = contents.find((c) => cleanTitle.includes(c.title.slice(0, 20)));
+    const item = contents.find((c) => c.title === cleanTitle) || contents.find((c) => cleanTitle.includes(c.title.slice(0, 20)));
     const comment = document.querySelector("#modal-body textarea")?.value.trim() || "已修改重新提交";
     if (item) {
       item.status = "待审核";
@@ -1626,7 +1630,7 @@ async function saveModalRecord() {
     const leads = parseInt(document.querySelector("#bf-leads")?.value) || 0;
     const modalTitle = document.querySelector("#modal-title")?.textContent || "";
     const cleanTitle = modalTitle.replace("数据回填：", "");
-    const item = contents.find((c) => cleanTitle.includes(c.title.slice(0, 15)));
+    const item = contents.find((c) => c.title === cleanTitle) || contents.find((c) => cleanTitle.includes(c.title.slice(0, 15)));
     if (item) {
       item.metrics = { reads, likes, comments, shares, privateMessages, leads };
       if (reads > 0 || leads > 0) item.status = "已复盘";
@@ -1731,7 +1735,7 @@ async function saveModalRecord() {
 }
 
 function statusColor(s) {
-  const map = { "待审核": "red", "已驳回": "red", "草稿": "blue", "待回填": "amber", "可发布": "green", "审核通过": "green", "Posted": "green", "已发布": "green" };
+  const map = { "待审核": "red", "已驳回": "red", "草稿": "blue", "草稿修改": "amber", "待回填": "amber", "待发布": "amber", "待归档": "amber", "可发布": "green", "审核通过": "green", "Posted": "green", "已发布": "green", "已复盘": "green" };
   return map[s] || "blue";
 }
 
@@ -2190,7 +2194,10 @@ function buildRepurposeChainHtml(item) {
   const chain = [];
   // Walk up to find root
   let root = item;
+  const seen = new Set();
   while (root.repurposeSourceTitle) {
+    if (seen.has(root.title)) break;
+    seen.add(root.title);
     const parent = contents.find((c) => c.title === root.repurposeSourceTitle);
     if (!parent) break;
     root = parent;
@@ -2437,7 +2444,7 @@ function renderContent(items) {
         const reviewSnippet = latestReview && (item.status === "待审核" || item.status === "审核通过")
           ? `<div class="review-snippet">
                <span class="badge ${latestReview.action === "approve" ? "green" : latestReview.action === "reject" ? "red" : "amber"}">${latestReview.action === "approve" ? "通过" : latestReview.action === "reject" ? "驳回" : "修改意见"}</span>
-               <span class="review-snippet-text">${escapeHtml(latestReview.comment).slice(0, 40)}${latestReview.comment.length > 40 ? "…" : ""}</span>
+               <span class="review-snippet-text">${escapeHtml(latestReview.comment || "").slice(0, 40)}${(latestReview.comment || "").length > 40 ? "…" : ""}</span>
              </div>` : "";
         return `
         <article class="content-card content-detail" data-title="${escapeHtml(item.title)}" style="cursor:pointer">
@@ -2550,7 +2557,7 @@ function renderCrm() {
 
   // Admission counselors only see their own leads
   const visibleLeads = isAdmission
-    ? crmLeads.filter((l) => l.assignee === currentUser)
+    ? crmLeads.filter((l) => l.assignee === currentUser || l.assignee === "")
     : crmLeads;
 
   // Build kanban columns from crmStages
@@ -2613,7 +2620,7 @@ function renderBars() {
     ["小红书", 72, 57],
     ["视频号", 56, 38],
     ["公众号", 42, 26],
-    ["抖音", 31, 14],
+    ["知乎", 31, 14],
   ];
   target.innerHTML = rows
     .map(
@@ -3049,7 +3056,7 @@ function wireActions() {
               <div><strong>Review Cycle</strong><span>${item.reviewCycle}</span></div>
               <div><strong>Source</strong><span>${item.source}</span></div>
               <div><strong>Source Type</strong><span>${item.sourceType}</span></div>
-              <div><strong>Subject</strong><span>${item.subject.join(" / ")}</span></div>
+              <div><strong>Subject</strong><span>${(item.subject || []).join(" / ")}</span></div>
               <div><strong>Type</strong><span>${item.type}</span></div>
               <div><strong>Used In Contents</strong><span>${item.usedInContents} 条内容</span></div>
               <div><strong>Verified By</strong><span>${item.verifiedBy}</span></div>
@@ -3062,11 +3069,16 @@ function wireActions() {
       return;
     }
 
-    const filterButton = event.target.closest(".filter");
+    const filterButton = event.target.closest(".filter:not(.filter-list .filter)");
     if (filterButton) {
-      document.querySelectorAll(".filter").forEach((item) => item.classList.remove("active"));
+      const group = filterButton.parentElement;
+      if (group) group.querySelectorAll(".filter").forEach((item) => item.classList.remove("active"));
       filterButton.classList.add("active");
-      showToast(`已切换筛选：${filterButton.textContent}`);
+      // Trigger actual filtering based on filter text
+      const filterText = filterButton.textContent.trim();
+      const currentView = document.querySelector(".nav-item.active")?.dataset?.view;
+      if (currentView === "content") renderContent();
+      else showToast(`已切换筛选：${filterText}`);
       return;
     }
 
@@ -3218,6 +3230,7 @@ function wireActions() {
               confirmBtn.style.display = "";
               confirmBtn.textContent = "提交审核";
               currentModalAction = "content-submit-review";
+              window._contentDetailItem = pseudoItem;
             } else {
               confirmBtn.style.display = "none";
             }
@@ -3641,9 +3654,9 @@ function generateNotifications() {
     if (myPending > 0) {
       notifs.push({ type: "info", icon: "⏳", title: `你有 ${myPending} 条内容在审核中`, desc: "已提交等待部门负责人审核，请关注审核结果。", time: "实时", targetView: "content", filterStatus: "待审核" });
     }
-    const myRejected = contents.filter((c) => c.author === myName && c.status === "草稿修改").length;
+    const myRejected = contents.filter((c) => c.author === myName && c.status === "已驳回").length;
     if (myRejected > 0) {
-      notifs.push({ type: "action", icon: "✏️", title: `${myRejected} 条内容被退回修改`, desc: "审核未通过，请查看修改意见并重新提交。", time: "实时", targetView: "content", filterStatus: "草稿修改" });
+      notifs.push({ type: "action", icon: "✏️", title: `${myRejected} 条内容被退回修改`, desc: "审核未通过，请查看修改意见并重新提交。", time: "实时", targetView: "content", filterStatus: "已驳回" });
     }
   }
 
