@@ -2237,6 +2237,84 @@ function buildReviewTimeline(history) {
   }).join("")}</div>`;
 }
 
+function generateAiReview(item) {
+  const issues = [];
+  const goods = [];
+  let suggestion = "approve";
+
+  // 1. Check references — content should cite KB
+  if (!item.references || item.references === "—" || item.references === "") {
+    issues.push("未引用真实资料库，建议补充数据来源以增强可信度");
+    suggestion = "revise";
+  } else {
+    goods.push("已引用真实资料 (" + item.references.split("/")[0].trim() + ")");
+  }
+
+  // 2. Check funnel stage distribution
+  if (!item.funnelStage || item.funnelStage === "—") {
+    issues.push("缺少漏斗阶段标记，无法判断内容在转化链中的位置");
+    suggestion = "revise";
+  } else {
+    goods.push("漏斗阶段「" + item.funnelStage + "」已标记");
+  }
+
+  // 3. Check emotional trigger
+  if (!item.emotionalTrigger || item.emotionalTrigger === "—") {
+    issues.push("未设置情绪钩子，标题吸引力可能不足");
+  } else {
+    goods.push("情绪钩子「" + item.emotionalTrigger + "」合理");
+  }
+
+  // 4. Check CTA
+  if (!item.cta || item.cta === "—" || item.cta === "") {
+    issues.push("缺少 CTA 行动引导，难以转化为线索");
+    suggestion = "revise";
+  } else {
+    goods.push("CTA 已设置");
+  }
+
+  // 5. Check lead magnet
+  if (!item.leadMagnet || item.leadMagnet === "—" || item.leadMagnet === "") {
+    issues.push("没有挂载钩子资料（Lead Magnet），转化路径断裂");
+  }
+
+  // 6. Check primary keyword for SEO
+  if (!item.primaryKeyword || item.primaryKeyword === "—") {
+    issues.push("缺少主关键词，不利于搜索流量获取");
+  }
+
+  // 7. WACE content check
+  if (item.waceFocus && item.topicCluster && !item.topicCluster.includes("WACE")) {
+    issues.push("标记为 WACE Focus 但主题簇不含 WACE，请核实");
+  }
+
+  // 8. Check audience persona
+  if (!item.audiencePersona || item.audiencePersona.length === 0) {
+    issues.push("未指定目标受众画像");
+  }
+
+  // 9. Check content type
+  if (!item.contentType || item.contentType === "—") {
+    issues.push("内容类型未标注（干货/案例/情绪/对比…）");
+  }
+
+  // 10. Title length check
+  if (item.title.length > 25) {
+    issues.push("标题超过 25 字，部分平台可能被截断");
+  }
+
+  // Build output
+  if (issues.length >= 4) suggestion = "reject";
+  else if (issues.length >= 2) suggestion = "revise";
+
+  let comment = "【AI 审核报告】\n";
+  if (goods.length > 0) comment += "✅ " + goods.join("\n✅ ") + "\n";
+  if (issues.length > 0) comment += "⚠️ " + issues.join("\n⚠️ ") + "\n";
+  comment += "\n综合建议：" + (suggestion === "approve" ? "可通过发布" : suggestion === "revise" ? "建议修改后再审" : "问题较多，建议驳回重写");
+
+  return { suggestion, comment };
+}
+
 function buildReviewForm(item) {
   return `
     <div class="detail-list">
@@ -2251,6 +2329,12 @@ function buildReviewForm(item) {
     </div>
     <div class="modal-section">
       <h3>审核操作</h3>
+      <div style="margin-bottom:12px">
+        <button type="button" class="primary-button ai-review-btn" data-title="${escapeHtml(item.title)}" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);font-size:13px;padding:6px 16px">
+          🤖 AI 智能审核
+        </button>
+        <span class="ai-review-hint" style="margin-left:8px;color:var(--muted);font-size:12px">AI 将自动检查内容质量并生成审核意见</span>
+      </div>
       <div class="form-grid">
         <label>审核结果<select id="review-action-select">
           <option value="approve">审核通过</option>
@@ -2261,7 +2345,7 @@ function buildReviewForm(item) {
           <option>部门负责人</option>
           <option>超级管理员</option>
         </select></label>
-        <label class="full-field">审核意见<textarea id="review-comment-input" rows="3" placeholder="输入审核意见或修改建议..."></textarea></label>
+        <label class="full-field">审核意见<textarea id="review-comment-input" rows="5" placeholder="输入审核意见或修改建议..."></textarea></label>
       </div>
     </div>
   `;
@@ -2946,6 +3030,32 @@ function wireActions() {
     if (personaTimelineButton) {
       const personaName = personaTimelineButton.dataset.title;
       openModal("persona-timeline", `${personaName} 内容时间线`, buildIpTimeline(personaName));
+      return;
+    }
+
+    const aiReviewBtn = event.target.closest(".ai-review-btn");
+    if (aiReviewBtn) {
+      const title = aiReviewBtn.dataset.title;
+      const item = contents.find((c) => c.title === title);
+      if (item) {
+        aiReviewBtn.disabled = true;
+        aiReviewBtn.textContent = "🤖 分析中...";
+        setTimeout(() => {
+          const result = generateAiReview(item);
+          const actionSelect = document.querySelector("#review-action-select");
+          const commentInput = document.querySelector("#review-comment-input");
+          if (actionSelect) actionSelect.value = result.suggestion;
+          if (commentInput) {
+            commentInput.value = result.comment;
+            commentInput.style.borderColor = "#8b5cf6";
+          }
+          aiReviewBtn.textContent = "🤖 AI 审核完成 ✓";
+          aiReviewBtn.style.background = "linear-gradient(135deg,#22c55e,#16a34a)";
+          const hint = document.querySelector(".ai-review-hint");
+          if (hint) hint.textContent = "AI 建议已填入，可直接提交或修改后提交";
+          showToast("AI 审核完成，建议已自动填入");
+        }, 800);
+      }
       return;
     }
 
