@@ -2315,6 +2315,49 @@ function generateAiReview(item) {
   return { suggestion, comment };
 }
 
+async function callDeepSeekReview(item) {
+  const res = await fetch("/api/ai-review", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: item.title,
+      account: item.account,
+      funnelStage: item.funnelStage,
+      emotionalTrigger: item.emotionalTrigger,
+      contentType: item.contentType,
+      cta: item.cta,
+      leadMagnet: item.leadMagnet,
+      primaryKeyword: item.primaryKeyword,
+      references: item.references,
+      audiencePersona: item.audiencePersona,
+      waceFocus: item.waceFocus,
+      topicCluster: item.topicCluster,
+      notes: item.notes,
+      repurposeStatus: item.repurposeStatus,
+    }),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+function applyAiReviewResult(result, btn, source) {
+  const actionSelect = document.querySelector("#review-action-select");
+  const commentInput = document.querySelector("#review-comment-input");
+  if (actionSelect) actionSelect.value = result.suggestion;
+  if (commentInput) {
+    commentInput.value = result.comment;
+    commentInput.style.borderColor = "#8b5cf6";
+  }
+  btn.textContent = `🤖 ${source} 审核完成 ✓`;
+  btn.style.background = "linear-gradient(135deg,#22c55e,#16a34a)";
+  const hint = document.querySelector(".ai-review-hint");
+  if (hint) {
+    const tokenInfo = result.tokens ? ` (${result.tokens} tokens)` : "";
+    hint.textContent = `${source}审核完成${tokenInfo}，可直接提交或修改后提交`;
+  }
+  showToast(`${source} AI 审核完成，建议已自动填入`);
+}
+
 function buildReviewForm(item) {
   return `
     <div class="detail-list">
@@ -3039,22 +3082,19 @@ function wireActions() {
       const item = contents.find((c) => c.title === title);
       if (item) {
         aiReviewBtn.disabled = true;
-        aiReviewBtn.textContent = "🤖 分析中...";
-        setTimeout(() => {
-          const result = generateAiReview(item);
-          const actionSelect = document.querySelector("#review-action-select");
-          const commentInput = document.querySelector("#review-comment-input");
-          if (actionSelect) actionSelect.value = result.suggestion;
-          if (commentInput) {
-            commentInput.value = result.comment;
-            commentInput.style.borderColor = "#8b5cf6";
-          }
-          aiReviewBtn.textContent = "🤖 AI 审核完成 ✓";
-          aiReviewBtn.style.background = "linear-gradient(135deg,#22c55e,#16a34a)";
-          const hint = document.querySelector(".ai-review-hint");
-          if (hint) hint.textContent = "AI 建议已填入，可直接提交或修改后提交";
-          showToast("AI 审核完成，建议已自动填入");
-        }, 800);
+        aiReviewBtn.textContent = "🤖 DeepSeek 分析中...";
+        const hint = document.querySelector(".ai-review-hint");
+        if (hint) hint.textContent = "正在调用 DeepSeek 大模型，请稍候…";
+
+        // Try DeepSeek API first, fallback to local rules
+        callDeepSeekReview(item)
+          .then((result) => applyAiReviewResult(result, aiReviewBtn, "DeepSeek"))
+          .catch(() => {
+            // Fallback to local rule engine
+            aiReviewBtn.textContent = "🤖 本地规则分析中...";
+            const localResult = generateAiReview(item);
+            applyAiReviewResult(localResult, aiReviewBtn, "本地规则");
+          });
       }
       return;
     }
