@@ -645,23 +645,120 @@ function persistContentUpdate(item) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
 }
 
+/* ── Auth & Role Mapping ── */
+const AUTH_ROLE_MAP = {
+  "admin": "admin",
+  "lead": "lead",
+  "operator": "operator",
+  "ai": "ai",
+  "admission": "admission",
+};
+let authUser = null;
+let authMode = "local"; // "local" | "auth"
+
+function showLogin() {
+  document.getElementById("login-screen").classList.remove("hidden");
+  document.getElementById("app-shell").style.display = "none";
+}
+function hideLogin() {
+  document.getElementById("login-screen").classList.add("hidden");
+  document.getElementById("app-shell").style.display = "";
+}
+
+async function handleSignIn(email, password) {
+  if (!cloudClient) throw new Error("系统未连接，请刷新页面重试");
+  const { data, error } = await cloudClient.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+async function handleSignOut() {
+  if (!cloudClient) return;
+  await cloudClient.auth.signOut();
+  authUser = null;
+  showLogin();
+}
+
+function applyAuthRole(user) {
+  if (!user) return;
+  authUser = user;
+  const meta = user.user_metadata || {};
+  const role = AUTH_ROLE_MAP[meta.role] || "operator";
+  const roleSelect = document.getElementById("role-select");
+  if (roleSelect) {
+    roleSelect.value = role;
+    roleSelect.dispatchEvent(new Event("change"));
+    // Non-admin users can't switch roles
+    if (role !== "admin" && role !== "lead") {
+      roleSelect.disabled = true;
+    }
+  }
+  // Show user name in topbar
+  const nameDisplay = meta.display_name || user.email?.split("@")[0] || "用户";
+  const roleTitle = document.getElementById("role-title");
+  if (roleTitle && meta.display_name) {
+    roleTitle.textContent = `${roleCopy[role]?.title || "用户"} · ${nameDisplay}`;
+  }
+  // Show logout button
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.style.display = "";
+    logoutBtn.textContent = `退出 (${nameDisplay})`;
+  }
+}
+
 async function initCloudDatabase() {
   try {
     const response = await fetch("/api/config", { cache: "no-store" });
     if (!response.ok) throw new Error("config unavailable");
     const config = await response.json();
-    if (!config.supabaseUrl || !config.supabaseAnonKey || !window.supabase) {
+    if (!config.configured || !config.supabaseUrl || !config.supabaseAnonKey || !window.supabase) {
       setCloudStatus("本地模式：还没有配置 Supabase。", "local");
+      authMode = "local";
+      // In local mode: skip login, show app directly
+      hideLogin();
       return;
     }
 
     cloudClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-    await loadCloudState();
-    cloudReady = true;
-    setCloudStatus("云端数据库已连接。", "cloud");
+
+    // Check existing session
+    const { data: { session } } = await cloudClient.auth.getSession();
+    if (session?.user) {
+      authMode = "auth";
+      hideLogin();
+      applyAuthRole(session.user);
+      await loadCloudState();
+      cloudReady = true;
+      setCloudStatus("已登录，云端数据库已连接。", "cloud");
+    } else {
+      authMode = "auth";
+      showLogin();
+      setCloudStatus("请登录。", "local");
+    }
+
+    // Listen for auth state changes
+    cloudClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        hideLogin();
+        applyAuthRole(session.user);
+        if (!cloudReady) {
+          await loadCloudState();
+          cloudReady = true;
+          renderApp();
+        }
+        setCloudStatus("已登录，云端数据库已连接。", "cloud");
+      } else if (event === "SIGNED_OUT") {
+        authUser = null;
+        cloudReady = false;
+        showLogin();
+      }
+    });
   } catch (error) {
     console.warn("Cloud database is not ready, falling back to local storage.", error);
     setCloudStatus("本地模式：云端数据库暂不可用。", "local");
+    authMode = "local";
+    hideLogin();
   }
 }
 
@@ -3931,6 +4028,37 @@ function renderApp() {
 }
 
 async function bootstrap() {
+  // Wire login form (before cloud init, so it's ready when login screen shows)
+  const loginForm = document.getElementById("login-form");
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      const errorEl = document.getElementById("login-error");
+      const btn = loginForm.querySelector(".login-btn");
+      errorEl.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "登录中…";
+      try {
+        await handleSignIn(email, password);
+        // Auth state change listener will handle the rest
+      } catch (err) {
+        errorEl.textContent = err.message === "Invalid login credentials"
+          ? "邮箱或密码错误" : (err.message || "登录失败，请重试");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "登 录";
+      }
+    });
+  }
+
+  // Wire logout button
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => handleSignOut());
+  }
+
   loadSavedState();
   await initCloudDatabase();
   renderApp();

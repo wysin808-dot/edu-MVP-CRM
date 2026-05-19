@@ -7,7 +7,27 @@
     <link rel="stylesheet" href="./crm-prototype.css?v=12" />
   </head>
   <body>
-    <div class="app-shell">
+    <!-- Login Screen -->
+    <div class="login-screen" id="login-screen">
+      <div class="login-card">
+        <div class="login-brand">
+          <div class="brand-mark">BCI</div>
+          <div>
+            <strong>自媒体矩阵获客系统</strong>
+            <span>Content to Enrollment</span>
+          </div>
+        </div>
+        <form id="login-form" autocomplete="on">
+          <label>邮箱<input type="email" id="login-email" placeholder="name@bci.edu.sg" required autocomplete="email" /></label>
+          <label>密码<input type="password" id="login-password" placeholder="输入密码" required autocomplete="current-password" /></label>
+          <p class="login-error" id="login-error"></p>
+          <button class="primary-button login-btn" type="submit">登 录</button>
+        </form>
+        <p class="login-footer">BCI WACE 7-12 招生增长系统<br/>如需账号请联系管理员</p>
+      </div>
+    </div>
+
+    <div class="app-shell" id="app-shell" style="display:none">
       <aside class="sidebar">
         <div class="brand">
           <div class="brand-mark">BCI</div>
@@ -59,6 +79,7 @@
                 <option value="admission">招生顾问</option>
               </select>
             </label>
+            <button class="ghost-button logout-btn" type="button" id="logout-btn" style="display:none;font-size:12px;padding:4px 10px" title="退出登录">退出</button>
             <button class="notif-bell" type="button" aria-label="通知" data-action="notifications">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               <span class="notif-dot"></span>
