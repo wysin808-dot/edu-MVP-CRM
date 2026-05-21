@@ -2038,6 +2038,56 @@ textarea {
   margin-bottom: 8px;
   padding: 0 8px;
 }
+/* ── Content Type Mix Chart ── */
+.type-mix-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px 70px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.type-mix-label {
+  font-weight: 600;
+  font-size: 12px;
+}
+.type-mix-bar-track {
+  position: relative;
+  height: 18px;
+  background: var(--surface);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.type-mix-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 4px;
+}
+.type-mix-bar.actual {
+  background: var(--brand);
+  z-index: 2;
+}
+.type-mix-bar.target {
+  background: var(--muted);
+  z-index: 1;
+}
+.type-mix-pct {
+  font-weight: 600;
+  font-size: 12px;
+}
+.type-mix-pct small.warn {
+  color: #e67700;
+}
+.type-mix-pct small.ok {
+  color: #16a34a;
+}
+.type-mix-target {
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .lead-channel {
   display: inline-block;
   font-size: 11px;

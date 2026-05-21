@@ -112,7 +112,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 
 ## Part 2 — P1 重要（运营效率提升）
 
-### TASK 2.1 — 内容类型映射至 MCN 四类占比体系
+### TASK 2.1 ✅ 内容类型映射至 MCN 四类占比体系
 
 **目标**：将自由文本 contentType 规范为 MCN 规划书定义的 4 类，并在数据复盘中展示占比 vs 目标。
 

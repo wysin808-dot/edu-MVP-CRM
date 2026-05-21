@@ -396,6 +396,22 @@ const IP_CATEGORIES = {
   seo: { label: "独立站 SEO", icon: "🌐", color: "blue", desc: "英文内容，AI 草稿+人工审核" },
 };
 
+/* ── Content Type Categories (MCN 规划书 2.3 节) ── */
+const CONTENT_TYPE_CATEGORIES = {
+  "引流型": { target: 40, desc: "起量/博推荐", subtypes: ["干货", "升学科普", "对比", "政策", "情绪"] },
+  "信任型": { target: 30, desc: "专业感/干货深度", subtypes: ["FAQ", "视频口播", "数据解读", "课程介绍"] },
+  "案例型": { target: 20, desc: "转化/共鸣", subtypes: ["案例", "校园", "学生故事", "家长分享"] },
+  "转化型": { target: 10, desc: "收口/活动", subtypes: ["探校活动", "限时咨询", "直播预告", "资料包"] },
+};
+const ALL_CONTENT_SUBTYPES = Object.values(CONTENT_TYPE_CATEGORIES).flatMap((c) => c.subtypes);
+
+function getContentCategory(contentType) {
+  for (const [cat, info] of Object.entries(CONTENT_TYPE_CATEGORIES)) {
+    if (info.subtypes.includes(contentType)) return cat;
+  }
+  return "引流型"; // default
+}
+
 /* ── Brand Firewall (MCN 规划书 3.1 节 C 部分) ── */
 const BRAND_FIREWALL_KEYWORDS = [
   "BCI", "博文", "Brentvale", "创始人", "三娃", "校徽",
@@ -1310,7 +1326,7 @@ const modalTemplates = {
         <label>Account<select><option value="">选择账号</option>${accountNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
         <label>Audience Persona<input placeholder="如：P1 陪读妈妈, P2 国内待留学" /></label>
         <label>Author<select><option value="">选择作者</option>${teamMembers.map((m) => "<option>" + m.name + "</option>").join("")}<option>内容组</option></select></label>
-        <label>Content Type<select><option value="">选择类型</option><option>干货</option><option>升学科普</option><option>视频口播</option><option>FAQ</option><option>情绪</option><option>案例</option><option>校园</option><option>对比</option><option>政策</option></select></label>
+        <label>Content Type<select><option value="">选择类型</option><optgroup label="引流型（目标40%）"><option>干货</option><option>升学科普</option><option>对比</option><option>政策</option><option>情绪</option></optgroup><optgroup label="信任型（目标30%）"><option>FAQ</option><option>视频口播</option><option>数据解读</option><option>课程介绍</option></optgroup><optgroup label="案例型（目标20%）"><option>案例</option><option>校园</option><option>学生故事</option><option>家长分享</option></optgroup><optgroup label="转化型（目标10%）"><option>探校活动</option><option>限时咨询</option><option>直播预告</option><option>资料包</option></optgroup></select></label>
         <label>Emotional Trigger<select><option value="">选择情绪钩子</option><option>反常识</option><option>焦虑共鸣</option><option>向往</option><option>痛点直击</option><option>好奇驱动</option><option>数字震撼</option><option>案例代入</option><option>理性避坑</option><option>痛点反问</option></select></label>
         <label>Funnel Stage<select><option value="">选择漏斗阶段</option><option>Awareness</option><option>Consideration</option><option>Trust</option><option>Visit</option><option>Enroll</option></select></label>
         <label>Lead Magnet<select><option value="">选择钩子资料</option><option>路径选择表</option><option>评估表</option><option>学费明细</option><option>选课指南</option><option>升学路径清单</option><option>签证材料清单</option><option>科目组合建议</option></select></label>
@@ -2027,8 +2043,10 @@ function buildResubmitEditForm(item) {
       <label>CTA 引导语<input type="text" id="edit-cta" value="${escapeHtml(item.cta || "")}" /></label>
       <label>内容类型
         <select id="edit-content-type">
-          ${["干货", "情绪", "案例", "校园", "对比", "政策", "升学科普", "视频口播"].map(
-            (t) => `<option${t === item.contentType ? " selected" : ""}>${t}</option>`
+          ${Object.entries(CONTENT_TYPE_CATEGORIES).map(([cat, info]) =>
+            `<optgroup label="${cat}（目标${info.target}%）">${info.subtypes.map(
+              (t) => `<option${t === item.contentType ? " selected" : ""}>${t}</option>`
+            ).join("")}</optgroup>`
           ).join("")}
         </select>
       </label>
@@ -2730,6 +2748,7 @@ function renderContent(items) {
           <h3>${escapeHtml(item.title)}</h3>
           <div class="card-meta">
             ${badge(item.contentType, "blue")}
+            ${badge(getContentCategory(item.contentType), item.contentType ? "" : "amber")}
             ${badge(item.status, item.status === "Posted" || item.status === "已发布" ? "green" : "amber")}
             ${item.waceFocus ? badge("WACE Focus", "green") : ""}
           </div>
@@ -3870,7 +3889,35 @@ function renderStrategyHealth() {
   renderDistBars("funnel-dist-bars", contents, "funnelStage", "funnel");
   renderDistBars("emotion-dist-bars", contents, "emotionalTrigger", "emotion");
   renderDistBars("repurpose-dist-bars", contents, "repurposeStatus", "repurpose");
+  renderContentTypeMix();
   renderWaceTracker();
+}
+
+function renderContentTypeMix() {
+  const target = document.querySelector("#content-type-mix");
+  if (!target) return;
+  const total = contents.length || 1;
+  const catCounts = {};
+  contents.forEach((c) => {
+    const cat = getContentCategory(c.contentType);
+    catCounts[cat] = (catCounts[cat] || 0) + 1;
+  });
+  target.innerHTML = Object.entries(CONTENT_TYPE_CATEGORIES).map(([cat, info]) => {
+    const count = catCounts[cat] || 0;
+    const actual = Math.round((count / total) * 100);
+    const diff = actual - info.target;
+    const diffLabel = diff > 0 ? `+${diff}%` : `${diff}%`;
+    const diffCls = Math.abs(diff) > 10 ? "warn" : "ok";
+    return `<div class="type-mix-row">
+      <span class="type-mix-label">${cat}</span>
+      <div class="type-mix-bar-track">
+        <div class="type-mix-bar actual" style="width:${actual}%"></div>
+        <div class="type-mix-bar target" style="width:${info.target}%;opacity:0.3"></div>
+      </div>
+      <span class="type-mix-pct">${actual}%<small class="${diffCls}">（${diffLabel}）</small></span>
+      <span class="type-mix-target">目标 ${info.target}%</span>
+    </div>`;
+  }).join("");
 }
 
 function renderDistBars(targetId, items, field, colorClass) {
