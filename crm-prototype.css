@@ -1584,6 +1584,37 @@ textarea {
   border: 1px solid #fecaca;
   font-weight: 500;
 }
+/* Reverse content list (TASK 3.1) — shown in KB and Prompt detail modals */
+.reverse-content-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.reverse-content-list .ref-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  text-align: left;
+  width: 100%;
+}
+.reverse-content-list .ref-link:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.reverse-content-list .ref-link:hover .badge,
+.reverse-content-list .ref-link:hover span { color: white; }
+.reverse-title {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .modal-section {
   margin-top: 20px;
   padding-top: 16px;

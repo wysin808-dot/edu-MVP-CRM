@@ -2135,7 +2135,8 @@ function buildContentDetailHtml(item) {
       <div><strong>Primary Keyword</strong><span>${item.primaryKeyword}</span></div>
       <div><strong>Topic Cluster</strong><span>${item.topicCluster}</span></div>
       <div><strong>Repurpose Status</strong><span>${item.repurposeStatus}</span></div>
-      <div><strong>References</strong><span>${item.references}</span></div>
+      <div><strong>引用资料</strong><span>${buildRefLinks(item.references) || item.references || "—"}</span></div>
+      <div><strong>Prompt</strong><span>${buildPromptLinks(item.promptsUsed) || item.promptsUsed || "—"}</span></div>
       <div><strong>WACE Focus</strong><span>${item.waceFocus ? "是" : "否"}</span></div>
       <div><strong>Notes</strong><span>${item.notes}</span></div>
     </div>
@@ -2501,6 +2502,40 @@ function buildRefLinks(refsText) {
     .join(" · ");
 }
 
+/* ── P2 TASK 3.1: Structured associations — reverse lookups ── */
+function getContentsReferencingKb(kbTitle) {
+  return contents.filter(c => {
+    if (!c.references) return false;
+    const refs = c.references.split(/[/／]/).map(r => r.trim());
+    return refs.some(r => kbTitle.includes(r) || r.includes(kbTitle));
+  });
+}
+
+function getContentsUsingPrompt(promptTitle) {
+  return contents.filter(c => {
+    if (!c.promptsUsed) return false;
+    return c.promptsUsed.includes(promptTitle) || promptTitle.includes(c.promptsUsed);
+  });
+}
+
+function buildReverseContentList(items, label) {
+  if (!items.length) return `<p style="color:var(--muted)">暂无${label}。</p>`;
+  return `<div class="reverse-content-list">${items.map(c =>
+    `<button class="ref-link content-detail" type="button" data-title="${escapeHtml(c.title)}">
+      <span class="reverse-title">${escapeHtml(c.title)}</span>
+      <span class="badge ${statusColor(c.status)}" style="font-size:10px">${c.status}</span>
+      <span style="font-size:11px;color:var(--muted)">${c.account}</span>
+    </button>`
+  ).join("")}</div>`;
+}
+
+function buildPromptLinks(promptsText) {
+  if (!promptsText || promptsText === "未使用") return "";
+  const matched = aiPromptLibrary.find(p => p.title === promptsText || promptsText.includes(p.title) || p.title.includes(promptsText));
+  if (matched) return `<button class="ref-link ai-detail" type="button" data-title="${escapeHtml(matched.title)}">${escapeHtml(promptsText)}</button>`;
+  return `<span style="font-size:12px;color:var(--muted)">${escapeHtml(promptsText)}</span>`;
+}
+
 /* ── P1: Metrics helpers ── */
 function fmtNum(n) {
   if (!n && n !== 0) return "—";
@@ -2836,6 +2871,7 @@ function renderContent(items) {
             <span>CTA：${item.cta}</span>
             ${item.primaryKeyword && item.primaryKeyword !== "待定" ? `<span>关键词：<span class="strat-badge keyword">${escapeHtml(item.primaryKeyword)}</span></span>` : ""}
             <span>引用资料：${buildRefLinks(item.references)}</span>
+            ${item.promptsUsed && item.promptsUsed !== "未使用" ? `<span>Prompt：${buildPromptLinks(item.promptsUsed)}</span>` : ""}
           </div>
           <div class="card-footer"><span>${item.author}</span><button class="ghost-button content-detail" type="button" data-title="${escapeHtml(item.title)}">查看详情</button></div>
         </article>
@@ -2859,7 +2895,7 @@ function renderKnowledge(items = knowledge) {
           <p>${item.detail}</p>
           <div class="knowledge-meta">
             <span>复查：${item.reviewCycle}</span>
-            <span>引用：${item.usedInContents} 条内容</span>
+            <span>引用：${getContentsReferencingKb(item.title).length} 条内容</span>
             <span>可见：${item.visibility}</span>
           </div>
           <div class="card-footer">
@@ -3556,21 +3592,26 @@ function wireActions() {
     if (aiButton) {
       const item = aiPromptLibrary.find((entry) => entry.title === aiButton.dataset.title);
       if (item) {
+        const usingContents = getContentsUsingPrompt(item.title);
         openModal(
           "ai-detail",
           item.title,
           `
             <div class="detail-list">
-              <div><strong>Author</strong><span>${item.author}</span></div>
-              <div><strong>Last Used</strong><span>${item.lastUsed}</span></div>
-              <div><strong>Notes</strong><span>${item.notes}</span></div>
-              <div><strong>Output Examples</strong><span>${item.outputExamples}</span></div>
-              <div><strong>Platform</strong><span>${item.platform}</span></div>
-              <div><strong>Prompt Template</strong><span>${item.promptTemplate}</span></div>
-              <div><strong>Quality Rating</strong><span>${item.qualityRating}</span></div>
-              <div><strong>Stage</strong><span>${item.stage}</span></div>
-              <div><strong>Target Persona</strong><span>${item.targetPersona}</span></div>
-              <div><strong>Use Count</strong><span>${item.useCount}</span></div>
+              <div><strong>作者</strong><span>${item.author}</span></div>
+              <div><strong>最近使用</strong><span>${item.lastUsed}</span></div>
+              <div><strong>备注</strong><span>${item.notes}</span></div>
+              <div><strong>输出示例</strong><span>${item.outputExamples}</span></div>
+              <div><strong>适用平台</strong><span>${item.platform}</span></div>
+              <div><strong>Prompt 模板</strong><span style="white-space:pre-wrap;font-size:12px">${escapeHtml(item.promptTemplate)}</span></div>
+              <div><strong>质量评级</strong><span>${item.qualityRating}</span></div>
+              <div><strong>生产阶段</strong><span>${item.stage}</span></div>
+              <div><strong>目标 IP</strong><span>${item.targetPersona}</span></div>
+              <div><strong>使用次数</strong><span>${usingContents.length}（动态计算）</span></div>
+            </div>
+            <div class="modal-section">
+              <h3>使用该 Prompt 的内容（${usingContents.length}）</h3>
+              ${buildReverseContentList(usingContents, "关联内容")}
             </div>
           `,
         );
@@ -3582,23 +3623,28 @@ function wireActions() {
     if (knowledgeButton) {
       const item = knowledge.find((entry) => entry.title === knowledgeButton.dataset.title);
       if (item) {
+        const referencingContents = getContentsReferencingKb(item.title);
         openModal(
           "knowledge-detail",
           item.title,
           `
             <div class="detail-list">
-              <div><strong>Detail</strong><span>${item.detail}</span></div>
-              <div><strong>Notes</strong><span>${item.notes}</span></div>
-              <div><strong>Numeric Data</strong><span>${item.numericData}</span></div>
-              <div><strong>Review Cycle</strong><span>${item.reviewCycle}</span></div>
-              <div><strong>Source</strong><span>${item.source}</span></div>
-              <div><strong>Source Type</strong><span>${item.sourceType}</span></div>
-              <div><strong>Subject</strong><span>${(item.subject || []).join(" / ")}</span></div>
-              <div><strong>Type</strong><span>${item.type}</span></div>
-              <div><strong>Used In Contents</strong><span>${item.usedInContents} 条内容</span></div>
-              <div><strong>Verified By</strong><span>${item.verifiedBy}</span></div>
-              <div><strong>Last Verified</strong><span>${item.lastVerified}</span></div>
-              <div><strong>Visibility</strong><span>${item.visibility}</span></div>
+              <div><strong>详情</strong><span>${item.detail}</span></div>
+              <div><strong>备注</strong><span>${item.notes}</span></div>
+              <div><strong>数值数据</strong><span>${item.numericData}</span></div>
+              <div><strong>复查周期</strong><span>${item.reviewCycle}</span></div>
+              <div><strong>来源</strong><span>${item.source}</span></div>
+              <div><strong>来源类型</strong><span>${item.sourceType}</span></div>
+              <div><strong>主题</strong><span>${(item.subject || []).join(" / ")}</span></div>
+              <div><strong>类型</strong><span>${item.type}</span></div>
+              <div><strong>被引用</strong><span>${referencingContents.length} 条内容（动态计算）</span></div>
+              <div><strong>核实人</strong><span>${item.verifiedBy}</span></div>
+              <div><strong>最后核实</strong><span>${item.lastVerified}</span></div>
+              <div><strong>可见性</strong><span>${item.visibility}</span></div>
+            </div>
+            <div class="modal-section">
+              <h3>引用该资料的内容（${referencingContents.length}）</h3>
+              ${buildReverseContentList(referencingContents, "引用内容")}
             </div>
           `,
         );

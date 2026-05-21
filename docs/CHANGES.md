@@ -171,7 +171,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 
 ## Part 3 — P2 锦上添花
 
-### TASK 3.1 — 内容与资料/Prompt 的结构化关联
+### TASK 3.1 ✅ 内容与资料/Prompt 的结构化关联
 
 **目标**：references 和 promptsUsed 从纯文本变为可追踪的关联。
 
