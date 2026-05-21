@@ -2314,3 +2314,144 @@ textarea {
   border: 1px solid #bbf7d0;
   margin-top: 2px;
 }
+
+/* ── CRM Filter Bar ── */
+.crm-filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.crm-type-filter {
+  padding: 5px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.crm-type-filter:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.crm-type-filter.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+/* ── Lead Type Badge ── */
+.lead-type-badge {
+  display: inline-block !important;
+  font-size: 10px !important;
+  color: #fff !important;
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* ── Lead Card Header ── */
+.lead-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.lead-card-header strong {
+  flex: 1;
+  cursor: pointer;
+}
+.lead-card-header strong:hover {
+  color: var(--brand);
+}
+
+/* ── Lead Revenue ── */
+.lead-revenue {
+  display: inline-block !important;
+  font-size: 11px !important;
+  color: #059669 !important;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ── Lead Follow-up Hint ── */
+.lead-follow-up-hint {
+  display: block !important;
+  font-size: 11px !important;
+  color: var(--muted) !important;
+  background: #fef3c7;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+  border: 1px solid #fde68a;
+}
+
+/* ── Lead Edit Button ── */
+.lead-edit-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.lead-card:hover .lead-edit-btn {
+  opacity: 1;
+}
+.lead-edit-btn:hover {
+  background: var(--brand-light);
+}
+
+/* ── Drag & Drop ── */
+.lead-card[draggable="true"] {
+  cursor: grab;
+}
+.lead-card.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+.kanban-column.drag-over {
+  border-color: var(--brand);
+  background: var(--brand-light);
+  box-shadow: inset 0 0 0 2px var(--brand);
+}
+
+/* ── Follow-up Timeline ── */
+.follow-up-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.follow-up-entry {
+  padding: 10px;
+  background: var(--surface-soft);
+  border-radius: 6px;
+  border-left: 3px solid var(--brand);
+}
+.fu-date {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.fu-note {
+  font-size: 13px;
+  color: var(--fg);
+  line-height: 1.4;
+}
+.fu-next {
+  font-size: 12px;
+  color: #f59e0b;
+  margin-top: 4px;
+}
+.fu-author {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  margin-top: 4px;
+}

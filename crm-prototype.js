@@ -633,16 +633,21 @@ const SEED_ACCOUNTS = [
 ];
 
 const SEED_CRM_LEADS = [
-  { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "私信咨询", assignee: "", date: "2026-05-13", sourceLink: "https://www.xiaohongshu.com/explore/example001", channel: "小红书" },
-  { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "私信咨询", assignee: "", date: "2026-05-12", sourceLink: "", channel: "视频号" },
-  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "加企微", assignee: "招生顾问", date: "2026-05-10", sourceLink: "https://www.xiaohongshu.com/explore/example002", channel: "小红书", wechatId: "parent_g8_zhang", wechatAddTime: "2026-05-10T14:30:00Z" },
-  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "加企微", assignee: "招生顾问", date: "2026-05-09", sourceLink: "https://mp.weixin.qq.com/s/example003", channel: "公众号", wechatId: "parent_g11_li", wechatAddTime: "2026-05-09T11:20:00Z" },
-  { name: "G9 学生家长（张）", source: "周六开放日", stage: "留电/视频", assignee: "招生顾问", date: "2026-05-08", channel: "线下" },
-  { name: "G7 家庭", source: "校园参观", stage: "试听/到访", assignee: "招生顾问", date: "2026-05-07", channel: "线下" },
-  { name: "G10 学生", source: "已签约", stage: "签约", assignee: "招生顾问", date: "2026-04-28", channel: "小红书" },
-  { name: "G12 家庭", source: "流失：时间不匹配", stage: "流失", assignee: "招生顾问", date: "2026-05-01", channel: "视频号" },
-  { name: "G9 小红书私信", source: "来自小红书：WACE 选课", stage: "私信咨询", assignee: "", date: "2026-05-15", sourceLink: "", channel: "小红书" },
-  { name: "G10 家长（李）", source: "来自抖音评论区", stage: "私信咨询", assignee: "", date: "2026-05-14", sourceLink: "", channel: "抖音" },
+  { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "私信咨询", assignee: "", date: "2026-05-13", sourceLink: "https://www.xiaohongshu.com/explore/example001", channel: "小红书", leadType: "direct", followUps: [] },
+  { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "私信咨询", assignee: "", date: "2026-05-12", sourceLink: "", channel: "视频号", leadType: "direct", followUps: [] },
+  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "加企微", assignee: "招生顾问", date: "2026-05-10", sourceLink: "https://www.xiaohongshu.com/explore/example002", channel: "小红书", wechatId: "parent_g8_zhang", wechatAddTime: "2026-05-10T14:30:00Z", leadType: "direct", followUps: [{ date: "2026-05-10", note: "已通过企微好友验证", nextAction: "发课程资料", nextDate: "2026-05-12", author: "招生顾问" }] },
+  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "加企微", assignee: "招生顾问", date: "2026-05-09", sourceLink: "https://mp.weixin.qq.com/s/example003", channel: "公众号", wechatId: "parent_g11_li", wechatAddTime: "2026-05-09T11:20:00Z", leadType: "direct", followUps: [] },
+  { name: "G9 学生家长（张）", source: "周六开放日", stage: "留电/视频", assignee: "招生顾问", date: "2026-05-08", channel: "线下", leadType: "direct", expectedRevenue: 180000, followUps: [{ date: "2026-05-08", note: "开放日现场登记，对 WACE 很感兴趣", nextAction: "约试听课", nextDate: "2026-05-15", author: "招生顾问" }] },
+  { name: "G7 家庭", source: "校园参观", stage: "试听/到访", assignee: "招生顾问", date: "2026-05-07", channel: "线下", leadType: "direct", expectedRevenue: 180000, followUps: [] },
+  { name: "G10 学生", source: "已签约", stage: "签约", assignee: "招生顾问", date: "2026-04-28", channel: "小红书", leadType: "direct", expectedRevenue: 180000, followUps: [] },
+  { name: "G12 家庭", source: "流失：时间不匹配", stage: "流失", assignee: "招生顾问", date: "2026-05-01", channel: "视频号", leadType: "direct", followUps: [] },
+  { name: "G9 小红书私信", source: "来自小红书：WACE 选课", stage: "私信咨询", assignee: "", date: "2026-05-15", sourceLink: "", channel: "小红书", leadType: "direct", followUps: [] },
+  { name: "G10 家长（李）", source: "来自抖音评论区", stage: "私信咨询", assignee: "", date: "2026-05-14", sourceLink: "", channel: "抖音", leadType: "direct", followUps: [] },
+  // 中介分发线索
+  { name: "G9 中介-王同学", source: "中介：新学途教育推荐", stage: "留电/视频", assignee: "招生顾问", date: "2026-05-11", channel: "中介", leadType: "agent", agentName: "新学途教育", commissionRate: 10, expectedRevenue: 180000, followUps: [{ date: "2026-05-11", note: "中介推荐，学生在深圳国际学校就读", nextAction: "安排线上面试", nextDate: "2026-05-18", author: "招生顾问" }] },
+  { name: "G10 中介-陈同学", source: "中介：环球留学顾问", stage: "加企微", assignee: "招生顾问", date: "2026-05-06", channel: "中介", leadType: "agent", agentName: "环球留学顾问", commissionRate: 8, expectedRevenue: 180000, followUps: [] },
+  // 合作学校线索
+  { name: "G9 合作校-林同学", source: "合作学校：深圳实验中学", stage: "试听/到访", assignee: "招生顾问", date: "2026-05-05", channel: "合作学校", leadType: "partner_school", partnerSchool: "深圳实验中学", expectedRevenue: 160000, followUps: [{ date: "2026-05-05", note: "合作校推荐优秀学生，已到校参观", nextAction: "发录取通知", nextDate: "2026-05-10", author: "招生顾问" }] },
 ];
 const crmStages = ["私信咨询", "加企微", "留电/视频", "试听/到访", "签约", "流失"];
 
@@ -898,6 +903,18 @@ function toCloudUpdatePayload(collection, record) {
       notes: record.notes,
       wechat_id: record.wechatId,
       wechat_add_time: record.wechatAddTime,
+      lead_type: record.leadType || "direct",
+      agent_name: record.agentName || "",
+      partner_school: record.partnerSchool || "",
+      commission_rate: record.commissionRate || 0,
+      expected_revenue: record.expectedRevenue || 0,
+      follow_ups: record.followUps || [],
+      grade: record.grade || "",
+      parent_name: record.parentName || "",
+      course: record.course || "",
+      channel: record.channel || "",
+      source: record.source || "",
+      source_link: record.sourceLink || "",
     };
   }
   return {};
@@ -936,7 +953,7 @@ function persistLeadUpdate(lead) {
   const saved = readSavedState();
   saved._crmUpdates = saved._crmUpdates || [];
   const idx = saved._crmUpdates.findIndex(u => u.name === lead.name);
-  const snapshot = { name: lead.name, stage: lead.stage, assignee: lead.assignee, notes: lead.notes, wechatId: lead.wechatId, wechatAddTime: lead.wechatAddTime, followUps: lead.followUps };
+  const snapshot = { name: lead.name, stage: lead.stage, assignee: lead.assignee, notes: lead.notes, wechatId: lead.wechatId, wechatAddTime: lead.wechatAddTime, followUps: lead.followUps, leadType: lead.leadType, partnerSchool: lead.partnerSchool, agentName: lead.agentName, commissionRate: lead.commissionRate, expectedRevenue: lead.expectedRevenue, grade: lead.grade, parentName: lead.parentName, course: lead.course, channel: lead.channel, source: lead.source, sourceLink: lead.sourceLink };
   if (idx >= 0) saved._crmUpdates[idx] = snapshot;
   else saved._crmUpdates.push(snapshot);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
@@ -1211,6 +1228,11 @@ function fromCloudCrmLead(row) {
     wechatAddTime: row.wechat_add_time || null,
     notes: row.notes || "",
     followUps: row.follow_ups || [],
+    leadType: row.lead_type || "direct",
+    agentName: row.agent_name || "",
+    partnerSchool: row.partner_school || "",
+    commissionRate: row.commission_rate || 0,
+    expectedRevenue: row.expected_revenue || 0,
   };
 }
 
@@ -1646,6 +1668,11 @@ const modalTemplates = {
     title: "新增招生线索",
     body: () => `
       <div class="form-grid">
+        <label>线索类型<select id="lead-type" onchange="toggleLeadTypeFields()">
+          <option value="direct">直招</option>
+          <option value="agent">中介分发</option>
+          <option value="partner_school">合作学校</option>
+        </select></label>
         <label>学生姓名<input value="学生姓名" /></label>
         <label>当前年级<select><option>G7</option><option>G8</option><option>G9</option><option>G10</option><option>G11</option><option>G12</option></select></label>
         <label>家长姓名<input value="家长姓名" /></label>
@@ -1653,10 +1680,14 @@ const modalTemplates = {
         <label>来源渠道<select id="lead-channel">
           <option>企业微信</option><option>小红书私信</option><option>抖音私信</option>
           <option>视频号</option><option>公众号</option><option>知乎</option>
-          <option>独立站SEO</option><option>线下</option><option>老客推荐</option><option>其他</option>
+          <option>独立站SEO</option><option>线下</option><option>老客推荐</option><option>中介</option><option>合作学校</option><option>其他</option>
         </select></label>
         <label>来源 IP<select>${personaNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
         <label>企微 ID（可选）<input id="lead-wechat-id" placeholder="企业微信 ID 或备注名" /></label>
+        <label id="agent-name-field" style="display:none">中介名称<input id="lead-agent-name" placeholder="中介机构名称" /></label>
+        <label id="partner-school-field" style="display:none">合作学校<input id="lead-partner-school" placeholder="合作学校名称" /></label>
+        <label id="commission-field" style="display:none">佣金比例 (%)<input id="lead-commission" type="number" min="0" max="100" placeholder="如 10" /></label>
+        <label>预期学费<input id="lead-revenue" type="number" placeholder="如 180000" /></label>
         <label class="full-field">来源链接<input placeholder="粘贴小红书/知乎/公众号文章链接" /></label>
         <label class="full-field">跟进备注<textarea>记录家长问题、学生情况、下次跟进动作。</textarea></label>
       </div>
@@ -2161,28 +2192,89 @@ async function saveModalRecord() {
   }
 
   if (currentModalAction === "new-lead") {
-    const channelVal = document.querySelector("#lead-channel")?.value || values[4] || "其他";
+    const leadTypeVal = document.querySelector("#lead-type")?.value || "direct";
+    const channelVal = document.querySelector("#lead-channel")?.value || values[5] || "其他";
     const wechatIdVal = document.querySelector("#lead-wechat-id")?.value.trim() || "";
+    const agentNameVal = document.querySelector("#lead-agent-name")?.value.trim() || "";
+    const partnerSchoolVal = document.querySelector("#lead-partner-school")?.value.trim() || "";
+    const commissionVal = parseFloat(document.querySelector("#lead-commission")?.value) || 0;
+    const revenueVal = parseFloat(document.querySelector("#lead-revenue")?.value) || 0;
     const lead = {
-      name: `${values[1] || "G"} ${values[0] || "学生家长"}`,
-      source: `来自${channelVal}：${values[5] || "IP"}`,
+      name: `${values[2] || "G"} ${values[1] || "学生家长"}`,
+      source: leadTypeVal === "agent" ? `中介：${agentNameVal}推荐` : leadTypeVal === "partner_school" ? `合作学校：${partnerSchoolVal}` : `来自${channelVal}：${values[6] || "IP"}`,
       stage: "私信咨询",
       assignee: "",
       date: new Date().toISOString().slice(0, 10),
-      grade: values[1] || "",
-      parentName: values[2] || "",
-      course: values[3] || "",
-      sourceLink: values[7] || "",
+      grade: values[2] || "",
+      parentName: values[3] || "",
+      course: values[4] || "",
+      sourceLink: values[10] || "",
       channel: channelVal,
       wechatId: wechatIdVal,
       wechatAddTime: wechatIdVal ? new Date().toISOString() : null,
-      notes: values[8] || "",
+      notes: values[11] || "",
+      leadType: leadTypeVal,
+      agentName: leadTypeVal === "agent" ? agentNameVal : "",
+      partnerSchool: leadTypeVal === "partner_school" ? partnerSchoolVal : "",
+      commissionRate: leadTypeVal === "agent" ? commissionVal : 0,
+      expectedRevenue: revenueVal || 0,
+      followUps: [],
     };
     crmLeads.unshift(lead);
+    persistLeadUpdate(lead);
     renderCrm();
     renderNotifications();
     switchToView("crm");
     showToast("新线索已添加到「私信咨询」阶段，请分配招生顾问。");
+    return true;
+  }
+
+  if (currentModalAction === "lead-add-followup") {
+    const lead = window._editingLead;
+    const fuNote = document.querySelector("#fu-note")?.value.trim();
+    if (lead && fuNote) {
+      if (!lead.followUps) lead.followUps = [];
+      lead.followUps.push({
+        date: new Date().toISOString().slice(0, 10),
+        note: fuNote,
+        nextAction: document.querySelector("#fu-next-action")?.value.trim() || "",
+        nextDate: document.querySelector("#fu-next-date")?.value || "",
+        author: roleCopy[document.querySelector("#role-select").value]?.user || "系统",
+      });
+      persistLeadUpdate(lead);
+      renderCrm();
+      renderNotifications();
+      showToast("跟进记录已添加");
+    } else if (!fuNote) {
+      showToast("请填写跟进内容");
+      return false;
+    }
+    return true;
+  }
+
+  if (currentModalAction === "lead-edit") {
+    const lead = window._editingLead;
+    if (lead) {
+      const oldName = lead.name;
+      lead.name = document.querySelector("#edit-lead-name")?.value.trim() || lead.name;
+      lead.leadType = document.querySelector("#edit-lead-type")?.value || "direct";
+      lead.stage = document.querySelector("#edit-lead-stage")?.value || lead.stage;
+      lead.assignee = document.querySelector("#edit-lead-assignee")?.value || "";
+      lead.grade = document.querySelector("#edit-lead-grade")?.value || "";
+      lead.course = document.querySelector("#edit-lead-course")?.value.trim() || "";
+      lead.parentName = document.querySelector("#edit-lead-parent")?.value.trim() || "";
+      lead.channel = document.querySelector("#edit-lead-channel")?.value.trim() || "";
+      lead.wechatId = document.querySelector("#edit-lead-wechat")?.value.trim() || "";
+      lead.agentName = document.querySelector("#edit-lead-agent")?.value.trim() || "";
+      lead.partnerSchool = document.querySelector("#edit-lead-partner")?.value.trim() || "";
+      lead.commissionRate = parseFloat(document.querySelector("#edit-lead-commission")?.value) || 0;
+      lead.expectedRevenue = parseFloat(document.querySelector("#edit-lead-revenue")?.value) || 0;
+      lead.sourceLink = document.querySelector("#edit-lead-link")?.value.trim() || "";
+      lead.notes = document.querySelector("#edit-lead-notes")?.value.trim() || "";
+      persistLeadUpdate(lead);
+      renderCrm();
+      showToast(`线索「${lead.name}」已更新`);
+    }
     return true;
   }
 
@@ -3184,6 +3276,100 @@ function getAdmissionCounselors() {
   return teamMembers.filter((m) => m.role === "招生顾问" && m.status === "在职").map((m) => m.name);
 }
 
+/* ── Lead type helpers ── */
+const LEAD_TYPE_LABELS = { direct: "直招", agent: "中介", partner_school: "合作校" };
+const LEAD_TYPE_COLORS = { direct: "#3b82f6", agent: "#f59e0b", partner_school: "#10b981" };
+let crmTypeFilter = "all"; // "all" | "direct" | "agent" | "partner_school"
+
+function toggleLeadTypeFields() {
+  const t = document.querySelector("#lead-type")?.value || "direct";
+  const agentEl = document.querySelector("#agent-name-field");
+  const partnerEl = document.querySelector("#partner-school-field");
+  const commEl = document.querySelector("#commission-field");
+  if (agentEl) agentEl.style.display = t === "agent" ? "" : "none";
+  if (partnerEl) partnerEl.style.display = t === "partner_school" ? "" : "none";
+  if (commEl) commEl.style.display = t === "agent" ? "" : "none";
+}
+
+function buildLeadDetailHtml(lead) {
+  const typeBadge = `<span class="lead-type-badge" style="background:${LEAD_TYPE_COLORS[lead.leadType] || "#94a3b8"}">${LEAD_TYPE_LABELS[lead.leadType] || "直招"}</span>`;
+  const followUps = lead.followUps || [];
+  const counselors = getAdmissionCounselors();
+  return `
+    <div class="detail-list">
+      <div><strong>线索名称</strong><span>${escapeHtml(lead.name)}</span></div>
+      <div><strong>线索类型</strong><span>${typeBadge}</span></div>
+      <div><strong>当前阶段</strong><span>${escapeHtml(lead.stage)}</span></div>
+      <div><strong>来源</strong><span>${escapeHtml(lead.source)}${lead.sourceLink ? ` <a href="${escapeHtml(lead.sourceLink)}" target="_blank" rel="noopener">🔗</a>` : ""}</span></div>
+      <div><strong>渠道</strong><span>${escapeHtml(lead.channel || "—")}</span></div>
+      <div><strong>年级</strong><span>${escapeHtml(lead.grade || "—")}</span></div>
+      <div><strong>意向课程</strong><span>${escapeHtml(lead.course || "—")}</span></div>
+      <div><strong>家长姓名</strong><span>${escapeHtml(lead.parentName || "—")}</span></div>
+      <div><strong>负责顾问</strong><span>${lead.assignee ? escapeHtml(lead.assignee) : "未分配"}</span></div>
+      ${lead.wechatId ? `<div><strong>企微 ID</strong><span>${escapeHtml(lead.wechatId)}</span></div>` : ""}
+      ${lead.agentName ? `<div><strong>中介</strong><span>${escapeHtml(lead.agentName)}${lead.commissionRate ? ` (佣金 ${lead.commissionRate}%)` : ""}</span></div>` : ""}
+      ${lead.partnerSchool ? `<div><strong>合作学校</strong><span>${escapeHtml(lead.partnerSchool)}</span></div>` : ""}
+      ${lead.expectedRevenue ? `<div><strong>预期学费</strong><span>¥${fmtNum(lead.expectedRevenue)}</span></div>` : ""}
+      <div><strong>创建日期</strong><span>${lead.date || "—"}</span></div>
+      ${lead.notes ? `<div><strong>备注</strong><span>${escapeHtml(lead.notes)}</span></div>` : ""}
+    </div>
+    <div class="modal-section">
+      <h3>跟进记录 (${followUps.length})</h3>
+      ${followUps.length > 0 ? `<div class="follow-up-timeline">${followUps.map(f => `
+        <div class="follow-up-entry">
+          <div class="fu-date">${escapeHtml(f.date)}</div>
+          <div class="fu-note">${escapeHtml(f.note)}</div>
+          ${f.nextAction ? `<div class="fu-next">下一步：${escapeHtml(f.nextAction)}${f.nextDate ? ` (${f.nextDate})` : ""}</div>` : ""}
+          ${f.author ? `<div class="fu-author">— ${escapeHtml(f.author)}</div>` : ""}
+        </div>
+      `).join("")}</div>` : `<p style="color:var(--muted)">暂无跟进记录。</p>`}
+    </div>
+    <div class="modal-section">
+      <h3>添加跟进</h3>
+      <div class="form-grid">
+        <label class="full-field">跟进内容<textarea id="fu-note" placeholder="记录本次沟通内容…"></textarea></label>
+        <label>下一步动作<input id="fu-next-action" placeholder="如：约试听课" /></label>
+        <label>下次跟进日期<input id="fu-next-date" type="date" /></label>
+      </div>
+    </div>
+  `;
+}
+
+function buildLeadEditHtml(lead) {
+  const counselors = getAdmissionCounselors();
+  return `
+    <div class="form-grid">
+      <label>线索类型<select id="edit-lead-type">
+        <option value="direct" ${lead.leadType === "direct" ? "selected" : ""}>直招</option>
+        <option value="agent" ${lead.leadType === "agent" ? "selected" : ""}>中介分发</option>
+        <option value="partner_school" ${lead.leadType === "partner_school" ? "selected" : ""}>合作学校</option>
+      </select></label>
+      <label>学生姓名<input id="edit-lead-name" value="${escapeHtml(lead.name)}" /></label>
+      <label>当前阶段<select id="edit-lead-stage">
+        ${crmStages.map(s => `<option value="${s}" ${lead.stage === s ? "selected" : ""}>${s}</option>`).join("")}
+      </select></label>
+      <label>负责顾问<select id="edit-lead-assignee">
+        <option value="">未分配</option>
+        ${counselors.map(c => `<option value="${c}" ${lead.assignee === c ? "selected" : ""}>${c}</option>`).join("")}
+      </select></label>
+      <label>当前年级<select id="edit-lead-grade">
+        <option value="">—</option>
+        ${["G7","G8","G9","G10","G11","G12"].map(g => `<option value="${g}" ${lead.grade === g ? "selected" : ""}>${g}</option>`).join("")}
+      </select></label>
+      <label>意向课程<input id="edit-lead-course" value="${escapeHtml(lead.course || "")}" /></label>
+      <label>家长姓名<input id="edit-lead-parent" value="${escapeHtml(lead.parentName || "")}" /></label>
+      <label>来源渠道<input id="edit-lead-channel" value="${escapeHtml(lead.channel || "")}" /></label>
+      <label>企微 ID<input id="edit-lead-wechat" value="${escapeHtml(lead.wechatId || "")}" /></label>
+      <label>中介名称<input id="edit-lead-agent" value="${escapeHtml(lead.agentName || "")}" /></label>
+      <label>合作学校<input id="edit-lead-partner" value="${escapeHtml(lead.partnerSchool || "")}" /></label>
+      <label>佣金比例 (%)<input id="edit-lead-commission" type="number" value="${lead.commissionRate || 0}" /></label>
+      <label>预期学费<input id="edit-lead-revenue" type="number" value="${lead.expectedRevenue || 0}" /></label>
+      <label class="full-field">来源链接<input id="edit-lead-link" value="${escapeHtml(lead.sourceLink || "")}" /></label>
+      <label class="full-field">备注<textarea id="edit-lead-notes">${escapeHtml(lead.notes || "")}</textarea></label>
+    </div>
+  `;
+}
+
 function renderCrm() {
   const target = document.querySelector("#crm-kanban");
   if (!target) return;
@@ -3193,17 +3379,33 @@ function renderCrm() {
   const counselors = getAdmissionCounselors();
 
   // Admission counselors only see their own leads
-  const visibleLeads = isAdmission
+  let visibleLeads = isAdmission
     ? crmLeads.filter((l) => l.assignee === currentUser || l.assignee === "")
     : crmLeads;
+
+  // Apply lead type filter
+  if (crmTypeFilter !== "all") {
+    visibleLeads = visibleLeads.filter(l => (l.leadType || "direct") === crmTypeFilter);
+  }
+
+  // Lead type counts for filter bar
+  const typeCounts = { all: crmLeads.length, direct: 0, agent: 0, partner_school: 0 };
+  crmLeads.forEach(l => { const t = l.leadType || "direct"; typeCounts[t] = (typeCounts[t] || 0) + 1; });
 
   // Conversion rate calculation between stages
   const stageCounts = {};
   crmStages.forEach((s) => { stageCounts[s] = crmLeads.filter((l) => l.stage === s).length; });
-  const activeStages = crmStages.filter((s) => s !== "流失");
 
-  // Build kanban columns
-  target.innerHTML = crmStages.map((stageName, idx) => {
+  // Filter bar
+  const filterBar = `<div class="crm-filter-bar">
+    <button class="crm-type-filter ${crmTypeFilter === "all" ? "active" : ""}" data-type="all">全部 (${typeCounts.all})</button>
+    <button class="crm-type-filter ${crmTypeFilter === "direct" ? "active" : ""}" data-type="direct">直招 (${typeCounts.direct})</button>
+    <button class="crm-type-filter ${crmTypeFilter === "agent" ? "active" : ""}" data-type="agent">中介 (${typeCounts.agent})</button>
+    <button class="crm-type-filter ${crmTypeFilter === "partner_school" ? "active" : ""}" data-type="partner_school">合作校 (${typeCounts.partner_school})</button>
+  </div>`;
+
+  // Build kanban columns with drag-and-drop
+  const kanbanHtml = crmStages.map((stageName, idx) => {
     const leads = visibleLeads.filter((l) => l.stage === stageName);
     const funnelTarget = CRM_FUNNEL_TARGETS[stageName];
     const prevStage = idx > 0 ? crmStages[idx - 1] : null;
@@ -3213,15 +3415,24 @@ function renderCrm() {
     const convBadge = convRate !== null ? `<span class="conv-rate-badge${convRate < 20 ? " warn" : ""}">${convRate}%</span>` : "";
 
     return `
-      <section class="kanban-column">
+      <section class="kanban-column" data-stage="${escapeHtml(stageName)}" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleLeadDrop(event, '${escapeHtml(stageName)}'); this.classList.remove('drag-over')">
         <h3>${stageName} <span class="crm-count">${leads.length}</span> ${convBadge}</h3>
         ${targetInfo}
-        ${leads.map((lead) => `
-          <article class="lead-card row-action" data-title="${escapeHtml(lead.name)}" data-kind="线索详情">
-            <strong>${escapeHtml(lead.name)}</strong>
+        ${leads.map((lead) => {
+          const typeLabel = LEAD_TYPE_LABELS[lead.leadType] || "直招";
+          const typeColor = LEAD_TYPE_COLORS[lead.leadType] || "#3b82f6";
+          const lastFollowUp = (lead.followUps || []).slice(-1)[0];
+          return `
+          <article class="lead-card" draggable="true" data-lead-name="${escapeHtml(lead.name)}" ondragstart="event.dataTransfer.setData('text/plain', '${escapeHtml(lead.name)}'); this.classList.add('dragging')" ondragend="this.classList.remove('dragging')">
+            <div class="lead-card-header">
+              <strong class="row-action" data-title="${escapeHtml(lead.name)}" data-kind="线索详情">${escapeHtml(lead.name)}</strong>
+              <span class="lead-type-badge" style="background:${typeColor}">${typeLabel}</span>
+            </div>
             <span>${escapeHtml(lead.source)}${lead.sourceLink ? ` <a href="${escapeHtml(lead.sourceLink)}" target="_blank" rel="noopener" class="source-link" title="打开来源内容" onclick="event.stopPropagation()">🔗</a>` : ""}</span>
             ${lead.channel ? `<span class="lead-channel">${escapeHtml(lead.channel)}</span>` : ""}
             ${lead.wechatId ? `<span class="lead-wechat-status">💬 企微已加</span>` : ""}
+            ${lead.expectedRevenue ? `<span class="lead-revenue">¥${fmtNum(lead.expectedRevenue)}</span>` : ""}
+            ${lastFollowUp ? `<span class="lead-follow-up-hint">📋 ${escapeHtml(lastFollowUp.note.slice(0, 20))}${lastFollowUp.nextDate ? ` · 下次: ${lastFollowUp.nextDate}` : ""}</span>` : ""}
             <div class="lead-meta">
               ${lead.assignee
                 ? `<span class="lead-assignee">👤 ${escapeHtml(lead.assignee)}</span>`
@@ -3233,12 +3444,23 @@ function renderCrm() {
                   : `<span class="lead-assignee unassigned">未分配</span>`)
               }
               <span class="lead-date">${lead.date || ""}</span>
+              <button class="lead-edit-btn" data-lead-name="${escapeHtml(lead.name)}" title="编辑" onclick="event.stopPropagation()">✏️</button>
             </div>
-          </article>
-        `).join("")}
+          </article>`;
+        }).join("")}
       </section>
     `;
   }).join("");
+
+  target.innerHTML = filterBar + kanbanHtml;
+
+  // Wire filter buttons
+  target.querySelectorAll(".crm-type-filter").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      crmTypeFilter = e.target.dataset.type;
+      renderCrm();
+    });
+  });
 
   // Wire assign dropdowns
   target.querySelectorAll(".lead-assign-select").forEach((sel) => {
@@ -3255,6 +3477,32 @@ function renderCrm() {
     });
     sel.addEventListener("click", (e) => e.stopPropagation());
   });
+
+  // Wire edit buttons
+  target.querySelectorAll(".lead-edit-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const leadName = e.target.dataset.leadName;
+      const lead = crmLeads.find(l => l.name === leadName);
+      if (lead) {
+        window._editingLead = lead;
+        openModal("lead-edit", `编辑线索：${lead.name.slice(0, 15)}`, buildLeadEditHtml(lead));
+        currentModalAction = "lead-edit";
+      }
+    });
+  });
+}
+
+/* ── Drag & drop handler for CRM kanban ── */
+function handleLeadDrop(event, newStage) {
+  event.preventDefault();
+  const leadName = event.dataTransfer.getData("text/plain");
+  const lead = crmLeads.find(l => l.name === leadName);
+  if (lead && lead.stage !== newStage) {
+    lead.stage = newStage;
+    persistLeadUpdate(lead);
+    renderCrm();
+    showToast(`线索「${leadName}」已移至「${newStage}」阶段`);
+  }
 }
 
 function renderBars() {
@@ -3997,6 +4245,20 @@ function wireActions() {
         const post = posts.find((entry) => entry[4] === title);
         if (post) {
           openModal("record-detail", "发布记录", buildPostDetail(post));
+          return;
+        }
+      }
+      /* CRM lead detail */
+      if (kind === "线索详情") {
+        const lead = crmLeads.find(l => l.name === title);
+        if (lead) {
+          window._editingLead = lead;
+          openModal("lead-detail", `线索：${lead.name.slice(0, 15)}`, buildLeadDetailHtml(lead));
+          currentModalAction = "lead-add-followup";
+          const confirmBtn = document.querySelector("#modal-confirm");
+          if (confirmBtn) { confirmBtn.textContent = "添加跟进"; }
+          const draftBtn = document.querySelector("#modal-draft");
+          if (draftBtn) { draftBtn.style.display = "none"; }
           return;
         }
       }
