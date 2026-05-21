@@ -20,6 +20,7 @@ const roleCopy = {
     nav: ["dashboard", "publishing", "content", "knowledge", "calendar", "crm"],
     user: "运营 A",
     contentFilter: "all",
+    team: "china",
   },
   lead: {
     title: "部门负责人",
@@ -27,6 +28,7 @@ const roleCopy = {
     nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "settings"],
     user: "Ocean Wang",
     contentFilter: "all",
+    team: "hq",
   },
   admin: {
     title: "超级管理员",
@@ -34,6 +36,7 @@ const roleCopy = {
     nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "team", "settings"],
     user: "管理员",
     contentFilter: "all",
+    team: "hq",
   },
   ai: {
     title: "AI 内容编辑",
@@ -41,6 +44,7 @@ const roleCopy = {
     nav: ["dashboard", "content", "knowledge", "ai", "calendar"],
     user: "AI 编辑",
     contentFilter: "all",
+    team: "china",
   },
   admission: {
     title: "招生顾问",
@@ -48,8 +52,53 @@ const roleCopy = {
     nav: ["dashboard", "crm"],
     user: "招生顾问",
     contentFilter: "none",
+    team: "china",
   },
 };
+
+/* ── TASK 5.3: RBAC Guards & Audit Log ── */
+let auditLog = [];
+const TEAM_LABELS = { china: "中国团队", singapore: "新加坡团队", hq: "总部" };
+
+function isDemo() {
+  return authMode === "local";
+}
+
+function requireAuth(action) {
+  if (isDemo()) {
+    showToast(`演示模式下无法${action || "执行此操作"}，请登录后操作。`);
+    return false;
+  }
+  return true;
+}
+
+function addAuditLog(action, detail) {
+  const role = document.querySelector("#role-select")?.value || "unknown";
+  const user = authUser?.email || roleCopy[role]?.user || "demo";
+  const team = roleCopy[role]?.team || "hq";
+  auditLog.unshift({
+    time: new Date().toISOString(),
+    user,
+    role,
+    team,
+    action,
+    detail: typeof detail === "string" ? detail : JSON.stringify(detail),
+  });
+  // Keep last 200 entries
+  if (auditLog.length > 200) auditLog.length = 200;
+  // Persist to localStorage
+  try {
+    const saved = readSavedState();
+    saved._auditLog = auditLog.slice(0, 100);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+  } catch (e) { /* ignore storage full */ }
+}
+
+function getCurrentTeam() {
+  const role = document.querySelector("#role-select")?.value || "admin";
+  if (authUser?.user_metadata?.team) return authUser.user_metadata.team;
+  return roleCopy[role]?.team || "hq";
+}
 
 function getFilteredContents() {
   const role = document.querySelector("#role-select").value;
@@ -807,6 +856,8 @@ function loadSavedState() {
       const existing = crmLeads.find((l) => l.name === upd.name);
       if (existing) Object.assign(existing, upd);
     });
+    // Load audit log
+    if (saved._auditLog) auditLog = saved._auditLog;
   } catch (error) {
     console.warn("Could not load system data", error);
   }
@@ -981,6 +1032,11 @@ function showLogin() {
 function hideLogin() {
   document.getElementById("login-screen").classList.add("hidden");
   document.getElementById("app-shell").style.display = "";
+  // Update demo mode badge
+  const demoBadge = document.getElementById("demo-badge");
+  if (demoBadge) {
+    demoBadge.style.display = isDemo() ? "" : "none";
+  }
 }
 
 async function handleSignIn(email, password) {
@@ -2192,6 +2248,7 @@ async function saveModalRecord() {
   }
 
   if (currentModalAction === "new-lead") {
+    if (!requireAuth("新增线索")) return false;
     const leadTypeVal = document.querySelector("#lead-type")?.value || "direct";
     const channelVal = document.querySelector("#lead-channel")?.value || values[5] || "其他";
     const wechatIdVal = document.querySelector("#lead-wechat-id")?.value.trim() || "";
@@ -2222,6 +2279,7 @@ async function saveModalRecord() {
     };
     crmLeads.unshift(lead);
     persistLeadUpdate(lead);
+    addAuditLog("新增线索", `${lead.name} (${LEAD_TYPE_LABELS[lead.leadType] || "直招"})`);
     renderCrm();
     renderNotifications();
     switchToView("crm");
@@ -2230,6 +2288,7 @@ async function saveModalRecord() {
   }
 
   if (currentModalAction === "lead-add-followup") {
+    if (!requireAuth("添加跟进记录")) return false;
     const lead = window._editingLead;
     const fuNote = document.querySelector("#fu-note")?.value.trim();
     if (lead && fuNote) {
@@ -2242,6 +2301,7 @@ async function saveModalRecord() {
         author: roleCopy[document.querySelector("#role-select").value]?.user || "系统",
       });
       persistLeadUpdate(lead);
+      addAuditLog("添加跟进", `${lead.name}: ${fuNote.slice(0, 30)}`);
       renderCrm();
       renderNotifications();
       showToast("跟进记录已添加");
@@ -2253,6 +2313,7 @@ async function saveModalRecord() {
   }
 
   if (currentModalAction === "lead-edit") {
+    if (!requireAuth("编辑线索")) return false;
     const lead = window._editingLead;
     if (lead) {
       const oldName = lead.name;
@@ -2272,6 +2333,7 @@ async function saveModalRecord() {
       lead.sourceLink = document.querySelector("#edit-lead-link")?.value.trim() || "";
       lead.notes = document.querySelector("#edit-lead-notes")?.value.trim() || "";
       persistLeadUpdate(lead);
+      addAuditLog("编辑线索", `${lead.name} → 阶段: ${lead.stage}`);
       renderCrm();
       showToast(`线索「${lead.name}」已更新`);
     }
@@ -3495,11 +3557,14 @@ function renderCrm() {
 /* ── Drag & drop handler for CRM kanban ── */
 function handleLeadDrop(event, newStage) {
   event.preventDefault();
+  if (!requireAuth("移动线索")) return;
   const leadName = event.dataTransfer.getData("text/plain");
   const lead = crmLeads.find(l => l.name === leadName);
   if (lead && lead.stage !== newStage) {
+    const oldStage = lead.stage;
     lead.stage = newStage;
     persistLeadUpdate(lead);
+    addAuditLog("移动线索阶段", `${leadName}: ${oldStage} → ${newStage}`);
     renderCrm();
     showToast(`线索「${leadName}」已移至「${newStage}」阶段`);
   }
@@ -3779,6 +3844,25 @@ function renderSettings() {
           CRM 线索卡片上，可打开的链接会显示 🔗 图标，点击直接跳转。
         </p>
       </div>
+    </div>
+
+    <div class="table-card" style="margin-top:24px">
+      <div style="padding:16px 20px 0">
+        <h3 style="margin:0">操作审计日志</h3>
+        <p style="color:var(--muted);font-size:13px;margin:4px 0 0">记录关键操作，最近 ${Math.min(auditLog.length, 20)} / ${auditLog.length} 条</p>
+      </div>
+      ${auditLog.length > 0 ? `<table>
+        <thead><tr><th>时间</th><th>用户</th><th>团队</th><th>操作</th><th>详情</th></tr></thead>
+        <tbody>
+          ${auditLog.slice(0, 20).map(e => `<tr>
+            <td style="font-size:12px;white-space:nowrap">${e.time?.slice(0, 16).replace("T", " ") || "—"}</td>
+            <td>${escapeHtml(e.user || "—")}</td>
+            <td>${escapeHtml(TEAM_LABELS[e.team] || e.team || "—")}</td>
+            <td><strong>${escapeHtml(e.action || "—")}</strong></td>
+            <td style="font-size:12px;color:var(--muted)">${escapeHtml((e.detail || "").slice(0, 60))}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>` : `<div style="padding:20px;color:var(--muted);text-align:center">暂无审计记录</div>`}
     </div>
   `;
 

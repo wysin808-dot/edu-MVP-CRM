@@ -318,7 +318,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 线索卡片显示最新跟进摘要和下次跟进日期
 - 页面每 5 分钟自动刷新通知 `setInterval(renderNotifications, 300000)`
 
-### TASK 5.3 — RBAC + RLS 权限体系
+### TASK 5.3 ✅ RBAC + RLS 权限体系
 
 **现状**：前端角色切换器无限制，数据无团队隔离。  
 **目标**：中国团队 / 新加坡团队 / 顾问 / 运营 数据分权。
