@@ -182,7 +182,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 资料详情和 Prompt 详情中反向展示"被哪些内容引用"
 - `usedInContents` 字段自动计算（不再手动填数字）
 
-### TASK 3.2 — 团队 KPI 仪表盘
+### TASK 3.2 ✅ 团队 KPI 仪表盘
 
 **目标**：团队页面增加 MCN 规划书 9.3 节定义的人效指标。
 

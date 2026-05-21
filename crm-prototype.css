@@ -1696,6 +1696,58 @@ textarea {
 .table-card tr:hover { background: var(--surface-soft); }
 .compact-heading { margin-top: 32px; }
 
+/* ── TASK 3.2: Team KPI Dashboard ── */
+.kpi-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.kpi-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.kpi-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.kpi-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.kpi-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+.kpi-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.kpi-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+.kpi-value small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.kpi-value.green { color: #16a34a; }
+.kpi-value.amber { color: #d97706; }
+.kpi-value.red { color: #dc2626; }
+
 /* ── P2: Notification Panel ── */
 .notification-overlay {
   display: none;

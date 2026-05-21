@@ -3187,8 +3187,86 @@ function renderPermissions() {
     )
     .join("");
 
+  // ── KPI Dashboard (TASK 3.2) ──
+  const kpiCards = teamMembers.filter(m => m.status === "在职").map(m => {
+    const isOperator = m.role === "运营人员" || m.role === "部门负责人";
+    const isAdmission = m.role === "招生顾问";
+    const isAi = m.role === "AI 内容编辑";
+    const myContents = contents.filter(c => c.author === m.name);
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    const monthlyContents = myContents.filter(c => (c.publishDate || "").startsWith(thisMonth));
+    const totalReads = myContents.reduce((s, c) => s + (c.metrics?.reads || 0), 0);
+    const hotPosts = myContents.filter(c => (c.metrics?.reads || 0) >= 5000).length;
+    const hotRate = myContents.length ? Math.round(hotPosts / myContents.length * 100) : 0;
+    const myLeads = crmLeads.filter(l => l.assignee === m.name);
+    const monthlySigned = myLeads.filter(l => l.stage === "签约" && (l.date || "").startsWith(thisMonth)).length;
+
+    let kpiHtml = "";
+    if (isOperator || isAi) {
+      const monthTarget = 30;
+      const hotTarget = 5;
+      kpiHtml = `
+        <div class="kpi-row">
+          <div class="kpi-metric">
+            <span class="kpi-label">本月产出</span>
+            <span class="kpi-value ${monthlyContents.length >= monthTarget ? "green" : monthlyContents.length >= monthTarget * 0.6 ? "amber" : "red"}">${monthlyContents.length}<small>/${monthTarget}</small></span>
+          </div>
+          <div class="kpi-metric">
+            <span class="kpi-label">爆款率</span>
+            <span class="kpi-value ${hotRate >= hotTarget ? "green" : "amber"}">${hotRate}%<small>/${hotTarget}%</small></span>
+          </div>
+          <div class="kpi-metric">
+            <span class="kpi-label">总内容</span>
+            <span class="kpi-value">${myContents.length}</span>
+          </div>
+          <div class="kpi-metric">
+            <span class="kpi-label">总阅读</span>
+            <span class="kpi-value">${fmtNum(totalReads)}</span>
+          </div>
+        </div>`;
+    }
+    if (isAdmission) {
+      const monthlyFollowed = myLeads.filter(l => (l.date || "").startsWith(thisMonth)).length;
+      const signTarget = 1.5;
+      kpiHtml = `
+        <div class="kpi-row">
+          <div class="kpi-metric">
+            <span class="kpi-label">本月跟进</span>
+            <span class="kpi-value">${monthlyFollowed}</span>
+          </div>
+          <div class="kpi-metric">
+            <span class="kpi-label">本月签约</span>
+            <span class="kpi-value ${monthlySigned >= signTarget ? "green" : "red"}">${monthlySigned}<small>/${signTarget}</small></span>
+          </div>
+          <div class="kpi-metric">
+            <span class="kpi-label">总线索</span>
+            <span class="kpi-value">${myLeads.length}</span>
+          </div>
+          <div class="kpi-metric">
+            <span class="kpi-label">签约总数</span>
+            <span class="kpi-value">${myLeads.filter(l => l.stage === "签约").length}</span>
+          </div>
+        </div>`;
+    }
+    if (!kpiHtml) return "";
+    const roleColor = roleColorMap[m.role] || "blue";
+    return `
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <strong>${escapeHtml(m.name)}</strong>
+          ${badge(m.role, roleColor)}
+        </div>
+        ${kpiHtml}
+      </div>`;
+  }).filter(Boolean).join("");
+
   target.innerHTML = `
     ${roleCards}
+    ${kpiCards ? `
+    <div style="grid-column:1/-1;margin-top:16px">
+      <h3 style="margin:0 0 12px">团队 KPI 仪表盘</h3>
+      <div class="kpi-dashboard">${kpiCards}</div>
+    </div>` : ""}
     <div class="table-card" style="grid-column:1/-1;margin-top:16px">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 0">
         <h3 style="margin:0">团队成员（${teamMembers.length} 人）</h3>
