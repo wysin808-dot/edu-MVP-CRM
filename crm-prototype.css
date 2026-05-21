@@ -2088,6 +2088,52 @@ textarea {
   color: var(--muted);
 }
 
+/* ── North Star Metric ── */
+.north-star {
+  text-align: center;
+  padding: 16px;
+}
+.ns-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--brand);
+}
+.ns-value small {
+  font-size: 18px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.ns-label {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 4px 0 12px;
+}
+.ns-progress {
+  height: 8px;
+  background: var(--surface);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.ns-bar {
+  height: 100%;
+  background: var(--brand);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+.north-star.achieved .ns-bar { background: #16a34a; }
+.north-star.behind .ns-bar { background: #ef4444; }
+.ns-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+.funnel-rate {
+  display: block;
+  font-size: 11px;
+  color: var(--brand);
+  font-weight: 600;
+}
+
 /* ── Account Group Headers ── */
 .account-group-header td {
   background: var(--surface);

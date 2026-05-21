@@ -136,7 +136,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - `renderAccounts()` 按组分区渲染 + 组级汇总
 - 新增"矩阵全景图"视图（类似 MCN 规划书 3.2 节的树形图）
 
-### TASK 2.3 — 数据复盘动态化
+### TASK 2.3 ✅ 数据复盘动态化
 
 **目标**：analytics 页面的数据从硬编码改为基于 contents[] + accounts[] + crmLeads[] 动态计算。
 

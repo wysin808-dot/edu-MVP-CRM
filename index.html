@@ -363,19 +363,17 @@
             <button class="ghost-button action-button" type="button" data-action="export-report">导出月报</button>
           </div>
           <div class="analytics-grid">
+            <section class="panel">
+              <h3>北极星指标</h3>
+              <div id="north-star-metric"></div>
+            </section>
             <section class="panel wide">
               <h3>平台线索表现</h3>
               <div class="bar-chart" id="platform-bars"></div>
             </section>
             <section class="panel">
-              <h3>招生漏斗</h3>
-              <div class="funnel">
-                <div><span>曝光</span><strong>128,400</strong></div>
-                <div><span>私信</span><strong>386</strong></div>
-                <div><span>有效线索</span><strong>143</strong></div>
-                <div><span>到访</span><strong>41</strong></div>
-                <div><span>报名</span><strong>9</strong></div>
-              </div>
+              <h3>招生漏斗（实时）</h3>
+              <div class="funnel" id="dynamic-funnel"></div>
             </section>
           </div>
           <div class="section-heading compact-heading">

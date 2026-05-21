@@ -2977,6 +2977,52 @@ function renderBars() {
     .join("") || '<div class="empty-state">暂无平台数据</div>';
 }
 
+function renderDynamicFunnel() {
+  const target = document.querySelector("#dynamic-funnel");
+  if (!target) return;
+  const stageCounts = {};
+  crmStages.filter((s) => s !== "流失").forEach((s) => {
+    stageCounts[s] = crmLeads.filter((l) => l.stage === s).length;
+  });
+  // Also count downstream (cumulative: signed = all who passed through)
+  const stageLabels = crmStages.filter((s) => s !== "流失");
+  const totalMetricReads = contents.reduce((s, c) => s + (c.metrics?.reads || 0), 0);
+  // Prepend exposure as computed stat
+  const funnelData = [
+    { label: "内容曝光", value: totalMetricReads, target: null },
+    ...stageLabels.map((s) => ({
+      label: s,
+      value: stageCounts[s] || 0,
+      target: CRM_FUNNEL_TARGETS[s]?.monthlyTarget || null,
+    })),
+  ];
+  target.innerHTML = funnelData.map((item, i) => {
+    const prev = i > 0 ? funnelData[i - 1].value : null;
+    const rate = prev && prev > 0 ? ((item.value / prev) * 100).toFixed(1) + "%" : "";
+    const targetHint = item.target ? `<small>目标 ${fmtNum(item.target)}</small>` : "";
+    return `<div><span>${item.label}</span><strong>${fmtNum(item.value)}</strong>${targetHint}${rate ? `<small class="funnel-rate">${rate}</small>` : ""}</div>`;
+  }).join("");
+}
+
+function renderNorthStar() {
+  const target = document.querySelector("#north-star-metric");
+  if (!target) return;
+  const signed = crmLeads.filter((l) => l.stage === "签约").length;
+  const monthlyTarget = 8;
+  const pct = Math.round((signed / monthlyTarget) * 100);
+  const status = signed >= monthlyTarget ? "achieved" : signed >= monthlyTarget * 0.5 ? "on-track" : "behind";
+  target.innerHTML = `
+    <div class="north-star ${status}">
+      <div class="ns-value">${signed} <small>/ ${monthlyTarget}</small></div>
+      <div class="ns-label">月度签约数</div>
+      <div class="ns-progress">
+        <div class="ns-bar" style="width:${Math.min(pct, 100)}%"></div>
+      </div>
+      <div class="ns-hint">${status === "achieved" ? "已达成目标" : `还差 ${monthlyTarget - signed} 人`}</div>
+    </div>
+  `;
+}
+
 function renderAiLibrary(items = aiPromptLibrary) {
   const target = document.querySelector("#ai-library");
   if (!target) return;
@@ -4275,6 +4321,8 @@ function renderApp() {
   renderAccounts();
   renderCrm();
   renderBars();
+  renderDynamicFunnel();
+  renderNorthStar();
   renderAiLibrary();
   renderPermissions();
   renderSettings();
