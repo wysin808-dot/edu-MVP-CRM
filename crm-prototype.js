@@ -2842,9 +2842,24 @@ function renderPersonas(items = personas) {
 function renderAccounts(items) {
   if (!items) items = getMyAccounts();
   const target = document.querySelector("#accounts-table");
-  target.innerHTML = items
-    .map(
-      (account) => `
+  // Group by IP category for visual hierarchy
+  const groups = {};
+  items.forEach((a) => {
+    const cat = a.ipCategory || "school_official";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(a);
+  });
+  const catOrder = ["school_official", "real_person", "agency", "ugc", "seo"];
+  let html = "";
+  catOrder.forEach((cat) => {
+    const catAccounts = groups[cat];
+    if (!catAccounts || catAccounts.length === 0) return;
+    const catInfo = IP_CATEGORIES[cat] || { label: cat, icon: "📱", color: "blue" };
+    const totalLeads = catAccounts.reduce((s, a) => s + (a.leads || 0), 0);
+    const totalPosts = catAccounts.reduce((s, a) => s + (a.monthlyPosts || 0), 0);
+    html += `<tr class="account-group-header"><td colspan="9"><strong>${catInfo.icon} ${catInfo.label}</strong> <span class="badge ${catInfo.color}">${catAccounts.length} 号</span> <small style="color:var(--muted)">月产 ${totalPosts} 条 · 线索 ${totalLeads}</small></td></tr>`;
+    catAccounts.forEach((account) => {
+      html += `
         <tr class="clickable-row account-detail" data-title="${account.accountName}">
           <td>${account.platform}</td>
           <td><strong>${account.accountName}</strong>${account.ipCategory === "agency" ? ' <span class="badge red" style="font-size:10px">中介</span>' : ""}</td>
@@ -2854,11 +2869,10 @@ function renderAccounts(items) {
           <td>${badge(account.stage, "blue")}${badge(account.status, account.status === "运营中" ? "green" : "amber")}</td>
           <td>${account.monthlyPosts}</td>
           <td>${account.leads}</td>
-        </tr>
-      `,
-    )
-    .join("") ||
-    `<tr><td colspan="7"><div class="empty-state">没有找到匹配的账号。</div></td></tr>`;
+        </tr>`;
+    });
+  });
+  target.innerHTML = html || `<tr><td colspan="9"><div class="empty-state">没有找到匹配的账号。</div></td></tr>`;
 }
 
 function getAdmissionCounselors() {
