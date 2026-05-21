@@ -353,7 +353,7 @@ const BRAND_FIREWALL_KEYWORDS = [
   - 人效 = 签约学费 ÷ 团队人数
   - 佣金汇总（应付中介/合作学校）
 
-### TASK 6.2 — 文件存储（Supabase Storage）
+### TASK 6.2 ✅ 文件存储（Supabase Storage）
 
 **现状**：文件选择器只读文件名，不实际上传。  
 **目标**：截图、合同、学生资料、发布素材真实存储。
@@ -365,7 +365,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 线索/合同可附件上传
 - 文件列表展示（缩略图 + 大小 + 上传时间）
 
-### TASK 6.3 — 数据导出
+### TASK 6.3 ✅ 数据导出
 
 **现状**：「导出报告」按钮是空壳。  
 **目标**：CSV 一键导出。
@@ -377,7 +377,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 财务汇总 → CSV
 - 通用 `exportToCsv(headers, rows, filename)` 函数
 
-### TASK 6.4 — IP / 账号编辑 + 内容评论
+### TASK 6.4 ✅ IP / 账号编辑 + 内容评论
 
 **现状**：IP 和账号详情只读，内容无评论功能。  
 **目标**：所有实体可编辑，内容支持团队讨论。

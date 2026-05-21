@@ -1784,12 +1784,16 @@ const modalTemplates = {
     `,
   },
   "export-report": {
-    kicker: "Review Dashboard",
-    title: "导出月报",
-    body: `
+    kicker: "Data Export",
+    title: "数据导出",
+    body: () => `
       <div class="detail-list">
-        <div><strong>导出范围</strong><span>2026 年 5 月：平台表现、账号表现、IP 表现、内容 Top 10、招生漏斗。</span></div>
-        <div><strong>系统说明</strong><span>这里会生成 Excel 或 PDF 月报。</span></div>
+        <div><strong>导出范围</strong><span>当前系统数据的 CSV 导出（UTF-8 编码，Excel 兼容）</span></div>
+      </div>
+      <div class="export-buttons" style="display:grid;gap:10px;margin-top:16px">
+        <button class="primary-button" onclick="exportContents();showToast('内容资产库已导出')">📝 导出内容资产库（${contents.length} 条）</button>
+        <button class="primary-button" onclick="exportCrmLeads();showToast('CRM线索已导出')">🎯 导出 CRM 线索（${crmLeads.length} 条）</button>
+        <button class="primary-button" onclick="exportFinanceSummary();showToast('财务汇总已导出')">💰 导出财务汇总</button>
       </div>
     `,
   },
@@ -1849,6 +1853,116 @@ function getUploadSummary() {
     video: getUploadFiles("video"),
     screenshots: getUploadFiles("screenshots"),
   };
+}
+
+/* ── TASK 6.2: Supabase Storage Upload ── */
+const STORAGE_BUCKET = "bci-media";
+
+async function uploadFileToStorage(file, folder) {
+  if (!cloudReady || !cloudClient) {
+    showToast("离线模式，文件仅在本地预览。");
+    return { url: URL.createObjectURL(file), local: true };
+  }
+  const ext = file.name.split(".").pop() || "bin";
+  const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  updateSyncIndicator("syncing");
+  try {
+    const { data, error } = await cloudClient.storage.from(STORAGE_BUCKET).upload(fileName, file, { cacheControl: "3600", upsert: false });
+    if (error) throw error;
+    const { data: urlData } = cloudClient.storage.from(STORAGE_BUCKET).getPublicUrl(data.path);
+    updateSyncIndicator("synced");
+    return { url: urlData.publicUrl, path: data.path, local: false };
+  } catch (err) {
+    console.warn("Storage upload failed:", err);
+    updateSyncIndicator("error");
+    showToast("文件上传失败：" + (err.message || "请重试"));
+    return { url: URL.createObjectURL(file), local: true };
+  }
+}
+
+async function uploadMultipleFiles(files, folder) {
+  const results = [];
+  for (const file of files) {
+    const result = await uploadFileToStorage(file, folder);
+    results.push({ name: file.name, size: file.size, type: file.type, ...result });
+  }
+  return results;
+}
+
+function buildFilePreview(fileResults) {
+  if (!fileResults || fileResults.length === 0) return "";
+  return fileResults.map(f => {
+    const isImage = f.type?.startsWith("image/");
+    return `<div class="file-preview-item">
+      ${isImage ? `<img src="${f.url}" alt="${escapeHtml(f.name)}" class="file-thumb" />` : `<span class="file-icon">📄</span>`}
+      <span class="file-name">${escapeHtml(f.name)}</span>
+      <span class="file-size">${formatFileSize(f.size)}</span>
+      ${f.local ? `<span class="file-local">本地</span>` : `<span class="file-cloud">☁️</span>`}
+    </div>`;
+  }).join("");
+}
+
+/* ── TASK 6.3: CSV Export ── */
+function exportToCsv(headers, rows, filename) {
+  const escape = (v) => {
+    const s = String(v ?? "").replace(/"/g, '""');
+    return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s}"` : s;
+  };
+  const csvContent = [headers.map(escape).join(","), ...rows.map(row => row.map(escape).join(","))].join("\n");
+  const BOM = "﻿"; // UTF-8 BOM for Excel Chinese support
+  const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`已导出 ${filename}（${rows.length} 条记录）`);
+}
+
+function exportContents() {
+  const headers = ["标题", "状态", "作者", "账号", "漏斗阶段", "情绪钩子", "内容类型", "主题", "WACE", "阅读", "点赞", "评论", "分享", "私信", "线索"];
+  const rows = contents.map(c => [
+    c.title, c.status, c.author || "", c.account || "", c.funnelStage || "", c.emotionalTrigger || "",
+    c.contentType || "", c.topicCluster || "", c.waceFocus ? "是" : "否",
+    c.metrics?.reads || 0, c.metrics?.likes || 0, c.metrics?.comments || 0,
+    c.metrics?.shares || 0, c.metrics?.privateMessages || 0, c.metrics?.leads || 0,
+  ]);
+  exportToCsv(headers, rows, `BCI内容资产库_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+function exportCrmLeads() {
+  const headers = ["姓名", "类型", "阶段", "渠道", "来源", "顾问", "年级", "课程", "企微ID", "中介", "合作校", "佣金率", "预期学费", "日期", "备注"];
+  const rows = crmLeads.map(l => [
+    l.name, LEAD_TYPE_LABELS[l.leadType] || "直招", l.stage, l.channel || "", l.source || "",
+    l.assignee || "未分配", l.grade || "", l.course || "", l.wechatId || "",
+    l.agentName || "", l.partnerSchool || "", l.commissionRate || 0, l.expectedRevenue || 0,
+    l.date || "", l.notes || "",
+  ]);
+  exportToCsv(headers, rows, `BCI招生线索_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+function exportFinanceSummary() {
+  const headers = ["平台", "月度投入", "线索数", "签约收入", "ROI", "单线索成本"];
+  const platformROI = {};
+  accounts.forEach(a => {
+    if (!platformROI[a.platform]) platformROI[a.platform] = { spend: 0, leads: 0, revenue: 0 };
+    platformROI[a.platform].spend += a.monthlySpend || 0;
+    platformROI[a.platform].leads += a.leads || 0;
+  });
+  crmLeads.filter(l => l.stage === "签约").forEach(l => {
+    const ch = l.channel || "";
+    const matchPlatform = Object.keys(platformROI).find(p => ch.includes(p) || p.includes(ch));
+    if (matchPlatform) platformROI[matchPlatform].revenue += l.expectedRevenue || 0;
+  });
+  const rows = Object.entries(platformROI).map(([name, d]) => [
+    name, d.spend, d.leads, d.revenue,
+    d.spend > 0 ? Math.round((d.revenue / d.spend) * 100) + "%" : "—",
+    d.leads > 0 ? Math.round(d.spend / d.leads) : "—",
+  ]);
+  exportToCsv(headers, rows, `BCI财务汇总_${new Date().toISOString().slice(0,10)}.csv`);
 }
 
 function uploadFilesLabel(files) {
@@ -2514,7 +2628,41 @@ function buildContentDetailHtml(item) {
       <h3>审核记录</h3>
       ${buildReviewTimeline(item.reviewHistory)}
     </div>
+    <div class="modal-section">
+      <h3>团队评论 (${(item.comments || []).length})</h3>
+      ${(item.comments || []).length > 0 ? `<div class="comment-list">${(item.comments || []).map(c => `
+        <div class="comment-entry">
+          <div class="comment-author">${escapeHtml(c.author)} <span class="comment-time">${c.time?.slice(0, 16).replace("T", " ") || ""}</span></div>
+          <div class="comment-text">${escapeHtml(c.text)}</div>
+        </div>
+      `).join("")}</div>` : `<p style="color:var(--muted)">暂无评论。</p>`}
+      <div class="comment-form" style="margin-top:10px">
+        <textarea id="content-comment-input" placeholder="输入评论…" style="width:100%;min-height:60px;padding:8px;border:1px solid var(--line);border-radius:6px;font-size:13px;resize:vertical"></textarea>
+        <button class="primary-button" type="button" style="margin-top:6px" onclick="addContentComment('${escapeHtml(item.title)}')">发表评论</button>
+      </div>
+    </div>
   `;
+}
+
+function addContentComment(title) {
+  const input = document.querySelector("#content-comment-input");
+  const text = input?.value.trim();
+  if (!text) { showToast("请输入评论内容"); return; }
+  const item = contents.find(c => c.title === title);
+  if (!item) return;
+  if (!item.comments) item.comments = [];
+  const role = document.querySelector("#role-select")?.value || "admin";
+  item.comments.push({
+    author: roleCopy[role]?.user || "用户",
+    text,
+    time: new Date().toISOString(),
+  });
+  persistContentUpdate(item);
+  addAuditLog("评论内容", `${title.slice(0, 20)}: ${text.slice(0, 30)}`);
+  // Re-render the modal
+  const modalBody = document.querySelector("#modal-body");
+  if (modalBody) modalBody.innerHTML = buildContentDetailHtml(item);
+  showToast("评论已添加");
 }
 
 function renderKpiCards() {
