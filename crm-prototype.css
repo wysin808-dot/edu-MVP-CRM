@@ -1805,39 +1805,6 @@ textarea {
   white-space: nowrap;
 }
 
-/* ── Financial Dashboard ── */
-.finance-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-.finance-kpi-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-}
-.finance-kpi-label {
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-.finance-kpi-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--fg);
-  line-height: 1.2;
-}
-.finance-kpi-value.income { color: #059669; }
-.finance-kpi-value.expense { color: #dc2626; }
-.finance-kpi-sub {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 6px;
-}
-td.income { color: #059669; font-weight: 600; }
-td.expense { color: #dc2626; font-weight: 600; }
 
 /* ── File Upload Preview ── */
 .file-preview-item {
@@ -2175,8 +2142,6 @@ td.expense { color: #dc2626; font-weight: 600; }
   .lead-card-header { flex-wrap: wrap; }
   .crm-filter-bar { gap: 4px; }
   .crm-type-filter { padding: 4px 10px; font-size: 12px; }
-  .finance-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .finance-kpi-value { font-size: 22px; }
 
   /* Mobile nav: show icons only */
   .nav-item { font-size: 12px; padding: 6px 8px; }

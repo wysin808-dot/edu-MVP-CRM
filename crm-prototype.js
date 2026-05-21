@@ -25,7 +25,7 @@ const roleCopy = {
   lead: {
     title: "部门负责人",
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
-    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "finance", "settings"],
+    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "settings"],
     user: "Ocean Wang",
     contentFilter: "all",
     team: "hq",
@@ -33,7 +33,7 @@ const roleCopy = {
   admin: {
     title: "超级管理员",
     summary: "管理用户、角色、账号、IP、资料库和全局数据权限。",
-    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "finance", "team", "settings"],
+    nav: ["dashboard", "publishing", "content", "knowledge", "ai", "persona", "accounts", "calendar", "crm", "analytics", "team", "settings"],
     user: "管理员",
     contentFilter: "all",
     team: "hq",
@@ -1813,7 +1813,6 @@ const modalTemplates = {
       <div class="export-buttons" style="display:grid;gap:10px;margin-top:16px">
         <button class="primary-button" onclick="exportContents();showToast('内容资产库已导出')">📝 导出内容资产库（${contents.length} 条）</button>
         <button class="primary-button" onclick="exportCrmLeads();showToast('CRM线索已导出')">🎯 导出 CRM 线索（${crmLeads.length} 条）</button>
-        <button class="primary-button" onclick="exportFinanceSummary();showToast('财务汇总已导出')">💰 导出财务汇总</button>
       </div>
     `,
   },
@@ -1962,27 +1961,6 @@ function exportCrmLeads() {
     l.date || "", l.notes || "",
   ]);
   exportToCsv(headers, rows, `BCI招生线索_${new Date().toISOString().slice(0,10)}.csv`);
-}
-
-function exportFinanceSummary() {
-  const headers = ["平台", "月度投入", "线索数", "签约收入", "ROI", "单线索成本"];
-  const platformROI = {};
-  accounts.forEach(a => {
-    if (!platformROI[a.platform]) platformROI[a.platform] = { spend: 0, leads: 0, revenue: 0 };
-    platformROI[a.platform].spend += a.monthlySpend || 0;
-    platformROI[a.platform].leads += a.leads || 0;
-  });
-  crmLeads.filter(l => l.stage === "签约").forEach(l => {
-    const ch = l.channel || "";
-    const matchPlatform = Object.keys(platformROI).find(p => ch.includes(p) || p.includes(ch));
-    if (matchPlatform) platformROI[matchPlatform].revenue += l.expectedRevenue || 0;
-  });
-  const rows = Object.entries(platformROI).map(([name, d]) => [
-    name, d.spend, d.leads, d.revenue,
-    d.spend > 0 ? Math.round((d.revenue / d.spend) * 100) + "%" : "—",
-    d.leads > 0 ? Math.round(d.spend / d.leads) : "—",
-  ]);
-  exportToCsv(headers, rows, `BCI财务汇总_${new Date().toISOString().slice(0,10)}.csv`);
 }
 
 function uploadFilesLabel(files) {
@@ -3821,130 +3799,6 @@ function renderNorthStar() {
   `;
 }
 
-/* ── TASK 6.1: Financial Dashboard ── */
-function renderFinance() {
-  const target = document.querySelector("#finance-dashboard");
-  if (!target) return;
-
-  // Calculate financial metrics
-  const signedLeads = crmLeads.filter(l => l.stage === "签约");
-  const totalTuition = signedLeads.reduce((s, l) => s + (l.expectedRevenue || 0), 0);
-  const totalSpend = accounts.reduce((s, a) => s + (a.monthlySpend || 0), 0);
-  const signedCount = signedLeads.length;
-  const cac = signedCount > 0 ? Math.round(totalSpend / signedCount) : 0;
-  const profit = totalTuition - totalSpend;
-  const activeTeamCount = teamMembers.filter(m => m.status === "在职").length || 1;
-  const revenuePerHead = Math.round(totalTuition / activeTeamCount);
-
-  // Commission calculations
-  const agentLeads = crmLeads.filter(l => l.stage === "签约" && l.leadType === "agent");
-  const partnerLeads = crmLeads.filter(l => l.stage === "签约" && l.leadType === "partner_school");
-  const totalAgentCommission = agentLeads.reduce((s, l) => s + ((l.expectedRevenue || 0) * (l.commissionRate || 0) / 100), 0);
-  const totalPartnerCommission = partnerLeads.reduce((s, l) => s + ((l.expectedRevenue || 0) * 0.05), 0); // 5% default for partner schools
-
-  // Platform ROI
-  const platformROI = {};
-  accounts.forEach(a => {
-    if (!platformROI[a.platform]) platformROI[a.platform] = { spend: 0, leads: 0, revenue: 0 };
-    platformROI[a.platform].spend += a.monthlySpend || 0;
-    platformROI[a.platform].leads += a.leads || 0;
-  });
-  // Map signed leads to platforms via channel
-  signedLeads.forEach(l => {
-    const ch = l.channel || "";
-    const matchPlatform = Object.keys(platformROI).find(p => ch.includes(p) || p.includes(ch));
-    if (matchPlatform) platformROI[matchPlatform].revenue += l.expectedRevenue || 0;
-  });
-
-  target.innerHTML = `
-    <div class="finance-kpi-grid">
-      <div class="finance-kpi-card">
-        <div class="finance-kpi-label">月度学费收入</div>
-        <div class="finance-kpi-value income">¥${fmtNum(totalTuition)}</div>
-        <div class="finance-kpi-sub">${signedCount} 个签约学生</div>
-      </div>
-      <div class="finance-kpi-card">
-        <div class="finance-kpi-label">月度渠道支出</div>
-        <div class="finance-kpi-value expense">¥${fmtNum(totalSpend)}</div>
-        <div class="finance-kpi-sub">${accounts.filter(a => a.monthlySpend > 0).length} 个投放渠道</div>
-      </div>
-      <div class="finance-kpi-card">
-        <div class="finance-kpi-label">利润</div>
-        <div class="finance-kpi-value ${profit >= 0 ? "income" : "expense"}">¥${fmtNum(profit)}</div>
-        <div class="finance-kpi-sub">利润率 ${totalTuition > 0 ? Math.round((profit / totalTuition) * 100) : 0}%</div>
-      </div>
-      <div class="finance-kpi-card">
-        <div class="finance-kpi-label">CAC（获客成本）</div>
-        <div class="finance-kpi-value">¥${fmtNum(cac)}</div>
-        <div class="finance-kpi-sub">总投入 ÷ 签约数</div>
-      </div>
-      <div class="finance-kpi-card">
-        <div class="finance-kpi-label">人效</div>
-        <div class="finance-kpi-value">¥${fmtNum(revenuePerHead)}</div>
-        <div class="finance-kpi-sub">学费收入 ÷ ${activeTeamCount} 名在职员工</div>
-      </div>
-      <div class="finance-kpi-card">
-        <div class="finance-kpi-label">应付佣金</div>
-        <div class="finance-kpi-value expense">¥${fmtNum(Math.round(totalAgentCommission + totalPartnerCommission))}</div>
-        <div class="finance-kpi-sub">中介 ¥${fmtNum(Math.round(totalAgentCommission))} + 合作校 ¥${fmtNum(Math.round(totalPartnerCommission))}</div>
-      </div>
-    </div>
-
-    <div class="table-card" style="margin-top:24px">
-      <div style="padding:16px 20px 0">
-        <h3 style="margin:0">平台 ROI 分析</h3>
-        <p style="color:var(--muted);font-size:13px;margin:4px 0 0">每个平台的投入产出比</p>
-      </div>
-      <table>
-        <thead><tr><th>平台</th><th>月度投入</th><th>线索数</th><th>签约收入</th><th>ROI</th><th>单线索成本</th></tr></thead>
-        <tbody>
-          ${Object.entries(platformROI).sort(([,a],[,b]) => (b.revenue - b.spend) - (a.revenue - a.spend)).map(([name, data]) => {
-            const roi = data.spend > 0 ? ((data.revenue / data.spend) * 100).toFixed(0) + "%" : "—";
-            const costPerLead = data.leads > 0 ? "¥" + fmtNum(Math.round(data.spend / data.leads)) : "—";
-            const roiClass = data.spend > 0 && data.revenue > data.spend ? "income" : (data.spend > 0 ? "expense" : "");
-            return `<tr>
-              <td><strong>${escapeHtml(name)}</strong></td>
-              <td>¥${fmtNum(data.spend)}</td>
-              <td>${data.leads}</td>
-              <td>¥${fmtNum(data.revenue)}</td>
-              <td class="${roiClass}"><strong>${roi}</strong></td>
-              <td>${costPerLead}</td>
-            </tr>`;
-          }).join("")}
-        </tbody>
-      </table>
-    </div>
-
-    ${(agentLeads.length > 0 || partnerLeads.length > 0) ? `
-    <div class="table-card" style="margin-top:24px">
-      <div style="padding:16px 20px 0">
-        <h3 style="margin:0">佣金明细</h3>
-      </div>
-      <table>
-        <thead><tr><th>类型</th><th>来源</th><th>学生</th><th>学费</th><th>佣金率</th><th>应付佣金</th></tr></thead>
-        <tbody>
-          ${agentLeads.map(l => `<tr>
-            <td>中介</td>
-            <td>${escapeHtml(l.agentName || "—")}</td>
-            <td>${escapeHtml(l.name)}</td>
-            <td>¥${fmtNum(l.expectedRevenue || 0)}</td>
-            <td>${l.commissionRate || 0}%</td>
-            <td>¥${fmtNum(Math.round((l.expectedRevenue || 0) * (l.commissionRate || 0) / 100))}</td>
-          </tr>`).join("")}
-          ${partnerLeads.map(l => `<tr>
-            <td>合作校</td>
-            <td>${escapeHtml(l.partnerSchool || "—")}</td>
-            <td>${escapeHtml(l.name)}</td>
-            <td>¥${fmtNum(l.expectedRevenue || 0)}</td>
-            <td>5%</td>
-            <td>¥${fmtNum(Math.round((l.expectedRevenue || 0) * 0.05))}</td>
-          </tr>`).join("")}
-        </tbody>
-      </table>
-    </div>` : ""}
-  `;
-}
-
 /* ── TASK 7.3: AI Content Generation (DeepSeek stub) ── */
 async function generateAiContent(prompt, topic, persona) {
   const apiKey = localStorage.getItem("bci-deepseek-key");
@@ -5546,7 +5400,6 @@ function renderApp() {
   renderAiLibrary();
   renderPermissions();
   renderSettings();
-  renderFinance();
   queryArchive();
   renderCalendar();
   renderStrategyHealth();
