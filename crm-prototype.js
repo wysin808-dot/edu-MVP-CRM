@@ -909,7 +909,7 @@ async function loadCloudState() {
     selectCloudRows("content_items"),
     selectCloudRows("knowledge_items"),
     selectCloudRows("ip_personas"),
-    selectCloudRows("social_accounts"),
+    selectCloudRows("account_matrix"),
     selectCloudRows("published_posts"),
   ]);
 
@@ -1137,7 +1137,7 @@ async function persistRecordOnline(collection, record) {
     contents: "content_items",
     knowledge: "knowledge_items",
     personas: "ip_personas",
-    accounts: "social_accounts",
+    accounts: "account_matrix",
     posts: "published_posts",
   };
 

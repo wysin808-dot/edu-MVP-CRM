@@ -97,7 +97,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 漏斗转化率自动计算并展示（每级之间的转化率）
 - 增加红线指标预警（私信→加微 < 10% 等）
 
-### TASK 1.5 — Supabase 数据库表创建
+### TASK 1.5 ✅ Supabase 数据库表创建
 
 **目标**：创建 Supabase 表结构，使云端同步可用。
 
