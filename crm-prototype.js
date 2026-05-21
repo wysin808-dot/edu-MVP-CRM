@@ -94,6 +94,26 @@ function addAuditLog(action, detail) {
   } catch (e) { /* ignore storage full */ }
 }
 
+/* ── TASK 7.2: Dark Mode Toggle ── */
+function toggleDarkMode() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute("data-theme") === "dark";
+  html.setAttribute("data-theme", isDark ? "light" : "dark");
+  const btn = document.querySelector("#theme-toggle");
+  if (btn) btn.textContent = isDark ? "🌙" : "☀️";
+  try { localStorage.setItem("bci-theme", isDark ? "light" : "dark"); } catch(e) {}
+}
+// Restore theme preference on load
+(function() {
+  try {
+    const savedTheme = localStorage.getItem("bci-theme");
+    if (savedTheme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+      setTimeout(() => { const btn = document.querySelector("#theme-toggle"); if (btn) btn.textContent = "☀️"; }, 100);
+    }
+  } catch(e) {}
+})();
+
 function getCurrentTeam() {
   const role = document.querySelector("#role-select")?.value || "admin";
   if (authUser?.user_metadata?.team) return authUser.user_metadata.team;
@@ -3925,6 +3945,90 @@ function renderFinance() {
   `;
 }
 
+/* ── TASK 7.3: AI Content Generation (DeepSeek stub) ── */
+async function generateAiContent(prompt, topic, persona) {
+  const apiKey = localStorage.getItem("bci-deepseek-key");
+  if (!apiKey) {
+    showToast("请先在系统设置中配置 DeepSeek API Key");
+    return null;
+  }
+  try {
+    updateSyncIndicator("syncing");
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: `你是 BCI 国际学校的自媒体内容编辑，负责为 ${persona || "学校"} IP 创作内容。要求：真实、专业、符合教育行业规范。` },
+          { role: "user", content: `主题：${topic || "WACE 课程"}\n\n${prompt || "请生成一段小红书文案"}` },
+        ],
+        max_tokens: 1000,
+        temperature: 0.7,
+      }),
+    });
+    if (!response.ok) throw new Error(`API 错误: ${response.status}`);
+    const data = await response.json();
+    updateSyncIndicator("synced");
+    return data.choices?.[0]?.message?.content || "生成失败";
+  } catch (err) {
+    console.warn("AI generation failed:", err);
+    updateSyncIndicator("error");
+    showToast("AI 生成失败：" + (err.message || "请检查 API Key"));
+    return null;
+  }
+}
+
+/* ── TASK 7.4: Automation Workflows ── */
+function autoAssignLeads() {
+  const counselors = getAdmissionCounselors();
+  if (counselors.length === 0) return 0;
+  const unassigned = crmLeads.filter(l => l.stage === "私信咨询" && !l.assignee);
+  if (unassigned.length === 0) return 0;
+  // Round-robin assignment
+  let assigned = 0;
+  unassigned.forEach((lead, i) => {
+    lead.assignee = counselors[i % counselors.length];
+    persistLeadUpdate(lead);
+    addAuditLog("自动分配线索", `${lead.name} → ${lead.assignee}`);
+    assigned++;
+  });
+  if (assigned > 0) {
+    renderCrm();
+    renderNotifications();
+    showToast(`已自动分配 ${assigned} 条线索给 ${counselors.length} 位顾问`);
+  }
+  return assigned;
+}
+
+function runPeriodicChecks() {
+  // Check 1: Content without metrics after 3 days
+  const now = new Date();
+  const threeDaysAgo = new Date(now - 3 * 86400000).toISOString().slice(0, 10);
+  const staleContent = contents.filter(c =>
+    (c.status === "已发布" || c.status === "Posted") &&
+    c.publishDate && c.publishDate <= threeDaysAgo &&
+    (!c.metrics || (c.metrics.reads === 0 && c.metrics.leads === 0))
+  );
+  if (staleContent.length > 0) {
+    console.log(`[自动检查] ${staleContent.length} 条已发布内容超过 3 天未回填数据`);
+  }
+
+  // Check 2: Leads idle for more than 5 days
+  const fiveDaysAgo = new Date(now - 5 * 86400000).toISOString().slice(0, 10);
+  const idleLeads = crmLeads.filter(l =>
+    l.stage !== "签约" && l.stage !== "流失" &&
+    l.date && l.date <= fiveDaysAgo &&
+    (!l.followUps || l.followUps.length === 0)
+  );
+  if (idleLeads.length > 0) {
+    console.log(`[自动检查] ${idleLeads.length} 条线索超过 5 天未跟进`);
+  }
+}
+
+// Run periodic checks every 10 minutes
+setInterval(runPeriodicChecks, 600000);
+
 function renderAiLibrary(items = aiPromptLibrary) {
   const target = document.querySelector("#ai-library");
   if (!target) return;
@@ -4130,6 +4234,17 @@ function renderSettings() {
 
     <div class="table-card" style="margin-top:24px">
       <div style="padding:16px 20px 0">
+        <h3 style="margin:0">AI 内容生成配置</h3>
+        <p style="color:var(--muted);font-size:13px;margin:4px 0 0">配置 DeepSeek API Key 以启用 AI 内容生成功能。</p>
+      </div>
+      <div style="padding:16px 20px;display:flex;gap:8px;align-items:flex-end">
+        <label style="flex:1;font-size:13px">DeepSeek API Key<input id="deepseek-key-input" type="password" placeholder="sk-..." value="${localStorage.getItem("bci-deepseek-key") || ""}" style="width:100%" /></label>
+        <button class="primary-button" type="button" onclick="const v=document.querySelector('#deepseek-key-input').value.trim();if(v){localStorage.setItem('bci-deepseek-key',v);showToast('API Key 已保存')}else{localStorage.removeItem('bci-deepseek-key');showToast('API Key 已清除')}">保存</button>
+      </div>
+    </div>
+
+    <div class="table-card" style="margin-top:24px">
+      <div style="padding:16px 20px 0">
         <h3 style="margin:0">操作审计日志</h3>
         <p style="color:var(--muted);font-size:13px;margin:4px 0 0">记录关键操作，最近 ${Math.min(auditLog.length, 20)} / ${auditLog.length} 条</p>
       </div>
@@ -4247,7 +4362,7 @@ function renderDashboardForRole() {
   const actionsEl = document.getElementById("role-actions");
   if (actionsEl) {
     if (isAdmission) {
-      actionsEl.innerHTML = `<button class="primary-button action-button" type="button" data-action="new-lead">新增线索</button>`;
+      actionsEl.innerHTML = `<button class="primary-button action-button" type="button" data-action="new-lead">新增线索</button><button class="ghost-button" type="button" onclick="autoAssignLeads()" style="margin-left:8px">⚡ 自动分配</button>`;
     } else if (isAi) {
       actionsEl.innerHTML = `<button class="primary-button action-button" type="button" data-action="new-content">生成内容</button>`;
     } else {

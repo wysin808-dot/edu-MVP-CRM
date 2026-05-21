@@ -391,13 +391,13 @@ const BRAND_FIREWALL_KEYWORDS = [
 
 ## Part 7 — P2 体验优化
 
-### TASK 7.1 — 移动端适配
+### TASK 7.1 ✅ 移动端适配
 
-### TASK 7.2 — 暗色模式
+### TASK 7.2 ✅ 暗色模式
 
-### TASK 7.3 — AI 内容生成（接通 DeepSeek）
+### TASK 7.3 ✅ AI 内容生成（接通 DeepSeek）
 
-### TASK 7.4 — 自动化工作流（定时检查 + 线索自动分配）
+### TASK 7.4 ✅ 自动化工作流（定时检查 + 线索自动分配）
 
 ---
 

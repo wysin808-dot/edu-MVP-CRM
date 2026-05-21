@@ -4,8 +4,10 @@
   --surface: #ffffff;
   --surface-soft: #f0f2f5;
   --ink: #1a1d21;
+  --fg: #1a1d21;
   --muted: #64748b;
   --line: #e2e6ec;
+  --border: #e2e6ec;
   --brand: #2563eb;
   --brand-strong: #1d4ed8;
   --brand-light: #eff4ff;
@@ -15,6 +17,32 @@
   --red: #dc2626;
   --shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
+
+/* ── Dark Mode ── */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-soft: #1a2332;
+  --ink: #e2e8f0;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --line: #334155;
+  --border: #334155;
+  --brand: #60a5fa;
+  --brand-strong: #93bbfc;
+  --brand-light: #1e3a5f;
+  --green: #4ade80;
+  --blue: #60a5fa;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] img { opacity: 0.9; }
+[data-theme="dark"] .login-screen { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
+[data-theme="dark"] .login-card { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] table thead { background: #1e293b; }
+[data-theme="dark"] table tbody tr:nth-child(even) { background: #1a2332; }
 
 * {
   box-sizing: border-box;
@@ -2139,6 +2167,19 @@ td.expense { color: #dc2626; font-weight: 600; }
   .chain-arrow {
     transform: rotate(90deg);
   }
+
+  /* Mobile CRM kanban: vertical scroll */
+  .kanban-column {
+    min-height: 200px;
+  }
+  .lead-card-header { flex-wrap: wrap; }
+  .crm-filter-bar { gap: 4px; }
+  .crm-type-filter { padding: 4px 10px; font-size: 12px; }
+  .finance-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .finance-kpi-value { font-size: 22px; }
+
+  /* Mobile nav: show icons only */
+  .nav-item { font-size: 12px; padding: 6px 8px; }
 }
 
 /* ── Login Screen ── */

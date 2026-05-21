@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BCI 自媒体矩阵获客系统</title>
-    <link rel="stylesheet" href="./crm-prototype.css?v=17" />
+    <link rel="stylesheet" href="./crm-prototype.css?v=18" />
   </head>
   <body>
     <!-- Login Screen -->
@@ -80,6 +80,7 @@
                 <option value="admission">招生顾问</option>
               </select>
             </label>
+            <button class="ghost-button" type="button" id="theme-toggle" title="切换暗色模式" style="font-size:16px;padding:4px 8px;cursor:pointer" onclick="toggleDarkMode()">🌙</button>
             <span class="demo-badge" id="demo-badge">演示模式</span>
             <button class="ghost-button logout-btn" type="button" id="logout-btn" style="display:none;font-size:12px;padding:4px 10px" title="退出登录">退出</button>
             <span class="sync-indicator sync-off" id="sync-status">💾 离线</span>
@@ -512,6 +513,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./crm-prototype.js?v=17"></script>
+    <script src="./crm-prototype.js?v=18"></script>
   </body>
 </html>
