@@ -86,7 +86,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 ];
 ```
 
-### TASK 1.4 — CRM 漏斗扩展至 6 级
+### TASK 1.4 ✅ CRM 漏斗扩展至 6 级
 
 **目标**：CRM 看板从 4 列扩展为 6 级漏斗，对齐 MCN 规划书 9.2 节。
 

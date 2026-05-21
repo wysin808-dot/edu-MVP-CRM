@@ -607,16 +607,32 @@ const accounts = [
 ];
 
 const crmLeads = [
-  { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "新线索", assignee: "", date: "2026-05-13", sourceLink: "https://www.xiaohongshu.com/explore/example001" },
-  { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "新线索", assignee: "", date: "2026-05-12", sourceLink: "" },
-  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "已咨询", assignee: "招生顾问", date: "2026-05-10", sourceLink: "https://www.xiaohongshu.com/explore/example002" },
-  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "已咨询", assignee: "招生顾问", date: "2026-05-09", sourceLink: "https://mp.weixin.qq.com/s/example003" },
-  { name: "G9 学生家长（张）", source: "周六开放日", stage: "预约到访", assignee: "招生顾问", date: "2026-05-08" },
-  { name: "G7 家庭", source: "校园参观", stage: "预约到访", assignee: "招生顾问", date: "2026-05-07" },
-  { name: "G10 学生", source: "已缴费", stage: "缴费", assignee: "招生顾问", date: "2026-04-28" },
-  { name: "G12 家庭", source: "流失：时间不匹配", stage: "流失", assignee: "招生顾问", date: "2026-05-01" },
+  { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "私信咨询", assignee: "", date: "2026-05-13", sourceLink: "https://www.xiaohongshu.com/explore/example001", channel: "小红书" },
+  { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "私信咨询", assignee: "", date: "2026-05-12", sourceLink: "", channel: "视频号" },
+  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "加企微", assignee: "招生顾问", date: "2026-05-10", sourceLink: "https://www.xiaohongshu.com/explore/example002", channel: "小红书" },
+  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "加企微", assignee: "招生顾问", date: "2026-05-09", sourceLink: "https://mp.weixin.qq.com/s/example003", channel: "公众号" },
+  { name: "G9 学生家长（张）", source: "周六开放日", stage: "留电/视频", assignee: "招生顾问", date: "2026-05-08", channel: "线下" },
+  { name: "G7 家庭", source: "校园参观", stage: "试听/到访", assignee: "招生顾问", date: "2026-05-07", channel: "线下" },
+  { name: "G10 学生", source: "已签约", stage: "签约", assignee: "招生顾问", date: "2026-04-28", channel: "小红书" },
+  { name: "G12 家庭", source: "流失：时间不匹配", stage: "流失", assignee: "招生顾问", date: "2026-05-01", channel: "视频号" },
+  { name: "G9 小红书私信", source: "来自小红书：WACE 选课", stage: "私信咨询", assignee: "", date: "2026-05-15", sourceLink: "", channel: "小红书" },
+  { name: "G10 家长（李）", source: "来自抖音评论区", stage: "私信咨询", assignee: "", date: "2026-05-14", sourceLink: "", channel: "抖音" },
 ];
-const crmStages = ["新线索", "已咨询", "预约到访", "缴费", "流失"];
+const crmStages = ["私信咨询", "加企微", "留电/视频", "试听/到访", "签约", "流失"];
+
+/* ── CRM Funnel Targets (MCN 规划书 9.2 节) ── */
+const CRM_FUNNEL_TARGETS = {
+  "私信咨询": { monthlyTarget: 1500, conversionLabel: "曝光→私信", targetRate: 0.05 },
+  "加企微": { monthlyTarget: 300, conversionLabel: "私信→加微", targetRate: 20 },
+  "留电/视频": { monthlyTarget: 100, conversionLabel: "加微→深聊", targetRate: 33 },
+  "试听/到访": { monthlyTarget: 30, conversionLabel: "深聊→试听", targetRate: 30 },
+  "签约": { monthlyTarget: 8, conversionLabel: "试听→签约", targetRate: 27 },
+};
+const CRM_RED_LINES = [
+  { check: "私信→加微", threshold: 10, desc: "私信→加微转化率 < 10%" },
+  { check: "加微→试听", threshold: 20, desc: "加微→试听转化率 < 20%" },
+  { check: "试听→签约", threshold: 25, desc: "试听→签约转化率 < 25%" },
+];
 
 const permissions = [
   ["超级管理员", "全系统", "用户、角色、账号、IP、资料、CRM、导出"],
@@ -1487,7 +1503,7 @@ const modalTemplates = {
     body: () => {
       const pending = contents.filter((c) => c.status === "待审核").length;
       const backfill = contents.filter((c) => c.status === "已发布" || c.status === "待回填").length;
-      const newLeads = crmLeads.filter((l) => l.stage === "新线索" && !l.assignee).length;
+      const newLeads = crmLeads.filter((l) => l.stage === "私信咨询" && !l.assignee).length;
       return `<div class="detail-list">
         <div><strong>${pending} 条内容待审核</strong><span>负责人需要检查待审核内容。</span></div>
         <div><strong>${backfill} 条发布待回填</strong><span>已发布内容需要补充数据。</span></div>
@@ -1902,20 +1918,21 @@ async function saveModalRecord() {
     const lead = {
       name: `${values[1] || "G"} ${values[0] || "学生家长"}`,
       source: `来自${values[4] || "平台"}：${values[5] || "IP"}`,
-      stage: "新线索",
+      stage: "私信咨询",
       assignee: "",
       date: new Date().toISOString().slice(0, 10),
       grade: values[1] || "",
       parentName: values[2] || "",
       course: values[3] || "",
       sourceLink: values[6] || "",
+      channel: values[4] || "其他",
       notes: values[7] || "",
     };
     crmLeads.unshift(lead);
     renderCrm();
     renderNotifications();
     switchToView("crm");
-    showToast("新线索已添加，请分配招生顾问。");
+    showToast("新线索已添加到「私信咨询」阶段，请分配招生顾问。");
     return true;
   }
 
@@ -2088,8 +2105,8 @@ function renderKpiCards() {
     (c) => c.status === "待回填" || (c.status === "已发布" && c.metrics && c.metrics.reads === 0 && c.metrics.leads === 0)
   ).length;
 
-  // 4. 本周新线索 — count from CRM "新线索" column
-  const newLeadsCount = crmLeads.filter((l) => l.stage === "新线索").length;
+  // 4. 本周新线索 — count from CRM "私信咨询" column
+  const newLeadsCount = crmLeads.filter((l) => l.stage === "私信咨询").length;
 
   // Role-specific card sets
   const cards = [];
@@ -2098,9 +2115,9 @@ function renderKpiCards() {
     // Admission: CRM-focused KPIs — no content metrics
     const myName = roleCopy[currentRole].user;
     const myLeads = crmLeads.filter((l) => l.assignee === myName || l.assignee === "");
-    const pendingFollow = myLeads.filter((l) => l.stage === "新线索" || l.stage === "已咨询").length;
-    const todayVisits = myLeads.filter((l) => l.stage === "预约到访").length;
-    const enrolled = myLeads.filter((l) => l.stage === "缴费").length;
+    const pendingFollow = myLeads.filter((l) => l.stage === "私信咨询" || l.stage === "加企微").length;
+    const todayVisits = myLeads.filter((l) => l.stage === "试听/到访").length;
+    const enrolled = myLeads.filter((l) => l.stage === "签约").length;
 
     cards.push({
       label: "待跟进线索",
@@ -2121,7 +2138,7 @@ function renderKpiCards() {
       color: newLeadsCount > 0 ? "var(--brand)" : "var(--muted)",
     });
     cards.push({
-      label: "已缴费",
+      label: "已签约",
       value: enrolled,
       desc: "人已报名",
       color: enrolled > 0 ? "#16a34a" : "var(--muted)",
@@ -2842,29 +2859,34 @@ function renderCrm() {
     ? crmLeads.filter((l) => l.assignee === currentUser || l.assignee === "")
     : crmLeads;
 
-  // Build kanban columns from crmStages
-  const displayStages = ["新线索", "已咨询", "预约到访", "缴费 / 流失"];
-  const stageMap = {
-    "新线索": ["新线索"],
-    "已咨询": ["已咨询"],
-    "预约到访": ["预约到访"],
-    "缴费 / 流失": ["缴费", "流失"],
-  };
+  // Conversion rate calculation between stages
+  const stageCounts = {};
+  crmStages.forEach((s) => { stageCounts[s] = crmLeads.filter((l) => l.stage === s).length; });
+  const activeStages = crmStages.filter((s) => s !== "流失");
 
-  target.innerHTML = displayStages.map((displayName) => {
-    const matchStages = stageMap[displayName];
-    const leads = visibleLeads.filter((l) => matchStages.includes(l.stage));
+  // Build kanban columns
+  target.innerHTML = crmStages.map((stageName, idx) => {
+    const leads = visibleLeads.filter((l) => l.stage === stageName);
+    const funnelTarget = CRM_FUNNEL_TARGETS[stageName];
+    const prevStage = idx > 0 ? crmStages[idx - 1] : null;
+    const prevCount = prevStage ? stageCounts[prevStage] : 0;
+    const convRate = prevCount > 0 && stageName !== "流失" ? Math.round((leads.length / prevCount) * 100) : null;
+    const targetInfo = funnelTarget ? `<small class="funnel-target">目标 ${funnelTarget.monthlyTarget}/月</small>` : "";
+    const convBadge = convRate !== null ? `<span class="conv-rate-badge${convRate < 20 ? " warn" : ""}">${convRate}%</span>` : "";
+
     return `
       <section class="kanban-column">
-        <h3>${displayName} <span class="crm-count">${leads.length}</span></h3>
+        <h3>${stageName} <span class="crm-count">${leads.length}</span> ${convBadge}</h3>
+        ${targetInfo}
         ${leads.map((lead) => `
           <article class="lead-card row-action" data-title="${escapeHtml(lead.name)}" data-kind="线索详情">
             <strong>${escapeHtml(lead.name)}</strong>
             <span>${escapeHtml(lead.source)}${lead.sourceLink ? ` <a href="${escapeHtml(lead.sourceLink)}" target="_blank" rel="noopener" class="source-link" title="打开来源内容" onclick="event.stopPropagation()">🔗</a>` : ""}</span>
+            ${lead.channel ? `<span class="lead-channel">${escapeHtml(lead.channel)}</span>` : ""}
             <div class="lead-meta">
               ${lead.assignee
                 ? `<span class="lead-assignee">👤 ${escapeHtml(lead.assignee)}</span>`
-                : (lead.stage === "新线索" && !isAdmission
+                : (stageName === "私信咨询" && !isAdmission
                   ? `<select class="lead-assign-select" data-lead-name="${escapeHtml(lead.name)}">
                       <option value="">分配顾问…</option>
                       ${counselors.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("")}
@@ -2891,7 +2913,6 @@ function renderCrm() {
         renderCrm();
       }
     });
-    // Stop click from bubbling to the card's row-action handler
     sel.addEventListener("click", (e) => e.stopPropagation());
   });
 }
@@ -3172,13 +3193,12 @@ function renderDashboardForRole() {
       // Render CRM funnel summary in task-summary
       const taskSummary = document.getElementById("task-summary");
       if (taskSummary) {
-        const stages = ["新线索", "已咨询", "预约到访", "缴费", "流失"];
         const myName = roleCopy[role].user;
         const myLeads = crmLeads.filter((l) => l.assignee === myName || l.assignee === "");
-        taskSummary.innerHTML = `<div class="status-bar">${stages
+        taskSummary.innerHTML = `<div class="status-bar">${crmStages
           .map((s) => {
             const count = myLeads.filter((l) => l.stage === s).length;
-            const cls = s === "流失" ? "red" : s === "缴费" ? "green" : "";
+            const cls = s === "流失" ? "red" : s === "签约" ? "green" : "";
             return `<button class="status-chip ${cls}" data-filter-status="${s}"><strong>${count}</strong><span>${s}</span></button>`;
           })
           .join("")}</div>`;
@@ -3210,12 +3230,12 @@ function renderDashboardForRole() {
     if (isAdmission) {
       const myName = roleCopy[role].user;
       const myLeads = crmLeads.filter((l) => l.assignee === myName);
-      const pending = myLeads.filter((l) => l.stage === "新线索" || l.stage === "已咨询").length;
-      const visits = myLeads.filter((l) => l.stage === "预约到访").length;
+      const pending = myLeads.filter((l) => l.stage === "私信咨询" || l.stage === "加企微").length;
+      const visits = myLeads.filter((l) => l.stage === "试听/到访").length;
       sidebar.innerHTML = `
         <span>今日目标</span>
         <strong>${pending} 条线索跟进</strong>
-        <p>有 ${visits} 个预约到访待确认，及时更新线索阶段。</p>`;
+        <p>有 ${visits} 个试听/到访待确认，及时更新线索阶段。</p>`;
     } else if (isAi) {
       const aiDrafts = getFilteredContents().filter((c) => c.status === "草稿" || c.status === "待审核").length;
       sidebar.innerHTML = `
@@ -4087,15 +4107,15 @@ function generateNotifications() {
   if (isAdmission) {
     const myName = roleCopy[role]?.user || "";
     const myLeads = crmLeads.filter((l) => l.assignee === myName);
-    const myNew = myLeads.filter((l) => l.stage === "新线索").length;
-    const unassigned = crmLeads.filter((l) => l.stage === "新线索" && !l.assignee).length;
+    const myNew = myLeads.filter((l) => l.stage === "私信咨询" || l.stage === "加企微").length;
+    const unassigned = crmLeads.filter((l) => l.stage === "私信咨询" && !l.assignee).length;
     if (myNew > 0) {
-      notifs.push({ type: "action", icon: "🎯", title: `你有 ${myNew} 条新线索待跟进`, desc: "请及时联系，避免线索冷却流失。", time: "实时", targetView: "crm" });
+      notifs.push({ type: "action", icon: "🎯", title: `你有 ${myNew} 条线索待跟进`, desc: "请及时联系，避免线索冷却流失。", time: "实时", targetView: "crm" });
     }
     if (unassigned > 0) {
       notifs.push({ type: "info", icon: "📩", title: `${unassigned} 条线索待分配`, desc: "有新线索尚未分配顾问，请联系负责人。", time: "实时", targetView: "crm" });
     }
-    const myVisits = myLeads.filter((l) => l.stage === "预约到访").length;
+    const myVisits = myLeads.filter((l) => l.stage === "试听/到访").length;
     if (myVisits > 0) {
       notifs.push({ type: "info", icon: "🏫", title: `你有 ${myVisits} 组家庭预约到访`, desc: "请提前准备接待材料和校园参观路线。", time: "今日", targetView: "crm" });
     }
