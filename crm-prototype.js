@@ -772,6 +772,11 @@ function loadSavedState() {
     (saved.personas || []).forEach((item) => personas.unshift(item));
     (saved.accounts || []).forEach((item) => accounts.unshift(item));
     (saved.posts || []).forEach((item) => posts.unshift(item));
+    // Apply CRM lead updates
+    (saved._crmUpdates || []).forEach((upd) => {
+      const existing = crmLeads.find((l) => l.name === upd.name);
+      if (existing) Object.assign(existing, upd);
+    });
   } catch (error) {
     console.warn("Could not load system data", error);
   }
@@ -793,14 +798,127 @@ function persistRecord(collection, record) {
 }
 
 function persistContentUpdate(item) {
+  // Always save to localStorage
   const saved = readSavedState();
   saved._contentUpdates = saved._contentUpdates || [];
-  // Replace existing update for this title, or add new
   const idx = saved._contentUpdates.findIndex((u) => u.title === item.title);
-  const snapshot = { title: item.title, status: item.status, reviewHistory: item.reviewHistory, metrics: item.metrics };
+  const snapshot = {
+    title: item.title, status: item.status, reviewHistory: item.reviewHistory,
+    metrics: item.metrics, funnelStage: item.funnelStage, emotionalTrigger: item.emotionalTrigger,
+    contentType: item.contentType, leadMagnet: item.leadMagnet, primaryKeyword: item.primaryKeyword,
+    topicCluster: item.topicCluster, repurposeStatus: item.repurposeStatus, waceFocus: item.waceFocus,
+    references: item.references, cta: item.cta, notes: item.notes, comments: item.comments,
+  };
   if (idx >= 0) saved._contentUpdates[idx] = snapshot;
   else saved._contentUpdates.push(snapshot);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+  // Also sync to Supabase if connected
+  if (cloudReady && cloudClient) {
+    updateRecordOnline("contents", item).catch(err => console.warn("Cloud update failed:", err));
+  }
+}
+
+async function updateRecordOnline(collection, record) {
+  if (!cloudReady || !cloudClient) return "local";
+  const tableMap = { contents: "content_items", knowledge: "knowledge_items", personas: "ip_personas", accounts: "account_matrix", posts: "published_posts", crm: "crm_leads" };
+  const table = tableMap[collection];
+  if (!table) return "local";
+
+  // Build update payload (only changed fields)
+  const payload = toCloudUpdatePayload(collection, record);
+  if (!payload || Object.keys(payload).length === 0) return "local";
+
+  // Try to match by title (since records may not have cloud UUID)
+  const matchField = collection === "crm" ? "name" : "title";
+  const matchValue = collection === "crm" ? record.name : record.title;
+
+  const { error } = await cloudClient.from(table).update(payload).eq(matchField, matchValue);
+  if (error) {
+    console.warn(`Cloud update failed for ${collection}:`, error);
+    return "local";
+  }
+  updateSyncIndicator("synced");
+  return "cloud";
+}
+
+function toCloudUpdatePayload(collection, record) {
+  if (collection === "contents") {
+    const payload = {};
+    if (record.status) payload.status = record.status;
+    if (record.funnelStage) payload.funnel_stage = record.funnelStage;
+    if (record.emotionalTrigger) payload.emotional_trigger = record.emotionalTrigger;
+    if (record.contentType) payload.content_type = record.contentType;
+    if (record.leadMagnet) payload.lead_magnet = record.leadMagnet;
+    if (record.primaryKeyword) payload.primary_keyword = record.primaryKeyword;
+    if (record.topicCluster) payload.topic_cluster = record.topicCluster;
+    if (record.repurposeStatus) payload.repurpose_status = record.repurposeStatus;
+    if (record.waceFocus !== undefined) payload.wace_focus = record.waceFocus;
+    if (record.references) payload["references"] = record.references;
+    if (record.cta) payload.cta = record.cta;
+    if (record.notes) payload.notes = record.notes;
+    if (record.metrics) {
+      payload.metric_reads = record.metrics.reads || 0;
+      payload.metric_likes = record.metrics.likes || 0;
+      payload.metric_comments = record.metrics.comments || 0;
+      payload.metric_shares = record.metrics.shares || 0;
+      payload.metric_private_messages = record.metrics.privateMessages || 0;
+      payload.metric_leads = record.metrics.leads || 0;
+    }
+    return payload;
+  }
+  if (collection === "crm") {
+    return {
+      stage: record.stage,
+      assignee: record.assignee,
+      notes: record.notes,
+      wechat_id: record.wechatId,
+      wechat_add_time: record.wechatAddTime,
+    };
+  }
+  return {};
+}
+
+async function deleteRecordOnline(collection, matchField, matchValue) {
+  if (!cloudReady || !cloudClient) return "local";
+  const tableMap = { contents: "content_items", knowledge: "knowledge_items", personas: "ip_personas", accounts: "account_matrix", posts: "published_posts", crm: "crm_leads" };
+  const table = tableMap[collection];
+  if (!table) return "local";
+
+  const { error } = await cloudClient.from(table).delete().eq(matchField, matchValue);
+  if (error) {
+    console.warn(`Cloud delete failed for ${collection}:`, error);
+    return "local";
+  }
+  return "cloud";
+}
+
+function updateSyncIndicator(status) {
+  const el = document.querySelector("#sync-status");
+  if (!el) return;
+  const map = {
+    synced: { text: "☁️ 已同步", cls: "sync-ok" },
+    syncing: { text: "🔄 同步中", cls: "sync-ing" },
+    offline: { text: "💾 离线", cls: "sync-off" },
+    error: { text: "⚠️ 同步失败", cls: "sync-err" },
+  };
+  const info = map[status] || map.offline;
+  el.textContent = info.text;
+  el.className = `sync-indicator ${info.cls}`;
+}
+
+function persistLeadUpdate(lead) {
+  // Save CRM leads to localStorage
+  const saved = readSavedState();
+  saved._crmUpdates = saved._crmUpdates || [];
+  const idx = saved._crmUpdates.findIndex(u => u.name === lead.name);
+  const snapshot = { name: lead.name, stage: lead.stage, assignee: lead.assignee, notes: lead.notes, wechatId: lead.wechatId, wechatAddTime: lead.wechatAddTime, followUps: lead.followUps };
+  if (idx >= 0) saved._crmUpdates[idx] = snapshot;
+  else saved._crmUpdates.push(snapshot);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+  // Sync to Supabase
+  if (cloudReady && cloudClient) {
+    updateRecordOnline("crm", lead).catch(err => console.warn("CRM cloud update failed:", err));
+  }
 }
 
 /* ── Auth & Role Mapping ── */
@@ -889,10 +1007,12 @@ async function initCloudDatabase() {
       await loadCloudState();
       cloudReady = true;
       setCloudStatus("已登录，云端数据库已连接。", "cloud");
+      updateSyncIndicator("synced");
     } else {
       authMode = "auth";
       showLogin();
       setCloudStatus("请登录。", "local");
+      updateSyncIndicator("offline");
     }
 
     // Listen for auth state changes
@@ -906,16 +1026,19 @@ async function initCloudDatabase() {
           renderApp();
         }
         setCloudStatus("已登录，云端数据库已连接。", "cloud");
+        updateSyncIndicator("synced");
       } else if (event === "SIGNED_OUT") {
         authUser = null;
         cloudReady = false;
         showLogin();
+        updateSyncIndicator("offline");
       }
     });
   } catch (error) {
     console.warn("Cloud database is not ready, falling back to local storage.", error);
     setCloudStatus("本地模式：云端数据库暂不可用。", "local");
     authMode = "local";
+    updateSyncIndicator("offline");
     hideLogin();
   }
 }
@@ -1157,15 +1280,20 @@ async function persistRecordOnline(collection, record) {
     posts: "published_posts",
   };
 
-  const { error } = await cloudClient.from(tableMap[collection]).insert(toCloudRow(collection, record));
+  updateSyncIndicator("syncing");
+  const row = toCloudRow(collection, record);
+  // Use upsert: insert or update on conflict
+  const { error } = await cloudClient.from(tableMap[collection]).upsert(row, { onConflict: "title" });
   if (error) {
-    console.warn("Cloud insert failed, saving locally instead.", error);
+    console.warn("Cloud upsert failed, saving locally instead.", error);
     persistRecord(collection, record);
     setCloudStatus("本地模式：云端写入失败，已临时保存在本机。", "local");
+    updateSyncIndicator("error");
     return "local";
   }
 
   setCloudStatus("云端数据库已连接。", "cloud");
+  updateSyncIndicator("synced");
   return "cloud";
 }
 
@@ -3057,6 +3185,7 @@ function renderCrm() {
       const lead = crmLeads.find((l) => l.name === leadName && !l.assignee);
       if (lead) {
         lead.assignee = assignee;
+        persistLeadUpdate(lead);
         renderCrm();
       }
     });

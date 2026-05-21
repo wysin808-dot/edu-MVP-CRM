@@ -1748,6 +1748,22 @@ textarea {
 .kpi-value.amber { color: #d97706; }
 .kpi-value.red { color: #dc2626; }
 
+/* ── Sync indicator ── */
+.sync-indicator {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.sync-ok { background: #f0fdf4; color: #16a34a; }
+.sync-ing { background: #eff6ff; color: #3b82f6; animation: pulse-sync 1s infinite; }
+.sync-off { background: var(--surface); color: var(--muted); }
+.sync-err { background: #fef2f2; color: #dc2626; }
+@keyframes pulse-sync {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* ── P2: Notification Panel ── */
 .notification-overlay {
   display: none;

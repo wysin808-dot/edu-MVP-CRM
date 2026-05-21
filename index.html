@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BCI 自媒体矩阵获客系统</title>
-    <link rel="stylesheet" href="./crm-prototype.css?v=15" />
+    <link rel="stylesheet" href="./crm-prototype.css?v=16" />
   </head>
   <body>
     <!-- Login Screen -->
@@ -80,6 +80,7 @@
               </select>
             </label>
             <button class="ghost-button logout-btn" type="button" id="logout-btn" style="display:none;font-size:12px;padding:4px 10px" title="退出登录">退出</button>
+            <span class="sync-indicator sync-off" id="sync-status">💾 离线</span>
             <button class="notif-bell" type="button" aria-label="通知" data-action="notifications">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               <span class="notif-dot"></span>
@@ -499,6 +500,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./crm-prototype.js?v=15"></script>
+    <script src="./crm-prototype.js?v=16"></script>
   </body>
 </html>

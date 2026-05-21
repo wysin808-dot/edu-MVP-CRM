@@ -235,3 +235,176 @@ const BRAND_FIREWALL_KEYWORDS = [
 | Part 1 (P0) | 1.1–1.5 | 核心基建，优先完成 |
 | Part 2 (P1) | 2.1–2.5 | 运营效率提升 |
 | Part 3 (P2) | 3.1–3.4 | 按需实施 |
+
+---
+
+# Round 2 — 后端化 · 数据库化 · 权限化 · 财务化
+
+> 生成日期：2026-05-21  
+> 基于两份独立评估的综合分析（14 模块审计 + 7 件事优先级清单）  
+> 核心判断：产品方向对，已能看概念；但要支撑年 100 学生 + MCN 矩阵 + 中介分发，需做一次结构性重构
+
+### 当前完成度总览
+
+| 模块 | 完成度 | 主要差距 |
+|------|--------|---------|
+| UI 原型 | 80% | 无移动端、无暗色模式 |
+| 内容中台逻辑 | 60% | 无导出、无批量操作、日历只读 |
+| IP/账号矩阵 | 60% | 不能编辑、无生命周期追踪 |
+| 招生 CRM | 30% | 不能编辑线索、无跟进记录、无合作学校分发 |
+| 权限系统 | 25% | 前端控制、无 RBAC、无团队隔离 |
+| 云端数据库 | 20% | 只有 INSERT，无 UPDATE/DELETE，硬编码数据未迁移 |
+| 财务/佣金 | 5% | 基本空白 |
+| 正式团队协作 | 20% | 无评论、无通知推送、无活动流 |
+| 可商业运营 | 25-30% | 文件只记录名不上传、无合同管理 |
+
+---
+
+## Part 4 — P0 数据库正式化（基础设施）
+
+### TASK 4.1 ✅ Supabase 完整 CRUD + 同步指示器
+
+**现状**：`persistContentUpdate` 只写 localStorage，不回写 Supabase；`persistRecordOnline` 只有 INSERT。  
+**目标**：所有数据变更实时同步到 Supabase，页面显示同步状态。
+
+改动点：
+- `persistContentUpdate()` 增加 Supabase UPDATE 调用（`updateRecordOnline`）
+- `persistRecordOnline()` 改为 upsert（INSERT ON CONFLICT UPDATE）
+- 新增 `deleteRecordOnline()` 方法
+- 加载时 timestamp 比对：云端 vs 本地取较新
+- 顶栏增加同步状态指示器：☁️ 已同步 / 🔄 同步中 / 💾 离线 / ⚠️ 失败
+
+### TASK 4.2 — 硬编码数据迁移到数据库
+
+**现状**：`contents[]`、`knowledge[]`、`personas[]`、`accounts[]`、`crmLeads[]`、`aiPromptLibrary[]` 全部写死在 JS 文件里。  
+**目标**：JS 中只保留空数组作为 fallback，所有数据从 Supabase 加载。
+
+改动点：
+- 6 个硬编码数组改为 `let xxx = [];`
+- `loadCloudState()` 扩展为加载全部 6 张表（含 `ai_prompts`）
+- 新增 `loadLocalFallback()`：Supabase 不可用时从 localStorage 恢复
+- 新增 `/api/seed.js`：一键写入示例数据到 Supabase（初始化用）
+- `teamMembers[]` 和 `platformConfig[]` 也迁移到数据库
+
+---
+
+## Part 5 — P0 核心业务补全
+
+### TASK 5.1 — 重做招生 CRM 数据模型
+
+**现状**：线索不能编辑、不能拖拽换阶段、只有单一招生场景。  
+**目标**：CRM 支持直招 + 中介分发 + 合作学校三种模式。
+
+改动点：
+- 线索数据模型扩展：
+  - `leadType`: `direct`（直招）/ `agent`（中介分发）/ `partner_school`（合作学校）
+  - `partnerSchool`: 合作学校名称
+  - `agentName`: 中介名称
+  - `commissionRate`: 佣金比例
+  - `expectedRevenue`: 预期学费
+- 看板增加「线索类型」筛选标签
+- 线索卡片增加「编辑」按钮 → 弹窗编辑所有字段
+- 看板支持拖拽换阶段（HTML5 drag & drop）
+
+### TASK 5.2 — Follow-up 跟进记录 + 自动提醒
+
+**现状**：线索只有单条 notes，无跟进历史。  
+**目标**：每条线索有完整跟进时间线，超时未跟进自动提醒。
+
+改动点：
+- 线索增加 `followUps[]` 数组：`{ date, note, nextAction, nextDate, author }`
+- 线索详情弹窗显示跟进时间线 + 「添加跟进」表单
+- `generateNotifications()` 增加：跟进到期提醒（nextDate ≤ 今天）
+- 线索卡片显示最新跟进摘要和下次跟进日期
+- 页面每 5 分钟自动刷新通知 `setInterval(renderNotifications, 300000)`
+
+### TASK 5.3 — RBAC + RLS 权限体系
+
+**现状**：前端角色切换器无限制，数据无团队隔离。  
+**目标**：中国团队 / 新加坡团队 / 顾问 / 运营 数据分权。
+
+改动点：
+- 新增 `team` 维度：`china` / `singapore` / `hq`（总部）
+- `user_metadata` 增加 `team` 字段
+- Supabase RLS 策略：按 team 过滤（china 只看自己的线索/内容）
+- 前端：非登录状态标记为 `demo` 模式，禁用写入操作
+- 敏感操作增加 `requireAuth()` 守卫
+- 新增 `auditLog[]`：记录关键操作（谁/做了什么/什么时间）
+
+---
+
+## Part 6 — P1 商业运营支撑
+
+### TASK 6.1 — 财务模块
+
+**现状**：仅有 budgetPercent 字段，未展示。无学费、佣金、ROI 追踪。  
+**目标**：完整的招生财务闭环。
+
+改动点：
+- 新增「财务」导航模块
+- 数据模型：
+  - 学费收入：每个签约线索关联 `tuitionAmount`（年学费）
+  - 渠道成本：每个平台关联 `monthlySpend`（月度投放）
+  - 佣金：中介/合作学校线索关联 `commissionRate` + `commissionAmount`
+- 财务看板：
+  - 月度收入 vs 支出 vs 利润
+  - CAC（客户获取成本）= 总投入 ÷ 签约数
+  - 平台 ROI = 签约学费 ÷ 平台投入
+  - 人效 = 签约学费 ÷ 团队人数
+  - 佣金汇总（应付中介/合作学校）
+
+### TASK 6.2 — 文件存储（Supabase Storage）
+
+**现状**：文件选择器只读文件名，不实际上传。  
+**目标**：截图、合同、学生资料、发布素材真实存储。
+
+改动点：
+- 接入 Supabase Storage：`bci-media` bucket
+- 上传组件：选文件 → 上传 → 返回 public URL
+- 内容发布记录关联实际文件 URL
+- 线索/合同可附件上传
+- 文件列表展示（缩略图 + 大小 + 上传时间）
+
+### TASK 6.3 — 数据导出
+
+**现状**：「导出报告」按钮是空壳。  
+**目标**：CSV 一键导出。
+
+改动点：
+- 内容资产库 → CSV
+- CRM 线索库 → CSV
+- 关键词表 → CSV
+- 财务汇总 → CSV
+- 通用 `exportToCsv(headers, rows, filename)` 函数
+
+### TASK 6.4 — IP / 账号编辑 + 内容评论
+
+**现状**：IP 和账号详情只读，内容无评论功能。  
+**目标**：所有实体可编辑，内容支持团队讨论。
+
+改动点：
+- IP persona 编辑弹窗
+- 账号编辑弹窗
+- 内容详情底部评论区：`item.comments[]`
+
+---
+
+## Part 7 — P2 体验优化
+
+### TASK 7.1 — 移动端适配
+
+### TASK 7.2 — 暗色模式
+
+### TASK 7.3 — AI 内容生成（接通 DeepSeek）
+
+### TASK 7.4 — 自动化工作流（定时检查 + 线索自动分配）
+
+---
+
+## 实施原则（沿用 Round 1）
+
+1. **每完成一个 TASK，在本文档标题后追加 ✅**
+2. **Git commit 格式**：`feat(TASK-X.Y): 简要说明`
+3. **不改已有数据结构的字段名**，只做增量
+4. **保持单文件架构**（crm-prototype.js + crm-prototype.css + index.html）
+5. **向后兼容 localStorage 已有数据**
