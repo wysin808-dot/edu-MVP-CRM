@@ -274,7 +274,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 加载时 timestamp 比对：云端 vs 本地取较新
 - 顶栏增加同步状态指示器：☁️ 已同步 / 🔄 同步中 / 💾 离线 / ⚠️ 失败
 
-### TASK 4.2 — 硬编码数据迁移到数据库
+### TASK 4.2 ✅ 硬编码数据迁移到数据库
 
 **现状**：`contents[]`、`knowledge[]`、`personas[]`、`accounts[]`、`crmLeads[]`、`aiPromptLibrary[]` 全部写死在 JS 文件里。  
 **目标**：JS 中只保留空数组作为 fallback，所有数据从 Supabase 加载。

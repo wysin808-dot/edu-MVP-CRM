@@ -101,7 +101,17 @@ const dailyTasks = [
   ["16:30", "公众号", "BCI国际学校", "官方 IP", "WACE 课程结构：必修、选修和学分", "待归档", "amber"],
 ];
 
-const contents = [
+/* ── Runtime data arrays — populated from Supabase or SEED_DATA fallback ── */
+let contents = [];
+let knowledge = [];
+let personas = [];
+let accounts = [];
+let crmLeads = [];
+let teamMembers = [];
+let aiPromptLibrary = [];
+
+/* ── SEED DATA — used as fallback when no cloud/localStorage data exists ── */
+const SEED_CONTENTS = [
   {
     title: "新加坡高中不是越贵越好，真正要看这 3 点",
     aiSearchReady: false,
@@ -294,7 +304,7 @@ const contents = [
   },
 ];
 
-const knowledge = [
+const SEED_KNOWLEDGE = [
   {
     title: "NTU 录取 WACE ATAR 要求（按专业）",
     detail: "NTU 接受 WACE ATAR 作为录取标准。商学院 / 工学院 / 传媒学院 / 医学院要求不同。商学院、工学院通常需 ATAR 88+，医学院通常需 95+。",
@@ -427,7 +437,7 @@ function checkBrandFirewall(text, accountName) {
   return { pass: violations.length === 0, violations };
 }
 
-const personas = [
+const SEED_PERSONAS = [
   ["校长 IP", "权威背书", "视频号 / 公众号", "本月 18 条", "线索 11", "school_official"],
   ["升学顾问 IP", "路径规划", "小红书 / 视频号 / 抖音", "本月 34 条", "线索 27", "real_person"],
   ["招生老师 IP", "咨询转化", "小红书 / 朋友圈", "本月 29 条", "线索 23", "real_person"],
@@ -439,7 +449,7 @@ const personas = [
   ["SEO 英文站", "搜索引擎获客", "独立站SEO / Google", "本月 60 条", "线索 6", "seo"],
 ];
 
-const accounts = [
+const SEED_ACCOUNTS = [
   {
     platform: "小红书",
     accountName: "BCI升学顾问号",
@@ -622,7 +632,7 @@ const accounts = [
   },
 ];
 
-const crmLeads = [
+const SEED_CRM_LEADS = [
   { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "私信咨询", assignee: "", date: "2026-05-13", sourceLink: "https://www.xiaohongshu.com/explore/example001", channel: "小红书" },
   { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "私信咨询", assignee: "", date: "2026-05-12", sourceLink: "", channel: "视频号" },
   { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "加企微", assignee: "招生顾问", date: "2026-05-10", sourceLink: "https://www.xiaohongshu.com/explore/example002", channel: "小红书", wechatId: "parent_g8_zhang", wechatAddTime: "2026-05-10T14:30:00Z" },
@@ -658,7 +668,7 @@ const permissions = [
   ["招生顾问", "分配线索", "跟进 CRM、记录到访、反馈线索质量"],
 ];
 
-const teamMembers = [
+const SEED_TEAM_MEMBERS = [
   { name: "Ocean Wang", email: "ocean@bci.edu.sg", role: "部门负责人", accounts: "全部账号 + 知乎", status: "在职", joinDate: "2025-08-01" },
   { name: "运营 A", email: "opa@bci.edu.sg", role: "运营人员", accounts: "BCI升学顾问号, BCI国际学校", status: "在职", joinDate: "2026-02-01" },
   { name: "运营 B", email: "opb@bci.edu.sg", role: "运营人员", accounts: "BCI招生老师号, BCI官方视频号", status: "在职", joinDate: "2026-02-01" },
@@ -666,7 +676,7 @@ const teamMembers = [
   { name: "招生顾问", email: "advisor@bci.edu.sg", role: "招生顾问", accounts: "—", status: "在职", joinDate: "2026-01-20" },
 ];
 
-const aiPromptLibrary = [
+const SEED_AI_PROMPTS = [
   {
     title: "标题改写·反常识公式 5 候选",
     author: "Ocean",
@@ -756,21 +766,36 @@ function replaceRecords(target, records) {
   target.splice(0, target.length, ...records);
 }
 
+function seedDefaults() {
+  // Populate arrays from SEED_DATA if they're still empty (no cloud/localStorage data)
+  if (contents.length === 0) contents.push(...SEED_CONTENTS);
+  if (knowledge.length === 0) knowledge.push(...SEED_KNOWLEDGE);
+  if (personas.length === 0) personas.push(...SEED_PERSONAS);
+  if (accounts.length === 0) accounts.push(...SEED_ACCOUNTS);
+  if (crmLeads.length === 0) crmLeads.push(...SEED_CRM_LEADS);
+  if (teamMembers.length === 0) teamMembers.push(...SEED_TEAM_MEMBERS);
+  if (aiPromptLibrary.length === 0) aiPromptLibrary.push(...SEED_AI_PROMPTS);
+}
+
 function loadSavedState() {
+  // First seed with defaults so content updates can be applied
+  seedDefaults();
+
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return;
 
   try {
     const saved = JSON.parse(raw);
-    // Apply content updates (status, reviewHistory, etc.) to hardcoded items
+    // Apply content updates (status, reviewHistory, etc.) to seeded items
     (saved._contentUpdates || []).forEach((upd) => {
       const existing = contents.find((c) => c.title === upd.title);
       if (existing) Object.assign(existing, upd);
     });
-    (saved.contents || []).filter((item) => item && typeof item === "object" && !Array.isArray(item) && item.title).forEach((item) => contents.unshift(item));
-    (saved.knowledge || []).forEach((item) => knowledge.unshift(item));
-    (saved.personas || []).forEach((item) => personas.unshift(item));
-    (saved.accounts || []).forEach((item) => accounts.unshift(item));
+    // Append any user-created items from localStorage
+    (saved.contents || []).filter((item) => item && typeof item === "object" && !Array.isArray(item) && item.title && !contents.find(c => c.title === item.title)).forEach((item) => contents.unshift(item));
+    (saved.knowledge || []).filter(item => !knowledge.find(k => k.title === item.title)).forEach((item) => knowledge.unshift(item));
+    (saved.personas || []).forEach((item) => { if (!personas.find(p => p[0] === (item[0] || item.name))) personas.unshift(item); });
+    (saved.accounts || []).forEach((item) => { if (!accounts.find(a => a.accountName === item.accountName)) accounts.unshift(item); });
     (saved.posts || []).forEach((item) => posts.unshift(item));
     // Apply CRM lead updates
     (saved._crmUpdates || []).forEach((upd) => {
@@ -1044,12 +1069,14 @@ async function initCloudDatabase() {
 }
 
 async function loadCloudState() {
-  const [contentRows, knowledgeRows, personaRows, accountRows, postRows] = await Promise.all([
+  const [contentRows, knowledgeRows, personaRows, accountRows, postRows, crmRows, promptRows] = await Promise.all([
     selectCloudRows("content_items"),
     selectCloudRows("knowledge_items"),
     selectCloudRows("ip_personas"),
     selectCloudRows("account_matrix"),
     selectCloudRows("published_posts"),
+    selectCloudRows("crm_leads"),
+    selectCloudRows("ai_prompts"),
   ]);
 
   replaceRecords(contents, contentRows.map(fromCloudContent));
@@ -1057,6 +1084,8 @@ async function loadCloudState() {
   replaceRecords(personas, personaRows.map(fromCloudPersona));
   replaceRecords(accounts, accountRows.map(fromCloudAccount));
   replaceRecords(posts, postRows.map(fromCloudPost));
+  if (crmRows.length) replaceRecords(crmLeads, crmRows.map(fromCloudCrmLead));
+  if (promptRows.length) replaceRecords(aiPromptLibrary, promptRows.map(fromCloudPrompt));
 }
 
 async function selectCloudRows(table) {
@@ -1164,6 +1193,41 @@ function fromCloudPost(row) {
       screenshots: [],
     },
   ];
+}
+
+function fromCloudCrmLead(row) {
+  return {
+    name: row.name,
+    source: row.source || "",
+    stage: row.stage || "私信咨询",
+    assignee: row.assignee || "",
+    date: row.date || "",
+    sourceLink: row.source_link || "",
+    channel: row.channel || "",
+    grade: row.grade || "",
+    parentName: row.parent_name || "",
+    course: row.course || "",
+    wechatId: row.wechat_id || "",
+    wechatAddTime: row.wechat_add_time || null,
+    notes: row.notes || "",
+    followUps: row.follow_ups || [],
+  };
+}
+
+function fromCloudPrompt(row) {
+  return {
+    title: row.title,
+    author: row.author || "",
+    lastUsed: row.last_used || "待使用",
+    notes: row.notes || "",
+    outputExamples: row.output_examples || "",
+    platform: row.platform || "通用",
+    promptTemplate: row.prompt_template || "",
+    qualityRating: row.quality_rating || "3星",
+    stage: row.stage || "",
+    targetPersona: row.target_persona || "通用",
+    useCount: row.use_count || 0,
+  };
 }
 
 function toCloudRow(collection, record) {
