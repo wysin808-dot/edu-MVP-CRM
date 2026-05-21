@@ -335,7 +335,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 
 ## Part 6 — P1 商业运营支撑
 
-### TASK 6.1 — 财务模块
+### TASK 6.1 ✅ 财务模块
 
 **现状**：仅有 budgetPercent 字段，未展示。无学费、佣金、ROI 追踪。  
 **目标**：完整的招生财务闭环。
