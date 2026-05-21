@@ -66,7 +66,7 @@
 { name: "Facebook/IG", canBrowserOpen: true, icon: "📘" }
 ```
 
-### TASK 1.3 — IP 矩阵按 5 类分层 + 品牌防火墙
+### TASK 1.3 ✅ IP 矩阵按 5 类分层 + 品牌防火墙
 
 **目标**：personas 从扁平数组升级为分层结构，实现品牌隔离检查。
 

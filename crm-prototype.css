@@ -1986,3 +1986,32 @@ textarea {
   border: 1px solid var(--border) !important;
   border-radius: 6px !important;
 }
+
+/* ── IP Category Groups ── */
+.ip-category-group {
+  margin-bottom: 24px;
+}
+.ip-category-header {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ip-category-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.ip-category-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.agency-card {
+  border-left: 3px solid #ef4444 !important;
+}
+.agency-card h3 {
+  color: #ef4444;
+}

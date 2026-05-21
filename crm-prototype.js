@@ -387,19 +387,47 @@ const knowledge = [
   },
 ];
 
+/* ── IP Category System (MCN 规划书 3.1 节) ── */
+const IP_CATEGORIES = {
+  school_official: { label: "校品牌官号", icon: "🏫", color: "blue", desc: "BCI 直系，校园实景/师资/升学" },
+  real_person: { label: "真人 IP 号", icon: "👤", color: "green", desc: "新加坡本地员工，人格化+本地体感" },
+  agency: { label: "纯中介号", icon: "📢", color: "amber", desc: "完全切割 BCI 品牌，工业化堆量" },
+  ugc: { label: "UGC 半官方", icon: "🎓", color: "red", desc: "在读家长/学生/校友内容" },
+  seo: { label: "独立站 SEO", icon: "🌐", color: "blue", desc: "英文内容，AI 草稿+人工审核" },
+};
+
+/* ── Brand Firewall (MCN 规划书 3.1 节 C 部分) ── */
+const BRAND_FIREWALL_KEYWORDS = [
+  "BCI", "博文", "Brentvale", "创始人", "三娃", "校徽",
+  "bci.edu.sg", "校长", "Ocean Wang", "Ocean", "博文国际",
+  "bci international", "brentvale college",
+];
+
+function checkBrandFirewall(text, accountName) {
+  const acct = accounts.find((a) => a.accountName === accountName);
+  if (!acct || acct.ipCategory !== "agency") return { pass: true, violations: [] };
+  const lower = (text || "").toLowerCase();
+  const violations = BRAND_FIREWALL_KEYWORDS.filter((kw) => lower.includes(kw.toLowerCase()));
+  return { pass: violations.length === 0, violations };
+}
+
 const personas = [
-  ["校长 IP", "权威背书", "视频号 / 公众号", "本月 18 条", "线索 11"],
-  ["升学顾问 IP", "路径规划", "小红书 / 视频号", "本月 34 条", "线索 27"],
-  ["招生老师 IP", "咨询转化", "小红书 / 朋友圈", "本月 29 条", "线索 23"],
-  ["学生案例 IP", "真实故事", "小红书 / 知乎", "本月 12 条", "线索 8"],
-  ["家长故事 IP", "信任建立", "视频号 / 公众号", "本月 7 条", "线索 5"],
-  ["BCI 官方 IP", "学校信息", "全平台", "本月 26 条", "线索 14"],
+  ["校长 IP", "权威背书", "视频号 / 公众号", "本月 18 条", "线索 11", "school_official"],
+  ["升学顾问 IP", "路径规划", "小红书 / 视频号 / 抖音", "本月 34 条", "线索 27", "real_person"],
+  ["招生老师 IP", "咨询转化", "小红书 / 朋友圈", "本月 29 条", "线索 23", "real_person"],
+  ["学生案例 IP", "真实故事", "小红书 / 知乎", "本月 12 条", "线索 8", "ugc"],
+  ["家长故事 IP", "信任建立", "视频号 / 公众号", "本月 7 条", "线索 5", "ugc"],
+  ["BCI 官方 IP", "学校信息", "全平台", "本月 26 条", "线索 14", "school_official"],
+  ["新加坡留学规划", "中介矩阵主号", "小红书 / 抖音", "本月 0 条", "线索 0", "agency"],
+  ["陪读妈妈日记", "中介子号", "小红书 / 抖音", "本月 0 条", "线索 0", "agency"],
+  ["SEO 英文站", "搜索引擎获客", "独立站SEO / Google", "本月 60 条", "线索 6", "seo"],
 ];
 
 const accounts = [
   {
     platform: "小红书",
     accountName: "BCI升学顾问号",
+    ipCategory: "real_person",
     status: "运营中",
     contentCount: 34,
     handle: "https://www.xiaohongshu.com/user/profile/bci-counselor",
@@ -417,6 +445,7 @@ const accounts = [
   {
     platform: "小红书",
     accountName: "BCI招生老师号",
+    ipCategory: "real_person",
     status: "运营中",
     contentCount: 29,
     handle: "https://www.xiaohongshu.com/user/profile/bci-admission",
@@ -434,12 +463,13 @@ const accounts = [
   {
     platform: "公众号",
     accountName: "BCI国际学校",
+    ipCategory: "school_official",
     status: "运营中",
     contentCount: 36,
     handle: "微信公众号",
     investmentTier: "核心",
     ownerType: "自营",
-    persona: "官方 IP",
+    persona: "BCI 官方 IP",
     talent: "校方品牌",
     entityName: "BCI International",
     entityType: "学校",
@@ -451,6 +481,7 @@ const accounts = [
   {
     platform: "视频号",
     accountName: "BCI官方视频号",
+    ipCategory: "school_official",
     status: "运营中",
     contentCount: 18,
     handle: "微信视频号后台",
@@ -468,12 +499,13 @@ const accounts = [
   {
     platform: "知乎",
     accountName: "BCI升学",
+    ipCategory: "school_official",
     status: "运营中",
     contentCount: 12,
     handle: "https://www.zhihu.com/people/bci-edu",
     investmentTier: "辅助",
     ownerType: "自营",
-    persona: "官方 IP",
+    persona: "BCI 官方 IP",
     talent: "校方品牌",
     entityName: "BCI International",
     entityType: "学校",
@@ -485,6 +517,7 @@ const accounts = [
   {
     platform: "抖音",
     accountName: "BCI博文国际学院",
+    ipCategory: "school_official",
     status: "筹备",
     contentCount: 0,
     handle: "待开通",
@@ -502,13 +535,14 @@ const accounts = [
   {
     platform: "抖音",
     accountName: "新加坡留学规划中心",
+    ipCategory: "agency",
     status: "筹备",
     contentCount: 0,
     handle: "待开通",
     investmentTier: "主力",
     ownerType: "自营",
-    persona: "升学顾问 IP",
-    talent: "升学顾问",
+    persona: "新加坡留学规划",
+    talent: "运营团队",
     entityName: "独立主体",
     entityType: "中介",
     operator: "运营 A",
@@ -519,12 +553,13 @@ const accounts = [
   {
     platform: "独立站SEO",
     accountName: "wace.edu.sg",
+    ipCategory: "seo",
     status: "运营中",
     contentCount: 45,
     handle: "https://wace.edu.sg",
     investmentTier: "核心",
     ownerType: "自营",
-    persona: "官方 IP",
+    persona: "SEO 英文站",
     talent: "校方品牌",
     entityName: "BCI International",
     entityType: "学校",
@@ -536,12 +571,13 @@ const accounts = [
   {
     platform: "Google/YouTube",
     accountName: "BCI International School",
+    ipCategory: "school_official",
     status: "筹备",
     contentCount: 0,
     handle: "待开通",
     investmentTier: "辅助",
     ownerType: "自营",
-    persona: "官方 IP",
+    persona: "BCI 官方 IP",
     talent: "校方品牌",
     entityName: "BCI International",
     entityType: "学校",
@@ -553,12 +589,13 @@ const accounts = [
   {
     platform: "Facebook/IG",
     accountName: "BCI Singapore",
+    ipCategory: "school_official",
     status: "筹备",
     contentCount: 0,
     handle: "待开通",
     investmentTier: "辅助",
     ownerType: "自营",
-    persona: "官方 IP",
+    persona: "BCI 官方 IP",
     talent: "校方品牌",
     entityName: "BCI International",
     entityType: "学校",
@@ -1354,6 +1391,7 @@ const modalTemplates = {
         <label>IP 类型<select><option>升学顾问</option><option>校长</option><option>招生老师</option><option>学生案例</option></select></label>
         <label>负责人<input value="运营 A" /></label>
         <label>发布频率<input value="每周 5 条" /></label>
+        <label>IP 分类<select><option value="school_official">校品牌官号</option><option value="real_person">真人 IP 号</option><option value="agency">纯中介号（品牌隔离）</option><option value="ugc">UGC 半官方</option><option value="seo">独立站 SEO</option></select></label>
         <label class="full-field">人设定位<textarea>面向 7-12 年级家长，讲清 WACE、ATAR、大学申请和新加坡转轨路径。</textarea></label>
       </div>
     `,
@@ -1369,6 +1407,7 @@ const modalTemplates = {
         <label>Investment Tier<select><option>主力</option><option>辅助</option><option>测试</option></select></label>
         <label>Owner Type<select><option>自营</option><option>合作</option><option>外包</option></select></label>
         <label>绑定 IP<select>${optionList(personaNames(), "请先新增 IP")}</select></label>
+        <label>IP 分类<select><option value="school_official">校品牌官号</option><option value="real_person">真人 IP 号</option><option value="agency">纯中介号（品牌隔离）</option><option value="ugc">UGC 半官方</option><option value="seo">独立站 SEO</option></select></label>
         <label>Talent / 主理人<input value="空白" /></label>
         <label>主体名称<input value="师云教育上海" /></label>
         <label>主体类型<select><option>企业</option><option>学校</option><option>个人</option></select></label>
@@ -1629,10 +1668,11 @@ async function saveModalRecord() {
   if (currentModalAction === "new-persona") {
     const record = [
       values[0] || "未命名 IP",
-      values[4] || values[1] || "待补充人设定位",
+      values[4] === undefined ? (values[5] || values[1] || "待补充人设定位") : (values[5] || values[1] || "待补充人设定位"),
       `${values[1] || "IP"} · ${values[2] || "未分配"}`,
       values[3] || "待定频率",
       "线索 0",
+      values[4] || "school_official",
     ];
     personas.unshift(record);
     const mode = await persistRecordOnline("personas", record);
@@ -1677,14 +1717,29 @@ async function saveModalRecord() {
       repurposeSourceTitle: null,
       repurposeChildren: [],
     };
+    // Brand firewall check for agency accounts
+    const firewallResult = checkBrandFirewall(record.title + " " + (record.cta || "") + " " + (record.notes || ""), record.account);
+    if (!firewallResult.pass) {
+      record.reviewHistory.push({
+        reviewer: "系统",
+        action: "firewall",
+        comment: `⚠️ 品牌防火墙触发：中介号内容包含禁用词「${firewallResult.violations.join("、")}」，请修改后再提交。`,
+        timestamp: new Date().toISOString().slice(0, 16).replace("T", " "),
+      });
+      record.status = "草稿";
+    }
     contents.unshift(record);
     const mode = await persistRecordOnline("contents", record);
     renderContent();
     renderApp();
     switchToView("content");
-    showToast(isDraft
-      ? (mode === "cloud" ? "草稿已保存到云端。" : "草稿已临时保存到本机。")
-      : (mode === "cloud" ? "内容已提交审核，等待部门负责人处理。" : "内容已提交审核（本地保存）。"));
+    if (!firewallResult.pass) {
+      showToast(`⚠️ 品牌防火墙：中介号内容包含禁用词「${firewallResult.violations.join("、")}」，已自动退回草稿。`);
+    } else {
+      showToast(isDraft
+        ? (mode === "cloud" ? "草稿已保存到云端。" : "草稿已临时保存到本机。")
+        : (mode === "cloud" ? "内容已提交审核，等待部门负责人处理。" : "内容已提交审核（本地保存）。"));
+    }
     return true;
   }
 
@@ -1697,15 +1752,16 @@ async function saveModalRecord() {
       investmentTier: values[3] || "辅助",
       ownerType: values[4] || "自营",
       persona: values[5] || "未绑定 IP",
-      talent: values[6] || "空白",
-      entityName: values[7] || "待填主体",
-      entityType: values[8] || "企业",
-      operator: values[9] || "未分配",
-      frequency: values[10] || "未设置",
+      ipCategory: values[6] || "school_official",
+      talent: values[7] || "空白",
+      entityName: values[8] || "待填主体",
+      entityType: values[9] || "企业",
+      operator: values[10] || "未分配",
+      frequency: values[11] || "未设置",
       stage: values[2] || "筹备",
       monthlyPosts: 0,
       leads: 0,
-      handle: values[11] || "待补充链接",
+      handle: values[12] || "待补充链接",
     };
     accounts.unshift(record);
     const mode = await persistRecordOnline("accounts", record);
@@ -2509,6 +2565,13 @@ function generateAiReview(item) {
     issues.push("标题超过 25 字，部分平台可能被截断");
   }
 
+  // 11. Brand firewall check for agency accounts
+  const fwCheck = checkBrandFirewall(item.title + " " + (item.cta || "") + " " + (item.notes || ""), item.account);
+  if (!fwCheck.pass) {
+    issues.push("🔥 品牌防火墙：中介号内容包含禁用词「" + fwCheck.violations.join("、") + "」，必须修改！");
+    suggestion = "reject";
+  }
+
   // Build output
   if (issues.length >= 4) suggestion = "reject";
   else if (issues.length >= 2) suggestion = "revise";
@@ -2707,18 +2770,37 @@ function renderKnowledge(items = knowledge) {
 
 function renderPersonas(items = personas) {
   const target = document.querySelector("#persona-grid");
-  target.innerHTML = items
-    .map(
-      ([name, positioning, channels, volume, leads]) => `
-        <article class="matrix-card persona-timeline" data-title="${name}" style="cursor:pointer">
-          <h3>${name}</h3>
+  // Group by IP category
+  const groups = {};
+  items.forEach((item) => {
+    const cat = Array.isArray(item) ? (item[5] || "school_official") : (item.ipCategory || "school_official");
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(item);
+  });
+  const categoryOrder = ["school_official", "real_person", "agency", "ugc", "seo"];
+  let html = "";
+  categoryOrder.forEach((cat) => {
+    const catItems = groups[cat];
+    if (!catItems || catItems.length === 0) return;
+    const catInfo = IP_CATEGORIES[cat] || { label: cat, icon: "📱", color: "blue" };
+    html += `<div class="ip-category-group">
+      <h3 class="ip-category-header">${catInfo.icon} ${catInfo.label} <span class="badge ${catInfo.color}">${catItems.length} 个</span></h3>
+      <p class="ip-category-desc">${catInfo.desc}</p>
+      <div class="ip-category-cards">`;
+    catItems.forEach((item) => {
+      const [name, positioning, channels, volume, leads] = Array.isArray(item) ? item : [item.name, item.positioning, item.channels, item.volume, item.leads];
+      const isAgency = cat === "agency";
+      html += `
+        <article class="matrix-card persona-timeline${isAgency ? " agency-card" : ""}" data-title="${name}" style="cursor:pointer">
+          <h3>${name}${isAgency ? ' <span class="badge red" style="font-size:11px">🔥 品牌隔离</span>' : ""}</h3>
           <p>${positioning}</p>
           <div class="card-meta">${badge(channels)}${badge(volume, "blue")}</div>
           <div class="card-footer"><span>${leads}</span><button class="ghost-button persona-timeline" type="button" data-title="${name}">查看时间线</button></div>
-        </article>
-      `,
-    )
-    .join("") || `<div class="empty-state">没有找到匹配的 IP。</div>`;
+        </article>`;
+    });
+    html += `</div></div>`;
+  });
+  target.innerHTML = html || `<div class="empty-state">没有找到匹配的 IP。</div>`;
 }
 
 function renderAccounts(items) {
@@ -2729,8 +2811,9 @@ function renderAccounts(items) {
       (account) => `
         <tr class="clickable-row account-detail" data-title="${account.accountName}">
           <td>${account.platform}</td>
-          <td><strong>${account.accountName}</strong></td>
+          <td><strong>${account.accountName}</strong>${account.ipCategory === "agency" ? ' <span class="badge red" style="font-size:10px">中介</span>' : ""}</td>
           <td>${account.persona}</td>
+          <td>${badge((IP_CATEGORIES[account.ipCategory] || {}).label || "未分类", (IP_CATEGORIES[account.ipCategory] || {}).color || "blue")}</td>
           <td>${account.operator}</td>
           <td>${badge(account.stage, "blue")}${badge(account.status, account.status === "运营中" ? "green" : "amber")}</td>
           <td>${account.monthlyPosts}</td>
