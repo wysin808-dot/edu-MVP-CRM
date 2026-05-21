@@ -206,7 +206,7 @@ const BRAND_FIREWALL_KEYWORDS = [
   - 顾问 30 天无开单
 - 红线通知使用 `type: "critical"` 样式（红色高亮）
 
-### TASK 3.4 — 企业微信集成预留
+### TASK 3.4 ✅ 企业微信集成预留
 
 **目标**：为 MCN 规划书要求的企业微信线索归集预留接口。
 

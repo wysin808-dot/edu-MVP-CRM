@@ -2288,3 +2288,13 @@ textarea {
   color: var(--muted);
   margin-top: 2px;
 }
+.lead-wechat-status {
+  display: inline-block;
+  font-size: 11px;
+  background: #f0fdf4;
+  color: #16a34a;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #bbf7d0;
+  margin-top: 2px;
+}

@@ -625,8 +625,8 @@ const accounts = [
 const crmLeads = [
   { name: "G9 学生家长", source: "来自小红书：WACE 申请 NUS", stage: "私信咨询", assignee: "", date: "2026-05-13", sourceLink: "https://www.xiaohongshu.com/explore/example001", channel: "小红书" },
   { name: "G10 转轨家庭", source: "来自视频号：ATAR 评分", stage: "私信咨询", assignee: "", date: "2026-05-12", sourceLink: "", channel: "视频号" },
-  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "加企微", assignee: "招生顾问", date: "2026-05-10", sourceLink: "https://www.xiaohongshu.com/explore/example002", channel: "小红书" },
-  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "加企微", assignee: "招生顾问", date: "2026-05-09", sourceLink: "https://mp.weixin.qq.com/s/example003", channel: "公众号" },
+  { name: "G8 学生家长", source: "来源：招生老师 IP", stage: "加企微", assignee: "招生顾问", date: "2026-05-10", sourceLink: "https://www.xiaohongshu.com/explore/example002", channel: "小红书", wechatId: "parent_g8_zhang", wechatAddTime: "2026-05-10T14:30:00Z" },
+  { name: "G11 插班咨询", source: "来源：公众号学费文章", stage: "加企微", assignee: "招生顾问", date: "2026-05-09", sourceLink: "https://mp.weixin.qq.com/s/example003", channel: "公众号", wechatId: "parent_g11_li", wechatAddTime: "2026-05-09T11:20:00Z" },
   { name: "G9 学生家长（张）", source: "周六开放日", stage: "留电/视频", assignee: "招生顾问", date: "2026-05-08", channel: "线下" },
   { name: "G7 家庭", source: "校园参观", stage: "试听/到访", assignee: "招生顾问", date: "2026-05-07", channel: "线下" },
   { name: "G10 学生", source: "已签约", stage: "签约", assignee: "招生顾问", date: "2026-04-28", channel: "小红书" },
@@ -1458,8 +1458,13 @@ const modalTemplates = {
         <label>当前年级<select><option>G7</option><option>G8</option><option>G9</option><option>G10</option><option>G11</option><option>G12</option></select></label>
         <label>家长姓名<input value="家长姓名" /></label>
         <label>意向课程<select><option>WACE</option><option>国际高中</option><option>插班</option><option>升学规划</option></select></label>
-        <label>来源账号<select>${accountNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
+        <label>来源渠道<select id="lead-channel">
+          <option>企业微信</option><option>小红书私信</option><option>抖音私信</option>
+          <option>视频号</option><option>公众号</option><option>知乎</option>
+          <option>独立站SEO</option><option>线下</option><option>老客推荐</option><option>其他</option>
+        </select></label>
         <label>来源 IP<select>${personaNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
+        <label>企微 ID（可选）<input id="lead-wechat-id" placeholder="企业微信 ID 或备注名" /></label>
         <label class="full-field">来源链接<input placeholder="粘贴小红书/知乎/公众号文章链接" /></label>
         <label class="full-field">跟进备注<textarea>记录家长问题、学生情况、下次跟进动作。</textarea></label>
       </div>
@@ -1964,18 +1969,22 @@ async function saveModalRecord() {
   }
 
   if (currentModalAction === "new-lead") {
+    const channelVal = document.querySelector("#lead-channel")?.value || values[4] || "其他";
+    const wechatIdVal = document.querySelector("#lead-wechat-id")?.value.trim() || "";
     const lead = {
       name: `${values[1] || "G"} ${values[0] || "学生家长"}`,
-      source: `来自${values[4] || "平台"}：${values[5] || "IP"}`,
+      source: `来自${channelVal}：${values[5] || "IP"}`,
       stage: "私信咨询",
       assignee: "",
       date: new Date().toISOString().slice(0, 10),
       grade: values[1] || "",
       parentName: values[2] || "",
       course: values[3] || "",
-      sourceLink: values[6] || "",
-      channel: values[4] || "其他",
-      notes: values[7] || "",
+      sourceLink: values[7] || "",
+      channel: channelVal,
+      wechatId: wechatIdVal,
+      wechatAddTime: wechatIdVal ? new Date().toISOString() : null,
+      notes: values[8] || "",
     };
     crmLeads.unshift(lead);
     renderCrm();
@@ -3020,6 +3029,7 @@ function renderCrm() {
             <strong>${escapeHtml(lead.name)}</strong>
             <span>${escapeHtml(lead.source)}${lead.sourceLink ? ` <a href="${escapeHtml(lead.sourceLink)}" target="_blank" rel="noopener" class="source-link" title="打开来源内容" onclick="event.stopPropagation()">🔗</a>` : ""}</span>
             ${lead.channel ? `<span class="lead-channel">${escapeHtml(lead.channel)}</span>` : ""}
+            ${lead.wechatId ? `<span class="lead-wechat-status">💬 企微已加</span>` : ""}
             <div class="lead-meta">
               ${lead.assignee
                 ? `<span class="lead-assignee">👤 ${escapeHtml(lead.assignee)}</span>`
