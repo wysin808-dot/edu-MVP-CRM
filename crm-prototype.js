@@ -1886,6 +1886,13 @@ async function saveModalRecord() {
       const newCta = document.querySelector("#edit-cta")?.value.trim();
       const newContentType = document.querySelector("#edit-content-type")?.value;
       const newEmotionalTrigger = document.querySelector("#edit-emotional-trigger")?.value;
+      const newFunnelStage = document.querySelector("#edit-funnel-stage")?.value;
+      const newLeadMagnet = document.querySelector("#edit-lead-magnet")?.value.trim();
+      const newPrimaryKeyword = document.querySelector("#edit-primary-keyword")?.value.trim();
+      const newTopicCluster = document.querySelector("#edit-topic-cluster")?.value.trim();
+      const newRepurposeStatus = document.querySelector("#edit-repurpose-status")?.value;
+      const newWaceFocus = document.querySelector("#edit-wace-focus")?.value === "是";
+      const newReferences = document.querySelector("#edit-references")?.value.trim();
       const comment = document.querySelector("#edit-comment")?.value.trim() || "已修改内容";
 
       const changes = [];
@@ -1894,6 +1901,26 @@ async function saveModalRecord() {
       if (newCta && newCta !== item.cta) { item.cta = newCta; changes.push("CTA"); }
       if (newContentType && newContentType !== item.contentType) { item.contentType = newContentType; changes.push("内容类型"); }
       if (newEmotionalTrigger && newEmotionalTrigger !== item.emotionalTrigger) { item.emotionalTrigger = newEmotionalTrigger; changes.push("情绪钩子"); }
+      if (newFunnelStage && newFunnelStage !== item.funnelStage) { item.funnelStage = newFunnelStage; changes.push("漏斗阶段"); }
+      if (newLeadMagnet !== undefined && newLeadMagnet !== item.leadMagnet) { item.leadMagnet = newLeadMagnet; changes.push("Lead Magnet"); }
+      if (newPrimaryKeyword !== undefined && newPrimaryKeyword !== item.primaryKeyword) { item.primaryKeyword = newPrimaryKeyword; changes.push("关键词"); }
+      if (newTopicCluster !== undefined && newTopicCluster !== item.topicCluster) { item.topicCluster = newTopicCluster; changes.push("主题簇"); }
+      if (newRepurposeStatus && newRepurposeStatus !== item.repurposeStatus) { item.repurposeStatus = newRepurposeStatus; changes.push("复用状态"); }
+      if (newWaceFocus !== item.waceFocus) { item.waceFocus = newWaceFocus; changes.push("WACE Focus"); }
+      if (newReferences !== undefined && newReferences !== item.references) { item.references = newReferences; changes.push("引用资料"); }
+
+      // Brand firewall check on edit
+      const fwEdit = checkBrandFirewall(item.title + " " + (item.cta || "") + " " + (item.notes || ""), item.account);
+      if (!fwEdit.pass) {
+        item.status = "草稿";
+        item.reviewHistory = item.reviewHistory || [];
+        item.reviewHistory.push({ reviewer: "系统", action: "firewall", comment: `品牌防火墙：包含禁用词「${fwEdit.violations.join("、")}」`, timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") });
+        persistContentUpdate(item);
+        renderContent();
+        renderApp();
+        showToast(`⚠️ 品牌防火墙触发，已退回草稿。`);
+        return true;
+      }
 
       item.status = "待审核";
       item.reviewHistory = item.reviewHistory || [];
@@ -2052,11 +2079,30 @@ function buildResubmitEditForm(item) {
       </label>
       <label>情绪钩子
         <select id="edit-emotional-trigger">
-          ${["反常识", "焦虑共鸣", "向往", "痛点直击", "好奇驱动", "数字震撼", "案例代入", "理性避坑"].map(
+          ${["反常识", "焦虑共鸣", "向往", "痛点直击", "好奇驱动", "数字震撼", "案例代入", "理性避坑", "痛点反问"].map(
             (t) => `<option${t === item.emotionalTrigger ? " selected" : ""}>${t}</option>`
           ).join("")}
         </select>
       </label>
+      <label>漏斗阶段
+        <select id="edit-funnel-stage">
+          ${["Awareness", "Consideration", "Trust", "Visit", "Enroll"].map(
+            (t) => `<option${t === item.funnelStage ? " selected" : ""}>${t}</option>`
+          ).join("")}
+        </select>
+      </label>
+      <label>Lead Magnet<input type="text" id="edit-lead-magnet" value="${escapeHtml(item.leadMagnet || "")}" /></label>
+      <label>主关键词<input type="text" id="edit-primary-keyword" value="${escapeHtml(item.primaryKeyword || "")}" /></label>
+      <label>主题簇<input type="text" id="edit-topic-cluster" value="${escapeHtml(item.topicCluster || "")}" /></label>
+      <label>复用状态
+        <select id="edit-repurpose-status">
+          ${["原稿", "可二改", "可转视频号", "可转小红书", "可转抖音", "可转独立站", "已转小红书标题", "已复用多平台", "归档"].map(
+            (t) => `<option${t === item.repurposeStatus ? " selected" : ""}>${t}</option>`
+          ).join("")}
+        </select>
+      </label>
+      <label>WACE Focus<select id="edit-wace-focus"><option value="否"${!item.waceFocus ? " selected" : ""}>否</option><option value="是"${item.waceFocus ? " selected" : ""}>是</option></select></label>
+      <label>引用资料<input type="text" id="edit-references" value="${escapeHtml(item.references || "")}" /></label>
       <label>修改说明<textarea id="edit-comment" rows="2" placeholder="说明本次修改了什么…"></textarea></label>
     </div>
     <div class="modal-section">

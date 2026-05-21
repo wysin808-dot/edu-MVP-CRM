@@ -147,7 +147,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 增加 CAC 估算（如果有投放数据）
 - 增加转化率趋势（周/月维度）
 
-### TASK 2.4 — 内容详情增加编辑策略字段
+### TASK 2.4 ✅ 内容详情增加编辑策略字段
 
 **目标**：内容详情弹窗中，策略字段（funnelStage / emotionalTrigger / contentType 等）从只读变为可编辑。
 
