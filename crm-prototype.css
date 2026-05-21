@@ -1797,6 +1797,17 @@ textarea {
 .notif-item.notif-warn { border-left-color: #f59e0b; background: #fffbeb; }
 .notif-item.notif-action { border-left-color: #ef4444; background: #fef2f2; }
 .notif-item.notif-info { border-left-color: #3b82f6; background: #eff6ff; }
+.notif-item.notif-critical {
+  border-left-color: #dc2626;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-left-width: 5px;
+  animation: pulse-red 2s infinite;
+}
+.notif-item.notif-critical strong { color: #dc2626; }
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15); }
+}
 .notif-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
 .notif-body { flex: 1; min-width: 0; }
 .notif-body strong { display: block; font-size: 14px; margin-bottom: 4px; }

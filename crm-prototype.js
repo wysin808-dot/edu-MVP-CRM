@@ -4428,6 +4428,49 @@ function generateNotifications() {
     }
   }
 
+  // ── TASK 3.3: Red line indicator warnings (MCN 9.4) ──
+  if (isManager || isAdmission) {
+    const stageCounts = {};
+    crmLeads.forEach(l => { stageCounts[l.stage] = (stageCounts[l.stage] || 0) + 1; });
+    const dmCount = stageCounts["私信咨询"] || 0;
+    const wechatCount = stageCounts["加企微"] || 0;
+    const visitCount = stageCounts["试听/到访"] || 0;
+    const signedCount = stageCounts["签约"] || 0;
+
+    // Red line 1: 私信→加微 < 10%
+    if (dmCount > 0) {
+      const dmToWechat = Math.round(wechatCount / dmCount * 100);
+      if (dmToWechat < 10) {
+        notifs.push({ type: "critical", icon: "🚨", title: `红线：私信→加微 仅 ${dmToWechat}%（<10%）`, desc: "话术/响应速度需紧急优化，大量私信未转化为企微好友。", time: "红线预警", targetView: "crm" });
+      }
+    }
+    // Red line 2: 加微→试听 < 20%
+    if (wechatCount > 0) {
+      const wechatToVisit = Math.round(visitCount / wechatCount * 100);
+      if (wechatToVisit < 20) {
+        notifs.push({ type: "critical", icon: "🚨", title: `红线：加微→试听 仅 ${wechatToVisit}%（<20%）`, desc: "跟进节奏或内容吸引力不足，好友未转化为到访。", time: "红线预警", targetView: "crm" });
+      }
+    }
+    // Red line 3: 试听→签约 < 25%
+    if (visitCount > 0) {
+      const visitToSign = Math.round(signedCount / visitCount * 100);
+      if (visitToSign < 25) {
+        notifs.push({ type: "critical", icon: "🚨", title: `红线：试听→签约 仅 ${visitToSign}%（<25%）`, desc: "到访体验或顾问跟进存在问题，建议复盘接待流程。", time: "红线预警", targetView: "crm" });
+      }
+    }
+    // Red line 4: 顾问 30 天无开单
+    if (isManager) {
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
+      const advisors = teamMembers.filter(m => m.role === "招生顾问" && m.status === "在职");
+      advisors.forEach(adv => {
+        const recentSign = crmLeads.some(l => l.assignee === adv.name && l.stage === "签约" && l.date >= thirtyDaysAgo);
+        if (!recentSign) {
+          notifs.push({ type: "critical", icon: "🚨", title: `红线：${adv.name} 30天无签约`, desc: "顾问连续30天未开单，需排查线索分配和跟进质量。", time: "红线预警", targetView: "team" });
+        }
+      });
+    }
+  }
+
   return notifs;
 }
 
@@ -4437,7 +4480,7 @@ function renderNotifications() {
   const notifs = generateNotifications();
   const btn = document.querySelector('[data-action="notifications"]');
   // Show red dot if there are warn/action notifications
-  const urgent = notifs.filter((n) => n.type === "warn" || n.type === "action").length;
+  const urgent = notifs.filter((n) => n.type === "warn" || n.type === "action" || n.type === "critical").length;
   if (btn) {
     btn.classList.toggle("has-notif", urgent > 0);
   }

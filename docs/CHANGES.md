@@ -193,7 +193,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 基于 contents[] 和 crmLeads[] 动态计算
 - 增加 KPI 达标/未达标状态标识
 
-### TASK 3.3 — 红线指标预警系统
+### TASK 3.3 ✅ 红线指标预警系统
 
 **目标**：实现 MCN 规划书 9.4 节的红线指标，任一触发时在通知中心高亮警告。
 
