@@ -1,9 +1,13 @@
 /* ── Platform Configuration (editable via Settings) ── */
 let platformConfig = JSON.parse(localStorage.getItem("bci_platforms") || "null") || [
-  { name: "小红书", canBrowserOpen: true, icon: "📕" },
-  { name: "视频号", canBrowserOpen: false, icon: "📹" },
-  { name: "公众号", canBrowserOpen: true, icon: "📰" },
-  { name: "知乎", canBrowserOpen: true, icon: "💡" },
+  { name: "小红书", canBrowserOpen: true, icon: "📕", priority: 5, budgetPercent: 35 },
+  { name: "抖音", canBrowserOpen: true, icon: "🎵", priority: 4, budgetPercent: 20 },
+  { name: "视频号", canBrowserOpen: false, icon: "📹", priority: 3, budgetPercent: 15 },
+  { name: "公众号", canBrowserOpen: true, icon: "📰", priority: 3, budgetPercent: 8 },
+  { name: "独立站SEO", canBrowserOpen: true, icon: "🌐", priority: 4, budgetPercent: 12 },
+  { name: "知乎", canBrowserOpen: true, icon: "💡", priority: 2, budgetPercent: 5 },
+  { name: "Google/YouTube", canBrowserOpen: true, icon: "▶️", priority: 2, budgetPercent: 3 },
+  { name: "Facebook/IG", canBrowserOpen: true, icon: "📘", priority: 2, budgetPercent: 2 },
 ];
 function savePlatformConfig() { localStorage.setItem("bci_platforms", JSON.stringify(platformConfig)); }
 function platformNames() { return platformConfig.map((p) => p.name); }
@@ -477,6 +481,91 @@ const accounts = [
     stage: "增长",
     monthlyPosts: 4,
     leads: 9,
+  },
+  {
+    platform: "抖音",
+    accountName: "BCI博文国际学院",
+    status: "筹备",
+    contentCount: 0,
+    handle: "待开通",
+    investmentTier: "主力",
+    ownerType: "自营",
+    persona: "校长 IP",
+    talent: "校长",
+    entityName: "BCI International",
+    entityType: "学校",
+    operator: "运营 B",
+    stage: "养号",
+    monthlyPosts: 0,
+    leads: 0,
+  },
+  {
+    platform: "抖音",
+    accountName: "新加坡留学规划中心",
+    status: "筹备",
+    contentCount: 0,
+    handle: "待开通",
+    investmentTier: "主力",
+    ownerType: "自营",
+    persona: "升学顾问 IP",
+    talent: "升学顾问",
+    entityName: "独立主体",
+    entityType: "中介",
+    operator: "运营 A",
+    stage: "养号",
+    monthlyPosts: 0,
+    leads: 0,
+  },
+  {
+    platform: "独立站SEO",
+    accountName: "wace.edu.sg",
+    status: "运营中",
+    contentCount: 45,
+    handle: "https://wace.edu.sg",
+    investmentTier: "核心",
+    ownerType: "自营",
+    persona: "官方 IP",
+    talent: "校方品牌",
+    entityName: "BCI International",
+    entityType: "学校",
+    operator: "Ocean Wang",
+    stage: "增长",
+    monthlyPosts: 60,
+    leads: 6,
+  },
+  {
+    platform: "Google/YouTube",
+    accountName: "BCI International School",
+    status: "筹备",
+    contentCount: 0,
+    handle: "待开通",
+    investmentTier: "辅助",
+    ownerType: "自营",
+    persona: "官方 IP",
+    talent: "校方品牌",
+    entityName: "BCI International",
+    entityType: "学校",
+    operator: "Ocean Wang",
+    stage: "养号",
+    monthlyPosts: 0,
+    leads: 0,
+  },
+  {
+    platform: "Facebook/IG",
+    accountName: "BCI Singapore",
+    status: "筹备",
+    contentCount: 0,
+    handle: "待开通",
+    investmentTier: "辅助",
+    ownerType: "自营",
+    persona: "官方 IP",
+    talent: "校方品牌",
+    entityName: "BCI International",
+    entityType: "学校",
+    operator: "Ocean Wang",
+    stage: "养号",
+    monthlyPosts: 0,
+    leads: 0,
   },
 ];
 
@@ -1175,7 +1264,7 @@ const modalTemplates = {
         <label>Primary Keyword<input placeholder="输入主关键词" /></label>
         <label>Prompts Used<input placeholder="使用的 AI 模板" /></label>
         <label>Publish Date<input type="date" /></label>
-        <label>Repurpose Status<select><option value="">选择复用状态</option><option>原稿</option><option>可二改</option><option>可转视频号</option><option>可转小红书</option><option>已转小红书标题</option><option>已复用多平台</option><option>归档</option></select></label>
+        <label>Repurpose Status<select><option value="">选择复用状态</option><option>原稿</option><option>可二改</option><option>可转视频号</option><option>可转小红书</option><option>可转抖音</option><option>可转独立站</option><option>已转小红书标题</option><option>已复用多平台</option><option>归档</option></select></label>
         <label>Status<select><option>草稿</option><option>待审核</option><option>审核通过</option><option>已发布</option></select></label>
         <label>Topic Cluster<select><option value="">选择主题簇</option><option>WACE</option><option>A-Level</option><option>IB</option><option>升学</option><option>择校</option><option>陪读</option><option>校园</option><option>签证</option><option>学费</option><option>NUS / NTU</option><option>毕业生案例</option></select></label>
         <label>WACE Focus<select><option>否</option><option>是</option></select></label>
@@ -1201,7 +1290,7 @@ const modalTemplates = {
         <label>发布账号<select>${optionList(accountNames(), "请先新增账号")}</select></label>
         <label>绑定 IP<select>${optionList(personaNames(), "请先新增 IP")}</select></label>
         <label>关联内容资产<select>${contents.map((c) => `<option>${escapeHtml(c.title)}</option>`).join("")}</select></label>
-        <label>媒体类型<select><option>图文</option><option>短视频</option><option>公众号文章</option><option>朋友圈</option></select></label>
+        <label>媒体类型<select><option>图文</option><option>短视频</option><option>公众号文章</option><option>朋友圈</option><option>抖音短视频</option><option>SEO英文文章</option><option>YouTube视频</option></select></label>
         <label class="full-field">发布链接<input value="https://example.com/post/..." /></label>
         <div class="full-field upload-section">
           <span>封面图</span>
@@ -1252,7 +1341,7 @@ const modalTemplates = {
         <label>目标平台<select>${platformOptions()}</select></label>
         <label>目标 IP<select><option>升学顾问 IP</option><option>校长 IP</option><option>招生老师 IP</option></select></label>
         <label>目标人群<select><option>9-10 年级家长</option><option>7-8 年级转轨家庭</option><option>11-12 年级升学家庭</option></select></label>
-        <label class="full-field">Prompt<textarea>基于选中的真实资料，生成 3 个适合中文自媒体的版本：一个小红书图文、一个视频口播、一个招生朋友圈。</textarea></label>
+        <label class="full-field">Prompt<textarea>基于选中的真实资料，生成多平台适配版本：一个小红书图文、一个抖音短视频脚本、一个视频号口播、一个招生朋友圈、一个英文SEO文章摘要。</textarea></label>
       </div>
     `,
   },
@@ -2726,12 +2815,18 @@ function renderCrm() {
 
 function renderBars() {
   const target = document.querySelector("#platform-bars");
-  const rows = [
-    ["小红书", 72, 57],
-    ["视频号", 56, 38],
-    ["公众号", 42, 26],
-    ["知乎", 31, 14],
-  ];
+  // Dynamically aggregate leads per platform from accounts data
+  const platformLeads = {};
+  accounts.forEach((a) => {
+    platformLeads[a.platform] = (platformLeads[a.platform] || 0) + (a.leads || 0);
+  });
+  const maxLeads = Math.max(...Object.values(platformLeads), 1);
+  const rows = Object.entries(platformLeads)
+    .sort(([, a], [, b]) => b - a)
+    .map(([name, leads]) => {
+      const icon = (platformConfig.find((p) => p.name === name) || {}).icon || "📱";
+      return [icon + " " + name, Math.round((leads / maxLeads) * 100), leads];
+    });
   target.innerHTML = rows
     .map(
       ([name, width, value]) => `
@@ -2742,7 +2837,7 @@ function renderBars() {
         </div>
       `,
     )
-    .join("");
+    .join("") || '<div class="empty-state">暂无平台数据</div>';
 }
 
 function renderAiLibrary(items = aiPromptLibrary) {
@@ -2863,7 +2958,7 @@ function renderSettings() {
       </div>
       <div style="padding:16px 20px">
         <p style="font-size:14px;line-height:1.6;margin:0">
-          <strong>浏览器可打开</strong> = 链接在浏览器中直接查看（小红书、知乎、公众号文章）<br/>
+          <strong>浏览器可打开</strong> = 链接在浏览器中直接查看（小红书、知乎、公众号文章、抖音、独立站、Google/YouTube、Facebook/IG）<br/>
           <strong>需微信内打开</strong> = 链接只能在微信里查看（视频号）<br/>
           CRM 线索卡片上，可打开的链接会显示 🔗 图标，点击直接跳转。
         </p>
@@ -3637,7 +3732,8 @@ function renderCalendar() {
   monthContents.forEach((item) => { funnelCounts[item.funnelStage] = (funnelCounts[item.funnelStage] || 0) + 1; });
   const platformCounts = {};
   monthContents.forEach((item) => {
-    const p = (item.account || "").includes("小红书") ? "小红书" : (item.account || "").includes("视频号") ? "视频号" : (item.account || "").includes("公众号") ? "公众号" : "其他";
+    const acct = accounts.find((a) => a.accountName === item.account);
+    const p = acct ? acct.platform : (platformConfig.find((pl) => (item.account || "").includes(pl.name)) || {}).name || "其他";
     platformCounts[p] = (platformCounts[p] || 0) + 1;
   });
   const waceCount = monthContents.filter((item) => item.waceFocus).length;
