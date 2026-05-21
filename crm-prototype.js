@@ -1842,16 +1842,22 @@ async function saveModalRecord() {
     if (!actionSelect || !commentInput) return false;
     const action = actionSelect.value;
     const reviewer = reviewerSelect?.value || "部门负责人";
-    const comment = commentInput.value.trim() || "无备注";
+    let comment = commentInput.value.trim() || "无备注";
+    // Collect field-specific suggestions
+    const checkedFields = [...document.querySelectorAll(".review-field-cb:checked")].map(cb => cb.dataset.field);
+    if (checkedFields.length > 0) {
+      comment += `\n【需修改字段】${checkedFields.join("、")}`;
+    }
     const timestamp = new Date().toISOString().slice(0, 16).replace("T", " ");
     const modalTitle = document.querySelector("#modal-title")?.textContent || "";
     const cleanTitle = modalTitle.replace("审核：", "");
     const item = contents.find((c) => c.title === cleanTitle) || contents.find((c) => cleanTitle.includes(c.title.slice(0, 20))) || window._currentReviewItem;
     if (item) {
       item.reviewHistory = item.reviewHistory || [];
-      item.reviewHistory.push({ reviewer, action, comment, timestamp });
+      item.reviewHistory.push({ reviewer, action, comment, timestamp, revisionFields: checkedFields.length > 0 ? checkedFields : undefined });
       if (action === "approve") item.status = "可发布";
       else if (action === "reject") item.status = "已驳回";
+      else if (action === "revise") item.status = "已驳回";
       persistContentUpdate(item);
       renderContent();
       renderApp();
@@ -2055,12 +2061,13 @@ function statusColor(s) {
 }
 
 function buildResubmitEditForm(item) {
-  const lastReject = (item.reviewHistory || []).filter((r) => r.action === "reject").pop();
+  const lastReject = (item.reviewHistory || []).filter((r) => r.action === "reject" || r.action === "revise").pop();
   return `
     ${lastReject ? `
     <div class="modal-section" style="background:#fef2f2;border-radius:8px;padding:12px 16px;margin-bottom:16px">
       <h3 style="color:#dc2626;margin:0 0 6px">驳回原因</h3>
-      <p style="margin:0;color:#dc2626">${escapeHtml(lastReject.comment || "未填写原因")}</p>
+      <p style="margin:0;color:#dc2626">${escapeHtml((lastReject.comment || "未填写原因").split("\n")[0])}</p>
+      ${lastReject.revisionFields?.length ? `<div class="revision-field-tags" style="margin-top:8px">${lastReject.revisionFields.map(f => `<span class="revision-field-tag">⚠ ${f}</span>`).join("")}</div>` : ""}
       <small style="color:var(--muted)">${lastReject.reviewer} · ${lastReject.timestamp}</small>
     </div>` : ""}
     <div class="modal-section">
@@ -2576,6 +2583,7 @@ function buildReviewTimeline(history) {
         <span class="review-time">${entry.timestamp}</span>
       </div>
       <p class="review-comment">${escapeHtml(entry.comment)}</p>
+      ${entry.revisionFields?.length ? `<div class="revision-field-tags">${entry.revisionFields.map(f => `<span class="revision-field-tag">⚠ ${f}</span>`).join("")}</div>` : ""}
     </div>`;
   }).join("")}</div>`;
 }
@@ -2739,7 +2747,16 @@ function buildReviewForm(item) {
           <option>部门负责人</option>
           <option>超级管理员</option>
         </select></label>
-        <label class="full-field">审核意见<textarea id="review-comment-input" rows="5" placeholder="输入审核意见或修改建议..."></textarea></label>
+        <label class="full-field">审核意见<textarea id="review-comment-input" rows="3" placeholder="输入审核意见或修改建议..."></textarea></label>
+        <label class="full-field">修改建议（可选，针对具体字段）
+          <div class="review-field-suggestions">
+            <label><input type="checkbox" class="review-field-cb" data-field="标题" /> 标题需修改</label>
+            <label><input type="checkbox" class="review-field-cb" data-field="CTA" /> CTA 需优化</label>
+            <label><input type="checkbox" class="review-field-cb" data-field="数据/引用" /> 数据需核实</label>
+            <label><input type="checkbox" class="review-field-cb" data-field="情绪钩子" /> 情绪钩子不匹配</label>
+            <label><input type="checkbox" class="review-field-cb" data-field="合规" /> 合规问题</label>
+          </div>
+        </label>
       </div>
     </div>
   `;
@@ -2784,10 +2801,15 @@ function renderContent(items) {
     .map(
       (item) => {
         const latestReview = (item.reviewHistory || []).slice(-1)[0];
-        const reviewSnippet = latestReview && (item.status === "待审核" || item.status === "审核通过")
-          ? `<div class="review-snippet">
-               <span class="badge ${latestReview.action === "approve" ? "green" : latestReview.action === "reject" ? "red" : "amber"}">${latestReview.action === "approve" ? "通过" : latestReview.action === "reject" ? "驳回" : "修改意见"}</span>
-               <span class="review-snippet-text">${escapeHtml(latestReview.comment || "").slice(0, 40)}${(latestReview.comment || "").length > 40 ? "…" : ""}</span>
+        const showReview = latestReview && (item.status === "待审核" || item.status === "审核通过" || item.status === "已驳回");
+        const revisionFieldTags = latestReview?.revisionFields?.length
+          ? `<div class="revision-field-tags">${latestReview.revisionFields.map(f => `<span class="revision-field-tag">⚠ ${f}</span>`).join("")}</div>` : "";
+        const commentText = (latestReview?.comment || "").split("\n")[0]; // first line only for card
+        const reviewSnippet = showReview
+          ? `<div class="review-snippet ${item.status === "已驳回" ? "rejected" : ""}">
+               <span class="badge ${latestReview.action === "approve" ? "green" : latestReview.action === "reject" || latestReview.action === "revise" ? "red" : "amber"}">${latestReview.action === "approve" ? "通过" : latestReview.action === "reject" || latestReview.action === "revise" ? "驳回" : "修改意见"}</span>
+               <span class="review-snippet-text">${escapeHtml(commentText).slice(0, 40)}${commentText.length > 40 ? "…" : ""}</span>
+               ${revisionFieldTags}
              </div>` : "";
         return `
         <article class="content-card content-detail" data-title="${escapeHtml(item.title)}" style="cursor:pointer">

@@ -157,7 +157,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 修改后自动 persistContentUpdate + 云端同步
 - 编辑历史记入 reviewHistory（可选）
 
-### TASK 2.5 — 审核流程增加修改意见功能
+### TASK 2.5 ✅ 审核流程增加修改意见功能
 
 **目标**：审核时除了通过/驳回，还能在具体字段上给出修改建议。
 
