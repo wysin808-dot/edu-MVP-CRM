@@ -306,7 +306,7 @@ const BRAND_FIREWALL_KEYWORDS = [
 - 线索卡片增加「编辑」按钮 → 弹窗编辑所有字段
 - 看板支持拖拽换阶段（HTML5 drag & drop）
 
-### TASK 5.2 — Follow-up 跟进记录 + 自动提醒
+### TASK 5.2 ✅ Follow-up 跟进记录 + 自动提醒
 
 **现状**：线索只有单条 notes，无跟进历史。  
 **目标**：每条线索有完整跟进时间线，超时未跟进自动提醒。

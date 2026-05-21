@@ -4893,6 +4893,45 @@ function generateNotifications() {
     }
   }
 
+  // ── TASK 5.2: Follow-up overdue reminders ──
+  const todayStr = now.toISOString().slice(0, 10);
+  const relevantLeads = isAdmission
+    ? crmLeads.filter(l => l.assignee === (roleCopy[role]?.user || ""))
+    : (isManager ? crmLeads : []);
+  const overdueFollowUps = [];
+  const upcomingFollowUps = [];
+  relevantLeads.forEach(lead => {
+    if (lead.stage === "签约" || lead.stage === "流失") return;
+    const fups = lead.followUps || [];
+    const lastFu = fups[fups.length - 1];
+    if (lastFu && lastFu.nextDate) {
+      if (lastFu.nextDate <= todayStr) {
+        overdueFollowUps.push({ lead, fu: lastFu });
+      } else {
+        // upcoming in next 3 days
+        const nextD = new Date(lastFu.nextDate);
+        const diffDays = Math.ceil((nextD - now) / 86400000);
+        if (diffDays <= 3) {
+          upcomingFollowUps.push({ lead, fu: lastFu, days: diffDays });
+        }
+      }
+    }
+    // Leads with no follow-ups at all and older than 3 days
+    if (fups.length === 0 && lead.date) {
+      const leadDate = new Date(lead.date);
+      const daysSince = Math.floor((now - leadDate) / 86400000);
+      if (daysSince >= 3 && lead.stage !== "签约" && lead.stage !== "流失") {
+        overdueFollowUps.push({ lead, fu: null });
+      }
+    }
+  });
+  if (overdueFollowUps.length > 0) {
+    notifs.push({ type: "critical", icon: "🚨", title: `${overdueFollowUps.length} 条线索跟进已逾期`, desc: overdueFollowUps.slice(0, 3).map(o => `${o.lead.name}${o.fu ? `（${o.fu.nextAction || "待跟进"}）` : "（从未跟进）"}`).join("、"), time: "立即处理", targetView: "crm" });
+  }
+  if (upcomingFollowUps.length > 0) {
+    notifs.push({ type: "action", icon: "📅", title: `${upcomingFollowUps.length} 条线索即将到期跟进`, desc: upcomingFollowUps.slice(0, 3).map(o => `${o.lead.name}（${o.days}天后）`).join("、"), time: "近期", targetView: "crm" });
+  }
+
   // ── TASK 3.3: Red line indicator warnings (MCN 9.4) ──
   if (isManager || isAdmission) {
     const stageCounts = {};
@@ -5076,6 +5115,8 @@ async function bootstrap() {
   wireStrategyFilters();
   wireCalendar();
   wireNotifications();
+  // TASK 5.2: Auto-refresh notifications every 5 minutes
+  setInterval(() => { renderNotifications(); }, 300000);
   const status = getCloudStatus();
   if (status.message) {
     showToast(status.message);
