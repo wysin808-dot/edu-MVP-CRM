@@ -821,7 +821,7 @@ const SEED_AI_PROMPTS = [
 
 const STORAGE_KEY = "bci-media-crm-prototype-v1";
 const CLOUD_STATUS_KEY = "bci-cloud-status";
-const CLOUD_COLLECTIONS = ["contents", "knowledge", "personas", "accounts", "posts"];
+const CLOUD_COLLECTIONS = ["contents", "knowledge", "personas", "accounts", "posts", "crm", "prompts"];
 let currentModalAction = "";
 let cloudClient = null;
 let cloudReady = false;
@@ -918,7 +918,10 @@ function persistContentUpdate(item) {
     metrics: item.metrics, funnelStage: item.funnelStage, emotionalTrigger: item.emotionalTrigger,
     contentType: item.contentType, leadMagnet: item.leadMagnet, primaryKeyword: item.primaryKeyword,
     topicCluster: item.topicCluster, repurposeStatus: item.repurposeStatus, waceFocus: item.waceFocus,
+    repurposeSourceTitle: item.repurposeSourceTitle, repurposeChildren: item.repurposeChildren,
     references: item.references, cta: item.cta, notes: item.notes, comments: item.comments,
+    account: item.account, author: item.author, audiencePersona: item.audiencePersona,
+    publishDate: item.publishDate, promptsUsed: item.promptsUsed,
   };
   if (idx >= 0) saved._contentUpdates[idx] = snapshot;
   else saved._contentUpdates.push(snapshot);
@@ -931,7 +934,7 @@ function persistContentUpdate(item) {
 
 async function updateRecordOnline(collection, record) {
   if (!cloudReady || !cloudClient) return "local";
-  const tableMap = { contents: "content_items", knowledge: "knowledge_items", personas: "ip_personas", accounts: "account_matrix", posts: "published_posts", crm: "crm_leads" };
+  const tableMap = { contents: "content_items", knowledge: "knowledge_items", personas: "ip_personas", accounts: "account_matrix", posts: "published_posts", crm: "crm_leads", prompts: "ai_prompts" };
   const table = tableMap[collection];
   if (!table) return "local";
 
@@ -939,9 +942,9 @@ async function updateRecordOnline(collection, record) {
   const payload = toCloudUpdatePayload(collection, record);
   if (!payload || Object.keys(payload).length === 0) return "local";
 
-  // Try to match by title (since records may not have cloud UUID)
-  const matchField = collection === "crm" ? "name" : "title";
-  const matchValue = collection === "crm" ? record.name : record.title;
+  // Match field per collection type
+  const matchField = collection === "crm" ? "name" : collection === "personas" ? "name" : "title";
+  const matchValue = collection === "crm" ? record.name : collection === "personas" ? (record[0] || record.name) : record.title;
 
   const { error } = await cloudClient.from(table).update(payload).eq(matchField, matchValue);
   if (error) {
@@ -955,7 +958,13 @@ async function updateRecordOnline(collection, record) {
 function toCloudUpdatePayload(collection, record) {
   if (collection === "contents") {
     const payload = {};
-    if (record.status) payload.status = record.status;
+    if (record.status) payload.status_label = record.status;
+    if (record.aiSearchReady !== undefined) payload.ai_search_ready = record.aiSearchReady;
+    if (record.account) payload.account_name = record.account;
+    if (record.author) payload.author_name = record.author;
+    if (record.audiencePersona) payload.audience_personas = record.audiencePersona;
+    if (record.publishDate) payload.publish_date = record.publishDate;
+    if (record.promptsUsed) payload.prompts_used = record.promptsUsed;
     if (record.funnelStage) payload.funnel_stage = record.funnelStage;
     if (record.emotionalTrigger) payload.emotional_trigger = record.emotionalTrigger;
     if (record.contentType) payload.content_type = record.contentType;
@@ -963,10 +972,14 @@ function toCloudUpdatePayload(collection, record) {
     if (record.primaryKeyword) payload.primary_keyword = record.primaryKeyword;
     if (record.topicCluster) payload.topic_cluster = record.topicCluster;
     if (record.repurposeStatus) payload.repurpose_status = record.repurposeStatus;
+    if (record.repurposeSourceTitle !== undefined) payload.repurpose_source_title = record.repurposeSourceTitle;
+    if (record.repurposeChildren) payload.repurpose_children = record.repurposeChildren;
     if (record.waceFocus !== undefined) payload.wace_focus = record.waceFocus;
-    if (record.references) payload["references"] = record.references;
+    if (record.references) payload.references_note = record.references;
     if (record.cta) payload.cta = record.cta;
     if (record.notes) payload.notes = record.notes;
+    if (record.comments) payload.comments = record.comments;
+    if (record.reviewHistory) payload.review_history = record.reviewHistory;
     if (record.metrics) {
       payload.metric_reads = record.metrics.reads || 0;
       payload.metric_likes = record.metrics.likes || 0;
@@ -981,6 +994,7 @@ function toCloudUpdatePayload(collection, record) {
     return {
       stage: record.stage,
       assignee: record.assignee,
+      date: record.date,
       notes: record.notes,
       wechat_id: record.wechatId,
       wechat_add_time: record.wechatAddTime,
@@ -998,12 +1012,86 @@ function toCloudUpdatePayload(collection, record) {
       source_link: record.sourceLink || "",
     };
   }
+  if (collection === "knowledge") {
+    return {
+      detail: record.detail,
+      notes: record.notes,
+      numeric_data_text: record.numericData,
+      review_cycle: record.reviewCycle,
+      source_url: record.source,
+      source_type: record.sourceType,
+      subject_tags: record.subject,
+      item_type: record.type,
+      category: record.type,
+      used_in_contents: Number(record.usedInContents) || 0,
+      verified_by_name: record.verifiedBy,
+      last_verified_text: record.lastVerified,
+      visibility: record.visibility,
+    };
+  }
+  if (collection === "personas") {
+    const [personaType, ownerName] = String(record[2] || "").split("·").map((s) => s.trim());
+    return {
+      positioning: record[1],
+      persona_type: personaType || "IP",
+      owner_name: ownerName || "未分配",
+      publishing_frequency: record[3],
+      lead_count: Number(String(record[4]).replace(/\D/g, "")) || 0,
+    };
+  }
+  if (collection === "accounts") {
+    return {
+      account_status: record.status,
+      content_count: record.contentCount,
+      handle_url: record.handle,
+      investment_tier: record.investmentTier,
+      owner_type: record.ownerType,
+      persona_name: record.persona,
+      talent_name: record.talent,
+      entity_name: record.entityName,
+      entity_type: record.entityType,
+      operator_name: record.operator,
+      account_stage: record.stage,
+      monthly_posts: record.monthlyPosts,
+      monthly_spend: record.monthlySpend || 0,
+      lead_count: record.leads,
+    };
+  }
+  if (collection === "posts") {
+    const media = (Array.isArray(record) ? record[7] : null) || {};
+    return {
+      publish_date: Array.isArray(record) ? record[0] : record.publishDate,
+      platform: Array.isArray(record) ? record[1] : record.platform,
+      account_name: Array.isArray(record) ? record[2] : record.accountName,
+      persona_name: Array.isArray(record) ? record[3] : record.personaName,
+      title: Array.isArray(record) ? record[4] : record.title,
+      status_label: Array.isArray(record) ? record[5] : record.statusLabel,
+      metric_label: Array.isArray(record) ? record[6] : record.metricLabel,
+      post_url: media.postUrl || record.postUrl || "",
+      published_copy: media.publishedCopy || record.publishedCopy || "",
+      media_note: media.mediaNote || record.mediaNote || "",
+    };
+  }
+  if (collection === "prompts") {
+    return {
+      author: record.author,
+      last_used: record.lastUsed,
+      notes: record.notes,
+      output_examples: record.outputExamples,
+      platform: record.platform,
+      prompt_template: record.promptTemplate,
+      quality_rating: record.qualityRating,
+      stage: record.stage,
+      target_persona: record.targetPersona,
+      use_count: record.useCount,
+    };
+  }
   return {};
 }
 
 async function deleteRecordOnline(collection, matchField, matchValue) {
   if (!cloudReady || !cloudClient) return "local";
-  const tableMap = { contents: "content_items", knowledge: "knowledge_items", personas: "ip_personas", accounts: "account_matrix", posts: "published_posts", crm: "crm_leads" };
+  const tableMap = { contents: "content_items", knowledge: "knowledge_items", personas: "ip_personas", accounts: "account_matrix", posts: "published_posts", crm: "crm_leads", prompts: "ai_prompts" };
   const table = tableMap[collection];
   if (!table) return "local";
 
@@ -1222,10 +1310,22 @@ function fromCloudContent(row) {
     promptsUsed: row.prompts_used || "未使用",
     publishDate: row.publish_date || new Date().toISOString().slice(0, 10),
     references: row.references_note || "待补充引用",
-    repurposeStatus: row.repurpose_status || "可二改",
+    repurposeStatus: row.repurpose_status || "原稿",
+    repurposeSourceTitle: row.repurpose_source_title || "",
+    repurposeChildren: row.repurpose_children || [],
     status: row.status_label || "草稿",
     topicCluster: row.topic_cluster || "未分类",
     waceFocus: row.wace_focus,
+    comments: row.comments || [],
+    reviewHistory: row.review_history || [],
+    metrics: {
+      reads: row.metric_reads || 0,
+      likes: row.metric_likes || 0,
+      comments: row.metric_comments || 0,
+      shares: row.metric_shares || 0,
+      privateMessages: row.metric_private_messages || 0,
+      leads: row.metric_leads || 0,
+    },
   };
 }
 
@@ -1273,6 +1373,7 @@ function fromCloudAccount(row) {
     operator: row.operator_name || "未分配",
     stage: row.account_stage || "筹备",
     monthlyPosts: row.monthly_posts || 0,
+    monthlySpend: row.monthly_spend || 0,
     leads: row.lead_count || 0,
   };
 }
@@ -1373,7 +1474,7 @@ function toCloudRow(collection, record) {
   }
 
   if (collection === "contents") {
-    return {
+    const row = {
       id: createId(),
       title: record.title,
       ai_search_ready: record.aiSearchReady,
@@ -1391,10 +1492,23 @@ function toCloudRow(collection, record) {
       publish_date: record.publishDate,
       references_note: record.references,
       repurpose_status: record.repurposeStatus,
+      repurpose_source_title: record.repurposeSourceTitle || "",
+      repurpose_children: record.repurposeChildren || [],
       status_label: record.status,
       topic_cluster: record.topicCluster,
       wace_focus: record.waceFocus,
+      comments: record.comments || [],
+      review_history: record.reviewHistory || [],
     };
+    if (record.metrics) {
+      row.metric_reads = record.metrics.reads || 0;
+      row.metric_likes = record.metrics.likes || 0;
+      row.metric_comments = record.metrics.comments || 0;
+      row.metric_shares = record.metrics.shares || 0;
+      row.metric_private_messages = record.metrics.privateMessages || 0;
+      row.metric_leads = record.metrics.leads || 0;
+    }
+    return row;
   }
 
   if (collection === "accounts") {
@@ -1414,6 +1528,7 @@ function toCloudRow(collection, record) {
       operator_name: record.operator,
       account_stage: record.stage,
       monthly_posts: record.monthlyPosts,
+      monthly_spend: record.monthlySpend || 0,
       lead_count: record.leads,
     };
   }
@@ -1435,6 +1550,48 @@ function toCloudRow(collection, record) {
     };
   }
 
+  if (collection === "crm") {
+    return {
+      id: createId(),
+      name: record.name,
+      source: record.source,
+      stage: record.stage,
+      assignee: record.assignee,
+      date: record.date,
+      source_link: record.sourceLink,
+      channel: record.channel,
+      grade: record.grade,
+      parent_name: record.parentName,
+      course: record.course,
+      wechat_id: record.wechatId,
+      wechat_add_time: record.wechatAddTime,
+      notes: record.notes,
+      follow_ups: record.followUps || [],
+      lead_type: record.leadType || "direct",
+      agent_name: record.agentName || "",
+      partner_school: record.partnerSchool || "",
+      commission_rate: record.commissionRate || 0,
+      expected_revenue: record.expectedRevenue || 0,
+    };
+  }
+
+  if (collection === "prompts") {
+    return {
+      id: createId(),
+      title: record.title,
+      author: record.author,
+      last_used: record.lastUsed,
+      notes: record.notes,
+      output_examples: record.outputExamples,
+      platform: record.platform,
+      prompt_template: record.promptTemplate,
+      quality_rating: record.qualityRating,
+      stage: record.stage,
+      target_persona: record.targetPersona,
+      use_count: record.useCount || 0,
+    };
+  }
+
   return record;
 }
 
@@ -1450,12 +1607,30 @@ async function persistRecordOnline(collection, record) {
     personas: "ip_personas",
     accounts: "account_matrix",
     posts: "published_posts",
+    crm: "crm_leads",
+    prompts: "ai_prompts",
   };
+
+  // Each table uses different unique columns for upsert conflict resolution
+  const conflictMap = {
+    contents: "title",
+    knowledge: "title",
+    personas: "name",
+    accounts: "platform,account_name",
+    posts: "title",
+    crm: "name",
+    prompts: "title",
+  };
+
+  const table = tableMap[collection];
+  if (!table) { persistRecord(collection, record); return "local"; }
 
   updateSyncIndicator("syncing");
   const row = toCloudRow(collection, record);
-  // Use upsert: insert or update on conflict
-  const { error } = await cloudClient.from(tableMap[collection]).upsert(row, { onConflict: "title" });
+  // Set user_id from authenticated user
+  if (authUser?.id) row.user_id = authUser.id;
+
+  const { error } = await cloudClient.from(table).upsert(row, { onConflict: conflictMap[collection] || "title" });
   if (error) {
     console.warn("Cloud upsert failed, saving locally instead.", error);
     persistRecord(collection, record);
@@ -2401,6 +2576,10 @@ async function saveModalRecord() {
     };
     crmLeads.unshift(lead);
     persistLeadUpdate(lead);
+    // Also upsert to cloud if connected
+    if (cloudReady && cloudClient) {
+      persistRecordOnline("crm", lead).catch(err => console.warn("CRM cloud insert failed:", err));
+    }
     addAuditLog("新增线索", `${lead.name} (${LEAD_TYPE_LABELS[lead.leadType] || "直招"})`);
     renderCrm();
     renderNotifications();
