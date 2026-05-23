@@ -1,0 +1,3 @@
+window.ACADEMIC_SUPABASE_URL = "";
+window.ACADEMIC_SUPABASE_ANON_KEY = "";
+

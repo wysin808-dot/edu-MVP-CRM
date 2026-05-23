@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BCI Academic Portal</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">BCI</div>
+          <div>
+            <strong>Academic Portal</strong>
+            <span>AI-Powered Academic OS</span>
+          </div>
+        </div>
+
+        <label class="role-picker">
+          <span>Portal View</span>
+          <select id="role-select">
+            <option value="admin">Admin / CEO</option>
+            <option value="student">Student</option>
+            <option value="parent">Parent</option>
+            <option value="teacher">Teacher</option>
+            <option value="academic_director">Academic Director</option>
+            <option value="qa_mr">QA / MR</option>
+          </select>
+        </label>
+
+        <nav class="nav-list" id="nav-list"></nav>
+
+        <div class="side-note">
+          <span>Today</span>
+          <strong id="today-focus">3 lessons · 2 assignments</strong>
+          <p>Academic activity, AI learning and evidence are tracked in one system.</p>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="view-eyebrow">Student Portal</p>
+            <h1 id="view-title">Learning Dashboard</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" id="theme-toggle" type="button" title="Toggle theme">◐</button>
+            <button class="primary-button" id="quick-action" type="button">Ask AI Tutor</button>
+          </div>
+        </header>
+
+        <section class="hero-panel">
+          <div>
+            <p class="eyebrow">BCI WACE · Grade 10</p>
+            <h2 id="hero-title">Good morning, Amanda.</h2>
+            <p id="hero-copy">You have Physics at 10:00, one Maths task due today, and a new AI recommendation based on last week’s quiz.</p>
+          </div>
+          <div class="hero-metrics" id="hero-metrics"></div>
+        </section>
+
+        <section class="metric-grid" id="metric-grid"></section>
+
+        <section class="workspace-grid">
+          <article class="panel wide">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow" id="primary-eyebrow">Today</p>
+                <h3 id="primary-title">Schedule & Tasks</h3>
+              </div>
+              <button class="ghost-button" id="primary-action" type="button">View all</button>
+            </div>
+            <div class="timeline-list" id="primary-list"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">AI Insight</p>
+                <h3 id="insight-title">Learning Recommendation</h3>
+              </div>
+            </div>
+            <div class="insight-card" id="insight-card"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow" id="secondary-eyebrow">Progress</p>
+                <h3 id="secondary-title">Subject Performance</h3>
+              </div>
+            </div>
+            <div class="bar-list" id="bar-list"></div>
+          </article>
+
+          <article class="panel wide">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow" id="table-eyebrow">Academic Records</p>
+                <h3 id="table-title">Recent Activity</h3>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead id="table-head"></thead>
+                <tbody id="table-body"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal" id="ai-modal" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">AI Tutor</p>
+            <h3>Ask a subject tutor</h3>
+          </div>
+          <button class="icon-button" id="modal-close" type="button">×</button>
+        </div>
+        <label>
+          Subject
+          <select id="ai-subject">
+            <option>Maths</option>
+            <option>Physics</option>
+            <option>Chemistry</option>
+            <option>EALD</option>
+            <option>Chinese</option>
+          </select>
+        </label>
+        <label>
+          Question
+          <textarea id="ai-question" rows="5" placeholder="Paste a question, describe a weak point, or ask for practice."></textarea>
+        </label>
+        <button class="primary-button full" id="ai-generate" type="button">Generate guidance</button>
+        <div class="ai-answer" id="ai-answer"></div>
+      </div>
+    </div>
+
+    <div class="modal" id="qr-modal" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Attendance QR</p>
+            <h3>Generate check-in code</h3>
+          </div>
+          <button class="icon-button" id="qr-close" type="button">×</button>
+        </div>
+        <div class="form-grid">
+          <label>
+            Class
+            <select id="qr-class">
+              <option>G10 Physics</option>
+              <option>G10 EALD</option>
+              <option>G11 Physics</option>
+              <option>G9 Science</option>
+            </select>
+          </label>
+          <label>
+            Session
+            <select id="qr-session">
+              <option>08:30 Lesson</option>
+              <option>10:00 Lesson</option>
+              <option>13:30 Tutorial</option>
+              <option>15:20 Support Block</option>
+            </select>
+          </label>
+        </div>
+        <button class="primary-button full" id="qr-generate" type="button">Generate QR</button>
+        <div class="qr-result" id="qr-result">
+          <canvas id="qr-canvas" width="220" height="220"></canvas>
+          <div>
+            <strong id="qr-title">No active QR</strong>
+            <p id="qr-link">Generate a signed class check-in token with a 15-minute expiry.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="assignment-modal" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Teacher Assignment</p>
+            <h3>Assign homework to one student</h3>
+          </div>
+          <button class="icon-button" id="assignment-close" type="button">×</button>
+        </div>
+        <div class="form-grid">
+          <label>
+            Student
+            <select id="assignment-student">
+              <option>Amanda Lee</option>
+              <option>Jason Ng</option>
+              <option>Priya Shah</option>
+              <option>Daniel Ho</option>
+              <option>Mei Chen</option>
+              <option>Liam Tan</option>
+            </select>
+          </label>
+          <label>
+            Subject
+            <select id="assignment-subject">
+              <option>Physics</option>
+              <option>Mathematics</option>
+              <option>Mathematics Methods</option>
+              <option>EALD</option>
+              <option>English General</option>
+              <option>Chemistry</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          Homework title
+          <input id="assignment-title" type="text" placeholder="Personalised practice set" />
+        </label>
+        <div class="form-grid">
+          <label>
+            Due date
+            <input id="assignment-due" type="date" />
+          </label>
+          <label>
+            Status
+            <select id="assignment-status">
+              <option>Due</option>
+              <option>Draft</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          Teacher note
+          <textarea id="assignment-note" rows="4" placeholder="Add intervention goal, extension task, or catch-up instruction."></textarea>
+        </label>
+        <p class="modal-hint">Only subjects authorised for teacher assignment can be created.</p>
+        <button class="primary-button full" id="assignment-create" type="button">Create individual assignment</button>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./config.js"></script>
+    <script src="./data-adapter.js"></script>
+    <script src="./app.js?v=8"></script>
+  </body>
+</html>

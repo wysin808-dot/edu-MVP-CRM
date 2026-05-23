@@ -1,0 +1,25 @@
+# BCI 自媒体矩阵获客系统
+
+BCI 自媒体矩阵获客 CRM 原型，Content to Enrollment 系统。
+
+## 部署
+
+- **Vercel**: `edu-mvp-crm.vercel.app`
+
+## 本地预览
+
+```bash
+cd crm
+python3 -m http.server 4175 --bind 127.0.0.1
+```
+
+## 文件结构
+
+```
+index.html          CRM 主界面
+crm-prototype.css   样式
+crm-prototype.js    交互逻辑
+vercel.json         Vercel 配置
+api/                Vercel serverless functions
+docs/               数据库设计、API 文档、改进路线图
+```
