@@ -2,5 +2,4 @@
 .claude/
 node_modules/
 *.zip
-academic-portal/config.local.js
 crm/.env

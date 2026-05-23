@@ -1,10 +1,11 @@
-# BCI Education Platform
+# BCI 自媒体矩阵获客系统
 
-BCI 教育平台 Monorepo，包含两个独立系统：
+BCI 自媒体矩阵获客 CRM 原型，Content to Enrollment 系统。
 
-| 系统 | 路径 | 说明 |
-|---|---|---|
-| [CRM](./crm/) | `crm/` | 自媒体矩阵获客系统，Content to Enrollment |
-| [Academic Portal](./academic-portal/) | `academic-portal/` | AI-Powered 学术教学管理系统，WACE 课程评估 |
+## 部署
 
-两个系统**完全独立**，不共享业务模型或数据库。
+- **Vercel**: `edu-mvp-crm.vercel.app`
+
+## Academic Portal
+
+Academic Portal 已迁移至独立仓库：[bci-academic-portal](https://github.com/wysin808-dot/bci-academic-portal)
