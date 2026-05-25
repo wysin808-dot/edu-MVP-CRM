@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useContentList, useCreateContent } from "@/hooks/useContents";
 import { PLATFORMS, CONTENT_STATUSES, FUNNEL_STAGES, TOPIC_CLUSTERS, EMOTIONAL_TRIGGERS, CONTENT_TYPES } from "@/lib/constants";
 import { Modal } from "@/components/ui/Modal";
@@ -11,7 +12,9 @@ import { Select } from "@/components/ui/Select";
 import type { Content } from "@/lib/types";
 
 export default function ContentPage() {
-  const [filters, setFilters] = useState({ platform: "", status: "", funnelStage: "", topicCluster: "" });
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get("status") || "";
+  const [filters, setFilters] = useState({ platform: "", status: initialStatus, funnelStage: "", topicCluster: "" });
   const { data: contents, isLoading } = useContentList({
     platform: filters.platform || undefined,
     status: filters.status || undefined,

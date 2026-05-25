@@ -67,24 +67,28 @@ export default function DashboardPage() {
           value={statsLoading ? "--" : String(stats?.todayPublishing ?? 0)}
           icon="📤"
           color="var(--brand)"
+          href="/publishing"
         />
         <StatsCard
           label="待审核"
           value={statsLoading ? "--" : String(stats?.pendingReview ?? 0)}
           icon="📋"
           color="var(--amber)"
+          href="/content?status=待审核"
         />
         <StatsCard
           label="本周线索"
           value={statsLoading ? "--" : String(stats?.weeklyLeads ?? 0)}
           icon="🎯"
           color="var(--green)"
+          href="/crm"
         />
         <StatsCard
           label="内容总量"
           value={statsLoading ? "--" : String(stats?.totalContents ?? 0)}
           icon="📝"
           color="var(--blue)"
+          href="/content"
         />
       </div>
 
@@ -203,18 +207,33 @@ function StatsCard({
   value,
   icon,
   color,
+  href,
 }: {
   label: string;
   value: string;
   icon: string;
   color: string;
+  href: string;
 }) {
   return (
-    <div
-      className="rounded-xl p-4 flex items-center gap-3"
+    <Link
+      href={href}
+      className="rounded-xl p-4 flex items-center gap-3 transition-all cursor-pointer"
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
+        textDecoration: "none",
+        color: "inherit",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = color;
+        e.currentTarget.style.boxShadow = `0 2px 8px color-mix(in srgb, ${color} 20%, transparent)`;
+        e.currentTarget.style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "var(--border)";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "none";
       }}
     >
       <div
@@ -231,7 +250,7 @@ function StatsCard({
           {label}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
