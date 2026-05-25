@@ -2902,6 +2902,15 @@ function buildContentDetailHtml(item) {
     </div>
     ${chainHtml ? `<div class="modal-section"><h3>复用链</h3>${chainHtml}</div>` : ""}
     <div class="modal-section">
+      <h3>一键复用到其他平台</h3>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:8px">将此内容改写后发布到另一个平台，自动建立复用链。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${["小红书","视频号","公众号","抖音","知乎","独立站SEO"].filter(p => p !== item.platform).map(p =>
+          `<button type="button" class="ghost-button repurpose-btn" data-source-title="${escapeHtml(item.title)}" data-target-platform="${p}" style="font-size:12px;padding:4px 12px">→ ${p}</button>`
+        ).join("")}
+      </div>
+    </div>
+    <div class="modal-section">
       <h3>审核记录</h3>
       ${buildReviewTimeline(item.reviewHistory)}
     </div>
@@ -2940,6 +2949,73 @@ function addContentComment(title) {
   const modalBody = document.querySelector("#modal-body");
   if (modalBody) modalBody.innerHTML = buildContentDetailHtml(item);
   showToast("评论已添加");
+}
+
+async function repurposeContent(sourceTitle, targetPlatform) {
+  const source = contents.find(c => c.title === sourceTitle);
+  if (!source) { showToast("找不到源内容"); return; }
+
+  // Find an account on the target platform
+  const targetAccount = accounts.find(a => a.platform === targetPlatform);
+  const targetAccountName = targetAccount ? targetAccount.accountName : "待分配账号";
+  const targetPersona = targetAccount ? (personas.find(p => p.channels?.includes(targetPlatform))?.name || source.persona) : source.persona;
+
+  const newTitle = `[${targetPlatform}] ${source.title}`;
+  // Check for duplicate
+  if (contents.find(c => c.title === newTitle)) {
+    showToast(`已存在复用内容：${newTitle}`);
+    return;
+  }
+
+  const newRecord = {
+    title: newTitle,
+    aiSearchReady: source.aiSearchReady,
+    account: targetAccountName,
+    audiencePersona: [...(source.audiencePersona || [])],
+    persona: targetPersona,
+    platform: targetPlatform,
+    author: roleCopy[document.querySelector("#role-select").value]?.user || source.author,
+    contentType: source.contentType,
+    emotionalTrigger: source.emotionalTrigger,
+    funnelStage: source.funnelStage,
+    leadMagnet: source.leadMagnet,
+    primaryKeyword: source.primaryKeyword,
+    promptsUsed: source.promptsUsed,
+    publishDate: localDateStr(new Date()),
+    repurposeStatus: "改写中",
+    status: "草稿",
+    topicCluster: source.topicCluster,
+    waceFocus: source.waceFocus,
+    cta: source.cta,
+    references: source.references,
+    notes: `复用自「${source.title}」，需改写适配${targetPlatform}风格。`,
+    metrics: { reads: 0, likes: 0, comments: 0, shares: 0, privateMessages: 0, leads: 0 },
+    reviewHistory: [],
+    repurposeSourceTitle: source.title,
+    repurposeChildren: [],
+    comments: [],
+  };
+
+  // Update source: add child + update status
+  if (!source.repurposeChildren) source.repurposeChildren = [];
+  source.repurposeChildren.push(newTitle);
+  if (source.repurposeStatus === "原稿" || source.repurposeStatus === "可二改") {
+    source.repurposeStatus = `可转${targetPlatform}`;
+  }
+  persistContentUpdate(source);
+
+  // Save new record
+  contents.unshift(newRecord);
+  await persistRecordOnline("contents", newRecord);
+
+  renderContent();
+  renderApp();
+  addAuditLog("一键复用", `${source.title.slice(0, 15)} → ${targetPlatform}`);
+
+  // Re-render detail modal to show new child
+  const modalBody = document.querySelector("#modal-body");
+  if (modalBody) modalBody.innerHTML = buildContentDetailHtml(source);
+  showToast(`✅ 已创建${targetPlatform}复用草稿，可在内容库中编辑。`);
 }
 
 function renderKpiCards() {
@@ -4673,6 +4749,15 @@ function wireActions() {
       if (refInput) {
         refInput.value = Array.from(allSelected).map(b => b.dataset.kbTitle).join(" / ");
       }
+      return;
+    }
+
+    // Repurpose button click
+    const repurposeBtn = event.target.closest(".repurpose-btn");
+    if (repurposeBtn) {
+      const sourceTitle = repurposeBtn.dataset.sourceTitle;
+      const targetPlatform = repurposeBtn.dataset.targetPlatform;
+      if (sourceTitle && targetPlatform) repurposeContent(sourceTitle, targetPlatform);
       return;
     }
 

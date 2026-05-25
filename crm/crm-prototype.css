@@ -1808,6 +1808,19 @@ textarea {
   color: var(--muted);
 }
 
+/* ── Quick Repurpose Buttons ── */
+.repurpose-btn {
+  border: 1px dashed var(--brand) !important;
+  color: var(--brand) !important;
+  border-radius: 16px !important;
+  transition: all 0.15s;
+}
+.repurpose-btn:hover {
+  background: var(--brand) !important;
+  color: #fff !important;
+  border-style: solid !important;
+}
+
 /* ── P1: Top Content Table ── */
 .table-card {
   background: var(--surface);
