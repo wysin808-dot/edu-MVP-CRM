@@ -3077,6 +3077,49 @@ function renderPublishing() {
     .join("");
 }
 
+function renderReviewQueue() {
+  const container = document.getElementById("dashboard-review-queue");
+  if (!container) return;
+  const currentRole = document.querySelector("#role-select").value;
+  const isReviewer = currentRole === "lead" || currentRole === "admin";
+  if (!isReviewer) { container.style.display = "none"; return; }
+
+  const pending = getFilteredContents().filter((c) => c.status === "待审核");
+  container.style.display = "";
+  container.innerHTML = `
+    <section class="panel" style="margin-top:16px;border-left:3px solid #e67700">
+      <div class="panel-header">
+        <div>
+          <h3 style="display:flex;align-items:center;gap:8px">
+            <span style="background:#e67700;color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">${pending.length}</span>
+            待审核队列
+          </h3>
+          <p>以下内容等待你的审核，点击「审核」查看详情并决定通过或驳回。</p>
+        </div>
+      </div>
+      ${pending.length === 0
+        ? `<p style="color:var(--muted);padding:12px 0">当前没有待审核的内容，做得好！</p>`
+        : `<div class="review-queue-list">${pending.map((c) => `
+          <article class="daily-task-card content-detail" data-title="${escapeHtml(c.title)}" style="cursor:pointer">
+            <div>
+              <div class="card-meta">
+                ${c.platform ? badge(c.platform, "blue") : ""}
+                ${badge("待审核", "red")}
+                ${c.publishDate ? badge(c.publishDate) : ""}
+              </div>
+              <h4>${escapeHtml(c.title)}</h4>
+              <p>${c.account || "—"} · ${c.author || "—"}</p>
+            </div>
+            <div class="daily-task-actions">
+              <button class="ghost-button content-detail" type="button" data-title="${escapeHtml(c.title)}">详情</button>
+              <button class="primary-button content-detail" type="button" data-title="${escapeHtml(c.title)}" style="background:#e67700">审核</button>
+            </div>
+          </article>
+        `).join("")}</div>`
+      }
+    </section>`;
+}
+
 function renderDailyTasks() {
   const target = document.querySelector("#daily-task-list");
   const currentRole = document.querySelector("#role-select").value;
@@ -4471,6 +4514,9 @@ function renderDashboardForRole() {
     }
     // For content roles, renderPublishingProgress already updates this
   }
+
+  // 5. Review queue — show pending review items for lead/admin
+  renderReviewQueue();
 }
 
 function wireRoleSwitch() {
@@ -5568,6 +5614,7 @@ function renderApp() {
   renderTasks();
   renderPublishing();
   renderDailyTasks();
+  renderReviewQueue();
   renderContent();
   renderKnowledge();
   renderPersonas();
