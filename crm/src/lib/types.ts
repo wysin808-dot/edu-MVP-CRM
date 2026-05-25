@@ -87,6 +87,7 @@ export interface Content {
   comments?: ContentComment[];
   knowledge_refs?: KnowledgeItem[];
   repurpose_children?: Content[];
+  media?: ContentMedia[];
 }
 
 export interface ContentMetrics {
@@ -172,6 +173,17 @@ export interface UserProfile {
   role: string;
   team: string;
   avatar_url: string | null;
+  created_at: string;
+}
+
+export interface ContentMedia {
+  id: string;
+  content_id: string;
+  file_url: string;
+  file_name: string;
+  file_type: string;  // image, video, document
+  file_size: number;
+  sort_order: number;
   created_at: string;
 }
 

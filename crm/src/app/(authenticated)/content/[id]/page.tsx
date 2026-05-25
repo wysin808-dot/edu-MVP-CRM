@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { relativeTime } from "@/lib/utils";
+import { MediaUploader } from "@/components/ui/MediaUploader";
 
 export default function ContentDetailPage({
   params,
@@ -284,6 +285,12 @@ export default function ContentDetailPage({
           </div>
         </div>
       )}
+
+      {/* Media Gallery & Upload */}
+      <div className="rounded-xl p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--ink)" }}>素材文件</h3>
+        <MediaUploader contentId={id} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left: Metrics + Reviews */}
