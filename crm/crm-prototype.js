@@ -185,6 +185,8 @@ const SEED_CONTENTS = [
     title: "新加坡高中不是越贵越好，真正要看这 3 点",
     aiSearchReady: false,
     account: "新加坡初高中留学-新闻·小红书",
+    persona: "升学顾问 IP",
+    platform: "小红书",
     audiencePersona: ["P1 陪读妈妈", "P2 国内待留学", "P3 转学家长"],
     author: "Ocean Wang",
     cta: "评论「择校」，我私信你《新加坡高中路径选择表》",
@@ -213,6 +215,8 @@ const SEED_CONTENTS = [
     title: "WACE 可以申请 NUS 吗？家长最容易误解这一点",
     aiSearchReady: true,
     account: "BCI升学顾问号",
+    persona: "升学顾问 IP",
+    platform: "小红书",
     audiencePersona: ["P2 国内待留学", "P3 转学家长"],
     author: "AI 编辑",
     cta: "评论「WACE」，领取 WACE 升学路径清单",
@@ -240,6 +244,8 @@ const SEED_CONTENTS = [
     title: "ATAR 90 不一定上 NUS，关键看这一步",
     aiSearchReady: true,
     account: "BCI官方视频号",
+    persona: "校长 IP",
+    platform: "视频号",
     audiencePersona: ["P3 转学家长"],
     author: "内容组",
     cta: "私信「ATAR」获取科目组合建议",
@@ -267,6 +273,8 @@ const SEED_CONTENTS = [
     title: "新加坡陪读签证 DP，家长最该先确认什么？",
     aiSearchReady: true,
     account: "BCI招生老师号",
+    persona: "招生老师 IP",
+    platform: "小红书",
     audiencePersona: ["P1 陪读妈妈"],
     author: "招生组",
     cta: "评论「陪读」，获取签证材料清单",
@@ -294,6 +302,8 @@ const SEED_CONTENTS = [
     title: "WACE 选课组合决定 ATAR 上限，这样选最稳",
     aiSearchReady: true,
     account: "BCI升学顾问号",
+    persona: "升学顾问 IP",
+    platform: "小红书",
     audiencePersona: ["P2 国内待留学", "P3 转学家长"],
     author: "Ocean Wang",
     cta: "私信「选课」获取 WACE 科目组合推荐表",
@@ -321,6 +331,8 @@ const SEED_CONTENTS = [
     title: "BCI 历届毕业生去向：NUS/NTU/墨大都有谁",
     aiSearchReady: false,
     account: "BCI官方视频号",
+    persona: "校长 IP",
+    platform: "视频号",
     audiencePersona: ["P2 国内待留学", "P3 转学家长"],
     author: "内容组",
     cta: "评论「录取」领取 BCI 历年录取数据",
@@ -348,6 +360,8 @@ const SEED_CONTENTS = [
     title: "家长探校日实录：一天看懂 BCI 的课程和氛围",
     aiSearchReady: false,
     account: "BCI国际学校",
+    persona: "BCI 官方 IP",
+    platform: "公众号",
     audiencePersona: ["P1 陪读妈妈", "P2 国内待留学"],
     author: "招生组",
     cta: "私信「探校」预约下一场开放日",
@@ -963,6 +977,8 @@ function toCloudUpdatePayload(collection, record) {
     if (record.account) payload.account_name = record.account;
     if (record.author) payload.author_name = record.author;
     if (record.audiencePersona) payload.audience_personas = record.audiencePersona;
+    if (record.persona) payload.persona_name = record.persona;
+    if (record.platform) payload.platform_name = record.platform;
     if (record.publishDate) payload.publish_date = record.publishDate;
     if (record.promptsUsed) payload.prompts_used = record.promptsUsed;
     if (record.funnelStage) payload.funnel_stage = record.funnelStage;
@@ -1298,6 +1314,8 @@ function fromCloudContent(row) {
     title: row.title,
     aiSearchReady: row.ai_search_ready,
     account: row.account_name || "待分配账号",
+    persona: row.persona_name || "",
+    platform: row.platform_name || "",
     audiencePersona: row.audience_personas || ["通用"],
     author: row.author_name || "当前用户",
     cta: row.cta || "待补充 CTA",
@@ -1800,6 +1818,8 @@ const modalTemplates = {
         <label>AI Search Ready<select><option>否</option><option>是</option></select></label>
         <label>Account<select><option value="">选择账号</option>${accountNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
         <label>Audience Persona<input placeholder="如：P1 陪读妈妈, P2 国内待留学" /></label>
+        <label>所属 IP <span style="color:#dc2626">*</span><select id="new-content-persona"><option value="">选择 IP（必填）</option>${personaNames().map((n) => "<option>" + n + "</option>").join("")}</select></label>
+        <label>平台 <span style="color:#dc2626">*</span><select id="new-content-platform"><option value="">选择平台（必填）</option>${platformOptions()}</select></label>
         <label>Author<select><option value="">选择作者</option>${teamMembers.map((m) => "<option>" + m.name + "</option>").join("")}<option>内容组</option></select></label>
         <label>Content Type<select><option value="">选择类型</option><optgroup label="引流型（目标40%）"><option>干货</option><option>升学科普</option><option>对比</option><option>政策</option><option>情绪</option></optgroup><optgroup label="信任型（目标30%）"><option>FAQ</option><option>视频口播</option><option>数据解读</option><option>课程介绍</option></optgroup><optgroup label="案例型（目标20%）"><option>案例</option><option>校园</option><option>学生故事</option><option>家长分享</option></optgroup><optgroup label="转化型（目标10%）"><option>探校活动</option><option>限时咨询</option><option>直播预告</option><option>资料包</option></optgroup></select></label>
         <label>Emotional Trigger<select><option value="">选择情绪钩子</option><option>反常识</option><option>焦虑共鸣</option><option>向往</option><option>痛点直击</option><option>好奇驱动</option><option>数字震撼</option><option>案例代入</option><option>理性避坑</option><option>痛点反问</option></select></label>
@@ -2298,33 +2318,45 @@ async function saveModalRecord() {
   if (currentModalAction === "new-content" || currentModalAction === "new-content-draft") {
     const isDraft = currentModalAction === "new-content-draft";
     const status = isDraft ? "草稿" : "待审核";
+    const personaVal = values[4] || "";
+    const platformVal = values[5] || "";
+    // Validate required fields for non-draft submissions
+    if (!isDraft && (!personaVal || !platformVal)) {
+      const missing = [];
+      if (!personaVal) missing.push("所属 IP");
+      if (!platformVal) missing.push("平台");
+      showToast(`⚠️ 提交审核前请填写必填项：${missing.join("、")}`);
+      return false;
+    }
     const record = {
       title: values[0] || "未命名内容",
       aiSearchReady: values[1] === "是",
       account: values[2] || "待分配账号",
       audiencePersona: (values[3] || "通用").split(/[,，/]/).map((tag) => tag.trim()).filter(Boolean),
-      author: values[4] || roleCopy[document.querySelector("#role-select").value].user,
-      contentType: values[5] || "内容",
-      emotionalTrigger: values[6] || "待定",
-      funnelStage: values[7] || "Awareness",
-      leadMagnet: values[8] || "待定",
-      primaryKeyword: values[9] || "待定",
-      promptsUsed: values[10] || "未使用",
-      publishDate: values[11] || new Date().toISOString().slice(0, 10),
-      repurposeStatus: values[12] || "原稿",
+      persona: personaVal || "待分配 IP",
+      platform: platformVal || "待分配平台",
+      author: values[6] || roleCopy[document.querySelector("#role-select").value].user,
+      contentType: values[7] || "内容",
+      emotionalTrigger: values[8] || "待定",
+      funnelStage: values[9] || "Awareness",
+      leadMagnet: values[10] || "待定",
+      primaryKeyword: values[11] || "待定",
+      promptsUsed: values[12] || "未使用",
+      publishDate: values[13] || new Date().toISOString().slice(0, 10),
+      repurposeStatus: values[14] || "原稿",
       status,
-      topicCluster: values[14] || "未分类",
-      waceFocus: values[15] === "是",
-      cta: values[16] || "待补充 CTA",
-      references: values[17] || "待补充引用",
-      notes: values[18] || "待补充备注",
+      topicCluster: values[16] || "未分类",
+      waceFocus: values[17] === "是",
+      cta: values[18] || "待补充 CTA",
+      references: values[19] || "待补充引用",
+      notes: values[20] || "待补充备注",
       metrics: {
-        reads: parseInt(values[19]) || 0,
-        likes: parseInt(values[20]) || 0,
-        comments: parseInt(values[21]) || 0,
-        shares: parseInt(values[22]) || 0,
-        privateMessages: parseInt(values[23]) || 0,
-        leads: parseInt(values[24]) || 0,
+        reads: parseInt(values[21]) || 0,
+        likes: parseInt(values[22]) || 0,
+        comments: parseInt(values[23]) || 0,
+        shares: parseInt(values[24]) || 0,
+        privateMessages: parseInt(values[25]) || 0,
+        leads: parseInt(values[26]) || 0,
       },
       reviewHistory: isDraft ? [] : [{ reviewer: "运营人员", action: "resubmit", comment: "新建内容，提交审核", timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") }],
       repurposeSourceTitle: null,
@@ -2454,6 +2486,14 @@ async function saveModalRecord() {
     const item = contents.find((c) => c.title === cleanTitle) || contents.find((c) => cleanTitle.includes(c.title.slice(0, 20)));
     const comment = document.querySelector("#modal-body textarea")?.value.trim() || "已修改重新提交";
     if (item) {
+      // Validate required fields before resubmitting
+      const missingFields = [];
+      if (!item.persona || item.persona === "待分配 IP") missingFields.push("所属 IP");
+      if (!item.platform || item.platform === "待分配平台") missingFields.push("平台");
+      if (missingFields.length > 0) {
+        showToast(`⚠️ 提交审核前请填写必填项：${missingFields.join("、")}。请先编辑内容补充信息。`);
+        return false;
+      }
       item.status = "待审核";
       item.reviewHistory = item.reviewHistory || [];
       item.reviewHistory.push({ reviewer: "运营人员", action: "resubmit", comment, timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") });
@@ -2480,7 +2520,20 @@ async function saveModalRecord() {
       const newRepurposeStatus = document.querySelector("#edit-repurpose-status")?.value;
       const newWaceFocus = document.querySelector("#edit-wace-focus")?.value === "是";
       const newReferences = document.querySelector("#edit-references")?.value.trim();
+      const newPersona = document.querySelector("#edit-persona")?.value;
+      const newPlatform = document.querySelector("#edit-platform")?.value;
       const comment = document.querySelector("#edit-comment")?.value.trim() || "已修改内容";
+
+      // Validate required fields before resubmitting
+      const effectivePersona = newPersona || item.persona || "";
+      const effectivePlatform = newPlatform || item.platform || "";
+      const missingFields = [];
+      if (!effectivePersona || effectivePersona === "待分配 IP") missingFields.push("所属 IP");
+      if (!effectivePlatform || effectivePlatform === "待分配平台") missingFields.push("平台");
+      if (missingFields.length > 0) {
+        showToast(`⚠️ 提交审核前请填写必填项：${missingFields.join("、")}`);
+        return false;
+      }
 
       const changes = [];
       if (newTitle && newTitle !== item.title) { item.title = newTitle; changes.push("标题"); }
@@ -2495,6 +2548,8 @@ async function saveModalRecord() {
       if (newRepurposeStatus && newRepurposeStatus !== item.repurposeStatus) { item.repurposeStatus = newRepurposeStatus; changes.push("复用状态"); }
       if (newWaceFocus !== item.waceFocus) { item.waceFocus = newWaceFocus; changes.push("WACE Focus"); }
       if (newReferences !== undefined && newReferences !== item.references) { item.references = newReferences; changes.push("引用资料"); }
+      if (newPersona && newPersona !== item.persona) { item.persona = newPersona; changes.push("所属 IP"); }
+      if (newPlatform && newPlatform !== item.platform) { item.platform = newPlatform; changes.push("平台"); }
 
       // Brand firewall check on edit
       const fwEdit = checkBrandFirewall(item.title + " " + (item.cta || "") + " " + (item.notes || ""), item.account);
@@ -2676,6 +2731,14 @@ async function saveModalRecord() {
   if (currentModalAction === "content-submit-review") {
     const item = window._contentDetailItem;
     if (item) {
+      // Validate required fields before submitting for review
+      const missingFields = [];
+      if (!item.persona || item.persona === "待分配 IP") missingFields.push("所属 IP");
+      if (!item.platform || item.platform === "待分配平台") missingFields.push("平台");
+      if (missingFields.length > 0) {
+        showToast(`⚠️ 提交审核前请填写必填项：${missingFields.join("、")}。请先编辑内容补充信息。`);
+        return false;
+      }
       item.status = "待审核";
       item.reviewHistory = item.reviewHistory || [];
       item.reviewHistory.push({ reviewer: "运营人员", action: "resubmit", comment: "草稿提交审核", timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") });
@@ -2691,6 +2754,14 @@ async function saveModalRecord() {
   if (currentModalAction === "content-resubmit") {
     const item = window._contentDetailItem;
     if (item) {
+      // Validate required fields before resubmitting
+      const missingFields = [];
+      if (!item.persona || item.persona === "待分配 IP") missingFields.push("所属 IP");
+      if (!item.platform || item.platform === "待分配平台") missingFields.push("平台");
+      if (missingFields.length > 0) {
+        showToast(`⚠️ 提交审核前请填写必填项：${missingFields.join("、")}。请在编辑页面补充信息。`);
+        return false;
+      }
       item.status = "待审核";
       item.reviewHistory = item.reviewHistory || [];
       item.reviewHistory.push({ reviewer: "运营人员", action: "resubmit", comment: "已修改重新提交", timestamp: new Date().toISOString().slice(0, 16).replace("T", " ") });
@@ -2729,6 +2800,18 @@ function buildResubmitEditForm(item) {
     <div class="modal-section">
       <h3>修改内容</h3>
       <label>标题<input type="text" id="edit-title" value="${escapeHtml(item.title)}" /></label>
+      <label>所属 IP <span style="color:#dc2626">*</span>
+        <select id="edit-persona">
+          <option value="">选择 IP（必填）</option>
+          ${personaNames().map((n) => `<option${n === item.persona ? " selected" : ""}>${n}</option>`).join("")}
+        </select>
+      </label>
+      <label>平台 <span style="color:#dc2626">*</span>
+        <select id="edit-platform">
+          <option value="">选择平台（必填）</option>
+          ${platformConfig.map((p) => `<option${p.name === item.platform ? " selected" : ""}>${p.name}</option>`).join("")}
+        </select>
+      </label>
       <label>备注 / 正文要点<textarea id="edit-notes" rows="3">${escapeHtml(item.notes || "")}</textarea></label>
       <label>CTA 引导语<input type="text" id="edit-cta" value="${escapeHtml(item.cta || "")}" /></label>
       <label>内容类型
@@ -2780,6 +2863,8 @@ function buildContentDetailHtml(item) {
   return `
     <div class="detail-list">
       <div><strong>Account</strong><span>${item.account}</span></div>
+      <div><strong>所属 IP</strong><span>${item.persona || "—"}</span></div>
+      <div><strong>平台</strong><span>${item.platform || "—"}</span></div>
       <div><strong>Status</strong><span>${item.status}</span></div>
       <div><strong>Funnel Stage</strong><span>${item.funnelStage}</span></div>
       <div><strong>Emotional Trigger</strong><span>${item.emotionalTrigger}</span></div>
