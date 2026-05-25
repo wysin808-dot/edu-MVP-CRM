@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   useContentWithMetrics,
   useUpdateContent,
+  useUpdateMetrics,
   useAddReview,
   useAddComment,
   useRepurposeContent,
@@ -26,6 +27,7 @@ export default function ContentDetailPage({
   const { profile, role } = useAuth();
   const { data: content, isLoading } = useContentWithMetrics(id);
   const updateContent = useUpdateContent();
+  const updateMetrics = useUpdateMetrics();
   const addReview = useAddReview();
   const addComment = useAddComment();
   const repurpose = useRepurposeContent();
@@ -35,6 +37,12 @@ export default function ContentDetailPage({
   const [newComment, setNewComment] = useState("");
   const [showRepurpose, setShowRepurpose] = useState(false);
   const [repurposeForm, setRepurposeForm] = useState({ platform: "", title: "" });
+  const [showMetrics, setShowMetrics] = useState(false);
+  const [metricsForm, setMetricsForm] = useState({
+    reads: 0, likes: 0, comments: 0, shares: 0, private_messages: 0, leads: 0,
+  });
+  const [aiReviewing, setAiReviewing] = useState(false);
+  const [aiResult, setAiResult] = useState<{ suggestion: string; comment: string } | null>(null);
 
   const [editForm, setEditForm] = useState({
     title: "", status: "", funnel_stage: "", emotional_trigger: "",
@@ -96,6 +104,66 @@ export default function ContentDetailPage({
     setNewComment("");
   };
 
+  const openMetricsForm = () => {
+    if (content?.metrics) {
+      setMetricsForm({
+        reads: content.metrics.reads, likes: content.metrics.likes,
+        comments: content.metrics.comments, shares: content.metrics.shares,
+        private_messages: content.metrics.private_messages, leads: content.metrics.leads,
+      });
+    } else {
+      setMetricsForm({ reads: 0, likes: 0, comments: 0, shares: 0, private_messages: 0, leads: 0 });
+    }
+    setShowMetrics(true);
+  };
+
+  const handleMetricsSave = async () => {
+    await updateMetrics.mutateAsync({ content_id: id, ...metricsForm });
+    setShowMetrics(false);
+  };
+
+  const handleAiReview = async () => {
+    if (!content) return;
+    setAiReviewing(true);
+    setAiResult(null);
+    try {
+      const res = await fetch("/api/ai-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: content.title,
+          account: content.platform,
+          funnelStage: content.funnel_stage,
+          emotionalTrigger: content.emotional_trigger,
+          contentType: content.content_type,
+          cta: content.cta,
+          primaryKeyword: content.primary_keyword,
+          waceFocus: content.wace_focus,
+          topicCluster: content.topic_cluster,
+          notes: content.notes,
+          repurposeStatus: content.repurpose_status,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAiResult(data);
+        // Auto-add as a review record
+        await addReview.mutateAsync({
+          content_id: id,
+          reviewer_name: "DeepSeek AI",
+          action: data.suggestion === "approve" ? "approve" : data.suggestion === "reject" ? "reject" : "comment",
+          comment: data.comment,
+        });
+      } else {
+        setAiResult({ suggestion: "error", comment: data.error || "AI 审核失败" });
+      }
+    } catch {
+      setAiResult({ suggestion: "error", comment: "网络错误，无法连接 AI 服务" });
+    } finally {
+      setAiReviewing(false);
+    }
+  };
+
   const handleRepurpose = async () => {
     if (!repurposeForm.platform || !repurposeForm.title.trim()) return;
     await repurpose.mutateAsync({
@@ -138,7 +206,11 @@ export default function ContentDetailPage({
             </div>
             <h1 className="text-xl font-bold m-0" style={{ color: "var(--ink)" }}>{content.title}</h1>
           </div>
-          <div className="flex gap-2 shrink-0 ml-4">
+          <div className="flex gap-2 shrink-0 ml-4 flex-wrap justify-end">
+            <Button variant="secondary" size="sm" onClick={openMetricsForm}>📊 数据回填</Button>
+            <Button variant="secondary" size="sm" onClick={handleAiReview} disabled={aiReviewing}>
+              {aiReviewing ? "🤖 审核中..." : "🤖 AI 审核"}
+            </Button>
             <Button variant="secondary" size="sm" onClick={startEditing}>编辑</Button>
             <Button variant="secondary" size="sm" onClick={() => setShowRepurpose(true)}>一键复用</Button>
           </div>
@@ -152,6 +224,24 @@ export default function ContentDetailPage({
           <Badge variant="outline">{content.topic_cluster}</Badge>
           {content.primary_keyword && <Badge variant="info">关键词: {content.primary_keyword}</Badge>}
         </div>
+
+        {/* AI Review Result */}
+        {aiResult && (
+          <div className="mb-4 p-4 rounded-lg text-sm" style={{
+            background: aiResult.suggestion === "approve" ? "#f0fdf4" : aiResult.suggestion === "reject" ? "#fef2f2" : aiResult.suggestion === "error" ? "#fef2f2" : "#fffbeb",
+            border: `1px solid ${aiResult.suggestion === "approve" ? "#86efac" : aiResult.suggestion === "reject" ? "#fca5a5" : aiResult.suggestion === "error" ? "#fca5a5" : "#fcd34d"}`,
+          }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-base">{aiResult.suggestion === "approve" ? "✅" : aiResult.suggestion === "reject" ? "❌" : aiResult.suggestion === "error" ? "⚠️" : "📝"}</span>
+              <span className="font-semibold" style={{ color: "var(--ink)" }}>
+                {aiResult.suggestion === "approve" ? "AI 建议：通过" : aiResult.suggestion === "reject" ? "AI 建议：退回" : aiResult.suggestion === "error" ? "AI 审核失败" : "AI 建议：修改后重审"}
+              </span>
+            </div>
+            <pre className="text-xs whitespace-pre-wrap m-0 font-sans" style={{ color: "var(--ink)" }}>
+              {aiResult.comment}
+            </pre>
+          </div>
+        )}
 
         {/* Meta Info */}
         <div className="grid grid-cols-4 gap-4 text-xs" style={{ color: "var(--muted)" }}>
@@ -432,6 +522,39 @@ export default function ContentDetailPage({
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
           </div>
+        </div>
+      </Modal>
+
+      {/* Metrics Backfill Modal */}
+      <Modal isOpen={showMetrics} onClose={() => setShowMetrics(false)} title="📊 数据回填"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setShowMetrics(false)}>取消</Button>
+            <Button variant="primary" onClick={handleMetricsSave} disabled={updateMetrics.isPending}>
+              {updateMetrics.isPending ? "保存中..." : "保存数据"}
+            </Button>
+          </div>
+        }>
+        <div className="grid grid-cols-2 gap-4">
+          {([
+            { key: "reads", label: "阅读量", icon: "👁️" },
+            { key: "likes", label: "点赞数", icon: "👍" },
+            { key: "comments", label: "评论数", icon: "💬" },
+            { key: "shares", label: "分享数", icon: "🔗" },
+            { key: "private_messages", label: "私信数", icon: "✉️" },
+            { key: "leads", label: "线索数", icon: "🎯" },
+          ] as const).map((field) => (
+            <div key={field.key}>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>
+                {field.icon} {field.label}
+              </label>
+              <input type="number" min="0"
+                value={metricsForm[field.key]}
+                onChange={(e) => setMetricsForm({ ...metricsForm, [field.key]: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
+            </div>
+          ))}
         </div>
       </Modal>
     </div>
