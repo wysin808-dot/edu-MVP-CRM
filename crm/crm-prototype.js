@@ -4574,7 +4574,7 @@ function wireActions() {
       const listHtml = matched.length
         ? matched.map((c) => {
             const isOwn = c.author === myName || c.author === "当前用户";
-            const label = isReviewer && !isOwn && (filterStatus === "待审核" || filterStatus === "草稿" || filterStatus === "已驳回") ? "审核" : "查看";
+            const label = isReviewer && (filterStatus === "待审核" || filterStatus === "草稿" || filterStatus === "已驳回") ? "审核" : "查看";
             return `
             <article class="review-list-item content-detail" data-title="${escapeHtml(c.title)}" style="cursor:pointer">
               <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)">
@@ -4607,8 +4607,10 @@ function wireActions() {
         const myName = roleCopy[currentRole]?.user || "";
         const isOwnContent = item.author === myName || item.author === "当前用户";
 
-        if (isReviewer && !isOwnContent) {
-          // Lead / Admin reviewing others' content
+        // Reviewer can always review pending content (even if author matches in demo mode)
+        const canReview = isReviewer && (!isOwnContent || item.status === "待审核" || item.status === "草稿" || item.status === "已驳回");
+        if (canReview) {
+          // Lead / Admin reviewing content
           if (item.status === "待审核" || item.status === "草稿" || item.status === "已驳回" || item.status === "可发布" || item.status === "审核通过") {
             openModal("review-action", `审核：${item.title.slice(0, 20)}`, buildReviewForm(item));
           } else if (item.status === "已发布" || item.status === "Posted" || item.status === "已复盘" || item.status === "待回填") {
