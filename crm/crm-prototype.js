@@ -5198,6 +5198,18 @@ function wireStrategyFilters() {
 /* ── Content calendar ── */
 let calYear = 2026;
 let calMonth = 4; // 0-indexed, May = 4
+let calViewMode = "month"; // "month" or "week"
+let calWeekStart = null; // Date object for week view start (Sunday)
+
+function getCalWeekStart() {
+  if (calWeekStart) return new Date(calWeekStart);
+  const today = new Date();
+  const day = today.getDay();
+  const start = new Date(today);
+  start.setDate(start.getDate() - day);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
 
 function renderCalendar() {
   const grid = document.querySelector("#calendar-grid");
@@ -5243,9 +5255,9 @@ function renderCalendar() {
       .slice(0, 3)
       .map((item) => {
         const cls = (item.funnelStage || "awareness").toLowerCase();
-        const acctParts = (item.account || "").split("·");
-        const acctShort = acctParts.length > 1 ? acctParts[1] : (acctParts[0] || "").slice(0, 4);
-        return `<button class="cal-item ${cls} content-detail" type="button" data-title="${escapeHtml(item.title)}" title="${escapeHtml(item.title)} · ${item.account}">${escapeHtml(acctShort)} ${escapeHtml(item.title).slice(0, 6)}</button>`;
+        const plat = item.platform || (accounts.find((a) => a.accountName === item.account) || {}).platform || "";
+        const platIcon = plat === "小红书" ? "📕" : plat === "视频号" ? "📹" : plat === "公众号" ? "📰" : plat === "知乎" ? "💬" : plat === "抖音" ? "🎵" : "📄";
+        return `<button class="cal-item ${cls} content-detail" type="button" data-title="${escapeHtml(item.title)}" title="${escapeHtml(item.title)} · ${plat || item.account}">${platIcon} ${escapeHtml(item.title).slice(0, 6)}</button>`;
       })
       .join("");
     const more = dayItems.length > 3 ? `<span style="font-size:10px;color:var(--muted)">+${dayItems.length - 3} 条</span>` : "";
@@ -5280,20 +5292,146 @@ function renderCalendar() {
   `;
 }
 
+function renderCalendarWeek() {
+  const weekGrid = document.querySelector("#calendar-week");
+  const monthGrid = document.querySelector("#calendar-grid");
+  const label = document.querySelector("#cal-month-label");
+  const summary = document.querySelector("#calendar-summary");
+  if (!weekGrid) return;
+
+  monthGrid.style.display = "none";
+  weekGrid.style.display = "block";
+
+  const ws = getCalWeekStart();
+  const we = new Date(ws);
+  we.setDate(we.getDate() + 6);
+  const startStr = `${ws.getMonth() + 1}/${ws.getDate()}`;
+  const endStr = `${we.getMonth() + 1}/${we.getDate()}`;
+  label.textContent = `${ws.getFullYear()} 年 ${startStr} – ${endStr}`;
+
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const dayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+  let headerHtml = "";
+  let colHtml = "";
+  const weekContents = [];
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(ws);
+    d.setDate(d.getDate() + i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const isToday = dateStr === todayStr;
+
+    headerHtml += `<div class="cal-week-header${isToday ? " today" : ""}"><div class="cal-weekday">${dayNames[i]}</div><div class="cal-weekdate">${d.getDate()}</div></div>`;
+
+    const dayItems = contents.filter((item) => item.publishDate === dateStr);
+    weekContents.push(...dayItems);
+
+    const itemsHtml = dayItems.length > 0
+      ? dayItems.map((item) => {
+          const cls = (item.funnelStage || "awareness").toLowerCase();
+          const plat = item.platform || (accounts.find((a) => a.accountName === item.account) || {}).platform || "";
+          const ip = item.persona || "";
+          const statusBadge = item.status === "已发布" ? "✅" : item.status === "待审核" ? "🔶" : item.status === "草稿" ? "📝" : item.status === "已驳回" ? "🔴" : "⬜";
+          return `<button class="cal-week-item ${cls} content-detail" type="button" data-title="${escapeHtml(item.title)}" title="${escapeHtml(item.title)}"><span class="cal-w-title">${statusBadge} ${escapeHtml(item.title)}</span><span class="cal-w-meta">${escapeHtml(plat)}${ip ? " · " + escapeHtml(ip) : ""}</span></button>`;
+        }).join("")
+      : '<div class="cal-week-empty">—</div>';
+
+    colHtml += `<div class="cal-week-col${isToday ? " today" : ""}">${itemsHtml}</div>`;
+  }
+
+  weekGrid.innerHTML = `<div class="cal-week-grid">${headerHtml}${colHtml}</div>`;
+
+  // summary for week
+  const funnelCounts = {};
+  weekContents.forEach((item) => { funnelCounts[item.funnelStage] = (funnelCounts[item.funnelStage] || 0) + 1; });
+  const platformCounts = {};
+  weekContents.forEach((item) => {
+    const p = item.platform || (accounts.find((a) => a.accountName === item.account) || {}).platform || "其他";
+    platformCounts[p] = (platformCounts[p] || 0) + 1;
+  });
+  const waceCount = weekContents.filter((item) => item.waceFocus).length;
+
+  summary.innerHTML = `
+    <div class="cal-stat"><span>本周内容</span><strong>${weekContents.length}</strong><small>条已排期</small></div>
+    <div class="cal-stat"><span>WACE Focus</span><strong>${waceCount}</strong><small>条（目标 ≥ 2）</small></div>
+    <div class="cal-stat"><span>漏斗覆盖</span><strong>${Object.keys(funnelCounts).length}/5</strong><small>${Object.entries(funnelCounts).map(([k, v]) => `${k}:${v}`).join(" · ")}</small></div>
+    <div class="cal-stat"><span>平台覆盖</span><strong>${Object.keys(platformCounts).length}</strong><small>${Object.entries(platformCounts).map(([k, v]) => `${k}:${v}`).join(" · ")}</small></div>
+  `;
+}
+
+function renderCalendarDispatch() {
+  if (calViewMode === "week") {
+    renderCalendarWeek();
+  } else {
+    const monthGrid = document.querySelector("#calendar-grid");
+    const weekGrid = document.querySelector("#calendar-week");
+    if (monthGrid) monthGrid.style.display = "";
+    if (weekGrid) weekGrid.style.display = "none";
+    renderCalendar();
+  }
+}
+
 function wireCalendar() {
   const prev = document.querySelector("#cal-prev");
   const next = document.querySelector("#cal-next");
+  const todayBtn = document.querySelector("#cal-today");
+  const toggle = document.querySelector("#cal-view-toggle");
   if (!prev) return;
   prev.addEventListener("click", () => {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-    renderCalendar();
+    if (calViewMode === "week") {
+      const ws = getCalWeekStart();
+      ws.setDate(ws.getDate() - 7);
+      calWeekStart = ws;
+    } else {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+    }
+    renderCalendarDispatch();
   });
   next.addEventListener("click", () => {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
-    renderCalendar();
+    if (calViewMode === "week") {
+      const ws = getCalWeekStart();
+      ws.setDate(ws.getDate() + 7);
+      calWeekStart = ws;
+    } else {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+    }
+    renderCalendarDispatch();
   });
+  if (todayBtn) {
+    todayBtn.addEventListener("click", () => {
+      const today = new Date();
+      calYear = today.getFullYear();
+      calMonth = today.getMonth();
+      calWeekStart = null; // reset to current week
+      renderCalendarDispatch();
+    });
+  }
+  if (toggle) {
+    toggle.addEventListener("click", (e) => {
+      const btn = e.target.closest(".cal-toggle-btn");
+      if (!btn) return;
+      const mode = btn.dataset.mode;
+      if (mode === calViewMode) return;
+      calViewMode = mode;
+      toggle.querySelectorAll(".cal-toggle-btn").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+      // sync month/week when switching
+      if (mode === "week") {
+        const firstOfMonth = new Date(calYear, calMonth, 1);
+        const day = firstOfMonth.getDay();
+        calWeekStart = new Date(firstOfMonth);
+        calWeekStart.setDate(calWeekStart.getDate() - day);
+      } else {
+        const ws = getCalWeekStart();
+        calYear = ws.getFullYear();
+        calMonth = ws.getMonth();
+      }
+      renderCalendarDispatch();
+    });
+  }
 }
 
 /* ── Strategy health dashboard ── */
@@ -5762,7 +5900,7 @@ function renderApp() {
   renderPermissions();
   renderSettings();
   queryArchive();
-  renderCalendar();
+  renderCalendarDispatch();
   renderStrategyHealth();
   renderTopContent();
   renderKeywordTable();

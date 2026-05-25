@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BCI 自媒体矩阵获客系统</title>
-    <link rel="stylesheet" href="./crm-prototype.css?v=26" />
+    <link rel="stylesheet" href="./crm-prototype.css?v=27" />
   </head>
   <body>
     <!-- Login Screen -->
@@ -335,16 +335,24 @@
               <button class="ghost-button" id="cal-prev" type="button">&larr;</button>
               <strong id="cal-month-label">2026 年 5 月</strong>
               <button class="ghost-button" id="cal-next" type="button">&rarr;</button>
+              <button class="ghost-button" id="cal-today" type="button" style="margin-left:8px;font-size:11px">今天</button>
             </div>
-            <div class="calendar-legend">
-              <span><i class="dot dot-awareness"></i>Aw</span>
-              <span><i class="dot dot-consideration"></i>Co</span>
-              <span><i class="dot dot-trust"></i>Tr</span>
-              <span><i class="dot dot-visit"></i>Vi</span>
-              <span><i class="dot dot-enroll"></i>En</span>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="cal-view-toggle" id="cal-view-toggle">
+                <button class="cal-toggle-btn active" data-mode="month" type="button">月</button>
+                <button class="cal-toggle-btn" data-mode="week" type="button">周</button>
+              </div>
+              <div class="calendar-legend">
+                <span><i class="dot dot-awareness"></i>Aw</span>
+                <span><i class="dot dot-consideration"></i>Co</span>
+                <span><i class="dot dot-trust"></i>Tr</span>
+                <span><i class="dot dot-visit"></i>Vi</span>
+                <span><i class="dot dot-enroll"></i>En</span>
+              </div>
             </div>
           </div>
           <div class="calendar-grid" id="calendar-grid"></div>
+          <div class="calendar-week" id="calendar-week" style="display:none"></div>
           <div class="calendar-summary" id="calendar-summary"></div>
         </section>
 
@@ -504,6 +512,6 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./crm-prototype.js?v=26"></script>
+    <script src="./crm-prototype.js?v=27"></script>
   </body>
 </html>
