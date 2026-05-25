@@ -5041,16 +5041,20 @@ function wireActions() {
   });
 
   document.querySelector("#modal-confirm").addEventListener("click", async () => {
+    const result = await saveModalRecord();
+    if (result === false) return; // validation failed, keep modal open
     closeModal();
-    if (!(await saveModalRecord())) {
+    if (!result) {
       showToast("已保存到系统，并记录本次操作。");
     }
   });
 
   document.querySelector("#modal-draft").addEventListener("click", async () => {
     currentModalAction = "new-content-draft";
+    const result = await saveModalRecord();
+    if (result === false) return; // validation failed, keep modal open
     closeModal();
-    if (!(await saveModalRecord())) {
+    if (!result) {
       showToast("草稿已保存。");
     }
   });
