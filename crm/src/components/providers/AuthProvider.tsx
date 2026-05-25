@@ -16,6 +16,10 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   role: UserRole;
+  realRole: UserRole;
+  isSimulating: boolean;
+  simulatedRole: UserRole | null;
+  setSimulatedRole: (role: UserRole | null) => void;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -24,6 +28,10 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   role: "operator",
+  realRole: "operator",
+  isSimulating: false,
+  simulatedRole: null,
+  setSimulatedRole: () => {},
   loading: true,
   signOut: async () => {},
 });
@@ -36,6 +44,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [simulatedRole, setSimulatedRole] = useState<UserRole | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -84,10 +93,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   }
 
-  const role = (profile?.role as UserRole) || "operator";
+  const realRole = (profile?.role as UserRole) || "operator";
+  const isSimulating = simulatedRole !== null && realRole === "admin";
+  const role = isSimulating ? simulatedRole! : realRole;
 
   return (
-    <AuthContext.Provider value={{ user, profile, role, loading, signOut }}>
+    <AuthContext.Provider value={{
+      user, profile, role, realRole, isSimulating, simulatedRole,
+      setSimulatedRole, loading, signOut,
+    }}>
       {children}
     </AuthContext.Provider>
   );
