@@ -1512,6 +1512,8 @@ function toCloudRow(collection, record) {
       repurpose_status: record.repurposeStatus,
       repurpose_source_title: record.repurposeSourceTitle || "",
       repurpose_children: record.repurposeChildren || [],
+      persona_name: record.persona || "",
+      platform_name: record.platform || "",
       status_label: record.status,
       topic_cluster: record.topicCluster,
       wace_focus: record.waceFocus,
