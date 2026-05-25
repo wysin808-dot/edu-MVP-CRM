@@ -5195,6 +5195,11 @@ function wireStrategyFilters() {
   });
 }
 
+/* ── Timezone-safe date helper ── */
+function localDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /* ── Content calendar ── */
 let calYear = 2026;
 let calMonth = 4; // 0-indexed, May = 4
@@ -5224,7 +5229,7 @@ function renderCalendar() {
   const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = localDateStr(today);
 
   const headers = ["日", "一", "二", "三", "四", "五", "六"];
   let html = headers.map((d) => `<div class="cal-header">${d}</div>`).join("");
@@ -5310,7 +5315,7 @@ function renderCalendarWeek() {
   label.textContent = `${ws.getFullYear()} 年 ${startStr} – ${endStr}`;
 
   const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = localDateStr(today);
   const dayNames = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
   let headerHtml = "";
@@ -5320,7 +5325,7 @@ function renderCalendarWeek() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(ws);
     d.setDate(d.getDate() + i);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dateStr = localDateStr(d);
     const isToday = dateStr === todayStr;
 
     headerHtml += `<div class="cal-week-header${isToday ? " today" : ""}"><div class="cal-weekday">${dayNames[i]}</div><div class="cal-weekdate">${d.getDate()}</div></div>`;
@@ -5495,7 +5500,7 @@ function renderWaceTracker() {
   const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
   const diffToMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Monday-based week
   weekStart.setDate(now.getDate() - diffToMon);
-  const weekStartStr = weekStart.toISOString().slice(0, 10);
+  const weekStartStr = localDateStr(weekStart);
   const waceThisWeek = contents.filter((item) => item.waceFocus && item.publishDate >= weekStartStr).length;
   const statusClass = waceThisWeek >= 2 ? "ok" : waceThisWeek >= 1 ? "warn" : "fail";
   target.innerHTML = `
@@ -5662,7 +5667,7 @@ function generateNotifications() {
     const weekStart = new Date(now);
     const dowNotif = now.getDay();
     weekStart.setDate(now.getDate() - (dowNotif === 0 ? 6 : dowNotif - 1));
-    const weekStartStr = weekStart.toISOString().slice(0, 10);
+    const weekStartStr = localDateStr(weekStart);
     const waceCount = contents.filter((c) => c.waceFocus && c.publishDate >= weekStartStr).length;
     if (waceCount < 2) {
       notifs.push({ type: "warn", icon: "⚠️", title: `WACE 内容本周仅 ${waceCount} 条`, desc: `铁律要求每周 ≥ 2 条，还差 ${2 - waceCount} 条。`, time: "实时", targetView: "content" });
@@ -5727,7 +5732,7 @@ function generateNotifications() {
   }
 
   // ── TASK 5.2: Follow-up overdue reminders ──
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = localDateStr(now);
   const relevantLeads = isAdmission
     ? crmLeads.filter(l => l.assignee === (roleCopy[role]?.user || ""))
     : (isManager ? crmLeads : []);
