@@ -3,7 +3,7 @@
 import { useEffect, useCallback, type ReactNode } from "react";
 
 interface ModalProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
@@ -11,8 +11,8 @@ interface ModalProps {
   footer?: ReactNode;
 }
 
-export default function Modal({
-  open,
+export function Modal({
+  isOpen,
   onClose,
   title,
   children,
@@ -27,7 +27,7 @@ export default function Modal({
   );
 
   useEffect(() => {
-    if (open) {
+    if (isOpen) {
       document.addEventListener("keydown", handleEscape);
       document.body.style.overflow = "hidden";
     }
@@ -35,9 +35,9 @@ export default function Modal({
       document.removeEventListener("keydown", handleEscape);
       document.body.style.overflow = "";
     };
-  }, [open, handleEscape]);
+  }, [isOpen, handleEscape]);
 
-  if (!open) return null;
+  if (!isOpen) return null;
 
   return (
     <div
@@ -96,3 +96,5 @@ export default function Modal({
     </div>
   );
 }
+
+export default Modal;

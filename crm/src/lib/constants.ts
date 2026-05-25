@@ -1,13 +1,13 @@
 // ── Platform Configuration ──
 export const PLATFORMS = [
-  { name: "小红书", icon: "📕", priority: 5, budgetPercent: 35 },
-  { name: "抖音", icon: "🎵", priority: 4, budgetPercent: 20 },
-  { name: "视频号", icon: "📹", priority: 3, budgetPercent: 15 },
-  { name: "公众号", icon: "📰", priority: 3, budgetPercent: 8 },
-  { name: "独立站SEO", icon: "🌐", priority: 4, budgetPercent: 12 },
-  { name: "知乎", icon: "💡", priority: 2, budgetPercent: 5 },
-  { name: "Google/YouTube", icon: "▶️", priority: 2, budgetPercent: 3 },
-  { name: "Facebook/IG", icon: "📘", priority: 2, budgetPercent: 2 },
+  { id: "小红书", name: "小红书", label: "小红书", icon: "📕", priority: 5, budgetPercent: 35 },
+  { id: "抖音", name: "抖音", label: "抖音", icon: "🎵", priority: 4, budgetPercent: 20 },
+  { id: "视频号", name: "视频号", label: "视频号", icon: "📹", priority: 3, budgetPercent: 15 },
+  { id: "公众号", name: "公众号", label: "公众号", icon: "📰", priority: 3, budgetPercent: 8 },
+  { id: "独立站SEO", name: "独立站SEO", label: "独立站SEO", icon: "🌐", priority: 4, budgetPercent: 12 },
+  { id: "知乎", name: "知乎", label: "知乎", icon: "💡", priority: 2, budgetPercent: 5 },
+  { id: "Google/YouTube", name: "Google/YouTube", label: "Google/YouTube", icon: "▶️", priority: 2, budgetPercent: 3 },
+  { id: "Facebook/IG", name: "Facebook/IG", label: "Facebook/IG", icon: "📘", priority: 2, budgetPercent: 2 },
 ] as const;
 
 export const PLATFORM_NAMES = PLATFORMS.map((p) => p.name);

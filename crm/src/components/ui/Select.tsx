@@ -1,19 +1,22 @@
 "use client";
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 interface SelectProps {
   value: string;
-  onChange: (value: string) => void;
-  options: readonly string[] | string[];
-  placeholder?: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: SelectOption[];
   label?: string;
   className?: string;
 }
 
-export default function Select({
+export function Select({
   value,
   onChange,
   options,
-  placeholder,
   label,
   className = "",
 }: SelectProps) {
@@ -29,7 +32,7 @@ export default function Select({
       )}
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         className="w-full px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
         style={{
           background: "var(--surface-soft)",
@@ -37,13 +40,14 @@ export default function Select({
           color: "var(--ink)",
         }}
       >
-        {placeholder && <option value="">{placeholder}</option>}
         {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
           </option>
         ))}
       </select>
     </label>
   );
 }
+
+export default Select;

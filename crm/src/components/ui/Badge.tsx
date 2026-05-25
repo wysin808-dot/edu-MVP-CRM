@@ -2,20 +2,21 @@
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: "default" | "success" | "warning" | "danger" | "info" | "muted";
+  variant?: "default" | "success" | "warning" | "danger" | "info" | "muted" | "outline";
   size?: "sm" | "md";
 }
 
-const variantColors: Record<string, { bg: string; fg: string }> = {
+const variantColors: Record<string, { bg: string; fg: string; border?: string }> = {
   default: { bg: "var(--brand-light)", fg: "var(--brand)" },
   success: { bg: "#dcfce7", fg: "var(--green)" },
   warning: { bg: "#fef3c7", fg: "var(--amber)" },
   danger: { bg: "#fee2e2", fg: "var(--red)" },
   info: { bg: "#dbeafe", fg: "var(--blue)" },
   muted: { bg: "var(--surface-soft)", fg: "var(--muted)" },
+  outline: { bg: "transparent", fg: "var(--muted)", border: "1px solid var(--border)" },
 };
 
-export default function Badge({
+export function Badge({
   children,
   variant = "default",
   size = "sm",
@@ -33,6 +34,7 @@ export default function Badge({
         fontWeight: 500,
         background: colors.bg,
         color: colors.fg,
+        border: colors.border || "none",
         whiteSpace: "nowrap",
       }}
     >
@@ -62,3 +64,5 @@ export function statusVariant(
       return "default";
   }
 }
+
+export default Badge;
