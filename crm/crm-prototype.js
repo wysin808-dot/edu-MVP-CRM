@@ -1856,7 +1856,7 @@ const modalTemplates = {
     title: "上传今日发布",
     body: () => `
       <div class="form-grid">
-        <label>发布日期<input type="date" value="${new Date().toISOString().slice(0, 10)}" /></label>
+        <label>发布日期<input type="date" value="${localDateStr(new Date())}" /></label>
         <label>平台<select>${platformOptions()}</select></label>
         <label>发布账号<select>${optionList(accountNames(), "请先新增账号")}</select></label>
         <label>绑定 IP<select>${optionList(personaNames(), "请先新增 IP")}</select></label>
@@ -4187,7 +4187,7 @@ function autoAssignLeads() {
 function runPeriodicChecks() {
   // Check 1: Content without metrics after 3 days
   const now = new Date();
-  const threeDaysAgo = new Date(now - 3 * 86400000).toISOString().slice(0, 10);
+  const threeDaysAgo = localDateStr(new Date(now - 3 * 86400000));
   const staleContent = contents.filter(c =>
     (c.status === "已发布" || c.status === "Posted") &&
     c.publishDate && c.publishDate <= threeDaysAgo &&
@@ -4198,7 +4198,7 @@ function runPeriodicChecks() {
   }
 
   // Check 2: Leads idle for more than 5 days
-  const fiveDaysAgo = new Date(now - 5 * 86400000).toISOString().slice(0, 10);
+  const fiveDaysAgo = localDateStr(new Date(now - 5 * 86400000));
   const idleLeads = crmLeads.filter(l =>
     l.stage !== "签约" && l.stage !== "流失" &&
     l.date && l.date <= fiveDaysAgo &&
@@ -5802,7 +5802,7 @@ function generateNotifications() {
     }
     // Red line 4: 顾问 30 天无开单
     if (isManager) {
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
+      const thirtyDaysAgo = localDateStr(new Date(now.getTime() - 30 * 86400000));
       const advisors = teamMembers.filter(m => m.role === "招生顾问" && m.status === "在职");
       advisors.forEach(adv => {
         const recentSign = crmLeads.some(l => l.assignee === adv.name && l.stage === "签约" && l.date >= thirtyDaysAgo);
