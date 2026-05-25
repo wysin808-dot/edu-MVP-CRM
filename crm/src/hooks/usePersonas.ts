@@ -4,12 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Persona, PersonaInsert } from "@/lib/types";
 
-const supabase = createClient();
-
 export function usePersonaList() {
   return useQuery({
     queryKey: ["personas"],
     queryFn: async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("personas")
         .select("*")
@@ -24,6 +23,7 @@ export function usePersona(id: string) {
   return useQuery({
     queryKey: ["personas", id],
     queryFn: async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("personas")
         .select("*")
@@ -41,6 +41,7 @@ export function useCreatePersona() {
 
   return useMutation({
     mutationFn: async (persona: PersonaInsert) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("personas")
         .insert(persona)
@@ -63,6 +64,7 @@ export function useUpdatePersona() {
       id,
       ...updates
     }: Partial<Persona> & { id: string }) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("personas")
         .update(updates)

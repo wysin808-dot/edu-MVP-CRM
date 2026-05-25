@@ -44,7 +44,7 @@ export default function DashboardPage() {
       badge: l.next_followup === today ? "今日跟进" : "已逾期",
       badgeColor: l.next_followup === today ? "var(--blue)" : "var(--red)",
       hint: `${l.stage} · ${l.interest_program || "未指定项目"}`,
-      href: `/crm/${l.id}`,
+      href: `/crm`,
     })),
   ];
 

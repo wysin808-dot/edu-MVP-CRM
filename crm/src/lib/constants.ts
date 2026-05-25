@@ -35,6 +35,7 @@ export const FUNNEL_STAGES = [
 ] as const;
 
 export const EMOTIONAL_TRIGGERS = [
+  "待定",
   "反常识",
   "焦虑共鸣",
   "向往",

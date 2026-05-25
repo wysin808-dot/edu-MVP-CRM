@@ -4,8 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { localDateStr, getWeekStart } from "@/lib/utils";
 
-const supabase = createClient();
-
 export interface DashboardStats {
   todayPublishing: number;
   pendingReview: number;
@@ -17,9 +15,13 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async (): Promise<DashboardStats> => {
+      const supabase = createClient();
       const today = new Date();
       const todayStr = localDateStr(today);
-      const weekStart = localDateStr(getWeekStart(today));
+      // Use ISO timestamp for TIMESTAMPTZ comparison
+      const weekStartDate = getWeekStart(today);
+      weekStartDate.setHours(0, 0, 0, 0);
+      const weekStartISO = weekStartDate.toISOString();
 
       const [todayRes, reviewRes, leadsRes, totalRes] = await Promise.all([
         // Today's publishing count
@@ -36,7 +38,7 @@ export function useDashboardStats() {
         supabase
           .from("crm_leads")
           .select("id", { count: "exact", head: true })
-          .gte("created_at", weekStart),
+          .gte("created_at", weekStartISO),
         // Total contents
         supabase
           .from("contents")

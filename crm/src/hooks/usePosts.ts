@@ -4,18 +4,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { PublishedPost } from "@/lib/types";
 
-const supabase = createClient();
-
 export function usePostList(filters?: { date?: string; status?: string }) {
   return useQuery({
     queryKey: ["published_posts", filters],
     queryFn: async () => {
+      const supabase = createClient();
       let query = supabase
         .from("published_posts")
         .select("*, content:contents(*), account:accounts(*)")
         .order("scheduled_time", { ascending: true });
 
       if (filters?.status) query = query.eq("status", filters.status);
+      if (filters?.date) query = query.eq("scheduled_time::date", filters.date);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -29,6 +29,7 @@ export function useCreatePost() {
 
   return useMutation({
     mutationFn: async (post: Partial<PublishedPost>) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("published_posts")
         .insert(post)
@@ -51,6 +52,7 @@ export function useUpdatePost() {
       id,
       ...updates
     }: Partial<PublishedPost> & { id: string }) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("published_posts")
         .update(updates)
@@ -71,6 +73,7 @@ export function useMarkPostPublished() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const supabase = createClient();
       const { error } = await supabase
         .from("published_posts")
         .update({

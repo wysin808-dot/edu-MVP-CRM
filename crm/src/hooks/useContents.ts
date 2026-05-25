@@ -4,8 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Content, ContentUpdate } from "@/lib/types";
 
-const supabase = createClient();
-
 // ── Queries ──
 
 export function useContentList(filters?: {
@@ -17,6 +15,7 @@ export function useContentList(filters?: {
   return useQuery({
     queryKey: ["contents", filters],
     queryFn: async () => {
+      const supabase = createClient();
       let query = supabase
         .from("contents")
         .select("*, account:accounts(*), persona:personas(*)")
@@ -38,6 +37,7 @@ export function useContent(id: string) {
   return useQuery({
     queryKey: ["contents", id],
     queryFn: async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("contents")
         .select(
@@ -60,6 +60,7 @@ export function useContentWithMetrics(id: string) {
   return useQuery({
     queryKey: ["contents", id, "metrics"],
     queryFn: async () => {
+      const supabase = createClient();
       const [contentResult, metricsResult, refsResult, childrenResult] =
         await Promise.all([
           supabase
@@ -104,6 +105,7 @@ export function useTodayPublishing() {
   return useQuery({
     queryKey: ["contents", "today"],
     queryFn: async () => {
+      const supabase = createClient();
       const today = new Date();
       const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
@@ -126,6 +128,7 @@ export function useCreateContent() {
 
   return useMutation({
     mutationFn: async (content: Partial<Content>) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("contents")
         .insert(content)
@@ -145,6 +148,7 @@ export function useUpdateContent() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: ContentUpdate & { id: string }) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("contents")
         .update(updates)
@@ -166,6 +170,7 @@ export function useDeleteContent() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const supabase = createClient();
       const { error } = await supabase.from("contents").delete().eq("id", id);
       if (error) throw error;
     },
@@ -187,6 +192,7 @@ export function useAddReview() {
       action: "approve" | "reject" | "comment";
       comment?: string;
     }) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("content_reviews")
         .insert(review)
@@ -229,6 +235,7 @@ export function useAddComment() {
       author_name: string;
       body: string;
     }) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("content_comments")
         .insert(comment)
@@ -258,6 +265,7 @@ export function useLinkKnowledge() {
       content_id: string;
       knowledge_id: string;
     }) => {
+      const supabase = createClient();
       const { error } = await supabase
         .from("content_knowledge_refs")
         .insert({ content_id, knowledge_id });
@@ -286,6 +294,7 @@ export function useRepurposeContent() {
       targetPlatform: string;
       title: string;
     }) => {
+      const supabase = createClient();
       const { data: parent } = await supabase
         .from("contents")
         .select("*")
@@ -345,13 +354,37 @@ export function useUpdateMetrics() {
       private_messages?: number;
       leads?: number;
     }) => {
-      const { data, error } = await supabase
+      const supabase = createClient();
+      // Check if a metrics row already exists for this content
+      const { data: existing } = await supabase
         .from("content_metrics")
-        .upsert(metrics, { onConflict: "content_id" })
-        .select()
+        .select("id")
+        .eq("content_id", metrics.content_id)
+        .order("recorded_at", { ascending: false })
+        .limit(1)
         .single();
-      if (error) throw error;
-      return data;
+
+      if (existing) {
+        // Update existing row
+        const { content_id: _cid, ...updates } = metrics;
+        const { data, error } = await supabase
+          .from("content_metrics")
+          .update({ ...updates, recorded_at: new Date().toISOString() })
+          .eq("id", existing.id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      } else {
+        // Insert new row
+        const { data, error } = await supabase
+          .from("content_metrics")
+          .insert(metrics)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

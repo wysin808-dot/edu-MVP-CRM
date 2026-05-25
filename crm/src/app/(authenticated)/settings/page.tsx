@@ -10,12 +10,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import type { UserProfile } from "@/lib/types";
 
-const supabase = createClient();
-
 function useUserProfiles() {
   return useQuery({
     queryKey: ["user_profiles"],
     queryFn: async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("user_profiles")
         .select("*")
@@ -30,6 +29,7 @@ function useUpdateUserRole() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, role }: { id: string; role: string }) => {
+      const supabase = createClient();
       const { error } = await supabase
         .from("user_profiles")
         .update({ role })
@@ -92,7 +92,7 @@ export default function SettingsPage() {
 
               return (
                 <div key={user.id} className="flex items-center gap-4 p-3 rounded-lg"
-                  style={{ background: isCurrentUser ? "rgba(232, 122, 46, 0.04)" : "var(--surface-soft)" }}>
+                  style={{ background: isCurrentUser ? "var(--brand-light)" : "var(--surface-soft)" }}>
                   {/* Avatar */}
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
                     style={{ background: "var(--brand)" }}>

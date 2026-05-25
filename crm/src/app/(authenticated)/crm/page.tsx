@@ -26,7 +26,7 @@ export default function CrmPage() {
   const [form, setForm] = useState({
     name: "", phone: "", child_name: "", child_grade: "",
     source_platform: "", interest_program: "", assigned_to: "",
-    notes: "", next_followup: "",
+    notes: "", next_followup: "", stage: "新线索",
   });
 
   const openCreate = () => {
@@ -34,7 +34,7 @@ export default function CrmPage() {
     setForm({
       name: "", phone: "", child_name: "", child_grade: "",
       source_platform: "", interest_program: "", assigned_to: "",
-      notes: "", next_followup: "",
+      notes: "", next_followup: "", stage: "新线索",
     });
     setShowModal(true);
   };
@@ -47,7 +47,7 @@ export default function CrmPage() {
       source_platform: lead.source_platform || "",
       interest_program: lead.interest_program || "",
       assigned_to: lead.assigned_to || "", notes: lead.notes || "",
-      next_followup: lead.next_followup || "",
+      next_followup: lead.next_followup || "", stage: lead.stage,
     });
     setShowModal(true);
   };
@@ -67,7 +67,7 @@ export default function CrmPage() {
       next_followup: form.next_followup || null,
     };
     if (editing) {
-      await updateLead.mutateAsync({ id: editing.id, ...payload });
+      await updateLead.mutateAsync({ id: editing.id, ...payload, stage: form.stage });
     } else {
       await createLead.mutateAsync({ ...payload, stage: "新线索", source_content_id: null });
     }
@@ -83,8 +83,12 @@ export default function CrmPage() {
     setDragOverStage(stage);
   };
 
-  const handleDragLeave = () => {
-    setDragOverStage(null);
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear highlight when leaving the column container itself,
+    // not when hovering over child elements within the column
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverStage(null);
+    }
   };
 
   const handleDrop = async (stage: string) => {
@@ -142,7 +146,7 @@ export default function CrmPage() {
                 transition: "all 0.15s",
               }}
               onDragOver={(e) => handleDragOver(e, stage)}
-              onDragLeave={handleDragLeave}
+              onDragLeave={(e) => handleDragLeave(e)}
               onDrop={() => handleDrop(stage)}
             >
               {/* Column Header */}
@@ -298,8 +302,8 @@ export default function CrmPage() {
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
           </div>
           {editing && (
-            <Select label="线索阶段" value={editing.stage}
-              onChange={(e) => moveLead.mutateAsync({ id: editing.id, newStage: e.target.value })}
+            <Select label="线索阶段" value={form.stage}
+              onChange={(e) => setForm({ ...form, stage: e.target.value })}
               options={CRM_STAGES.map((s) => ({ value: s, label: s }))} />
           )}
         </form>

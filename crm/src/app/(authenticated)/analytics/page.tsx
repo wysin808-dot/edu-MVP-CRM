@@ -60,9 +60,10 @@ export default function AnalyticsPage() {
   const waceWeekly = useMemo(() => {
     if (!contents) return { current: 0, target: 2 };
     const weekStart = getWeekStart(new Date());
-    const weekStartStr = localDateStr(weekStart);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekStartTime = weekStart.getTime();
     const waceThisWeek = contents.filter((c) =>
-      c.wace_focus && c.created_at >= weekStartStr
+      c.wace_focus && new Date(c.created_at).getTime() >= weekStartTime
     ).length;
     return { current: waceThisWeek, target: 2 };
   }, [contents]);

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useTodayPublishing, useUpdateContent } from "@/hooks/useContents";
-import { usePostList, useMarkPostPublished } from "@/hooks/usePosts";
-import { PLATFORMS, CONTENT_STATUSES } from "@/lib/constants";
+import { PLATFORMS } from "@/lib/constants";
 import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { localDateStr } from "@/lib/utils";
@@ -11,9 +10,7 @@ import { localDateStr } from "@/lib/utils";
 export default function PublishingPage() {
   const today = localDateStr(new Date());
   const { data: todayContents, isLoading: loadingContents } = useTodayPublishing();
-  const { data: posts, isLoading: loadingPosts } = usePostList({ date: today });
   const updateContent = useUpdateContent();
-  const markPublished = useMarkPostPublished();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -36,7 +33,7 @@ export default function PublishingPage() {
     });
   };
 
-  if (loadingContents || loadingPosts) return <PageSkeleton />;
+  if (loadingContents) return <PageSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto">

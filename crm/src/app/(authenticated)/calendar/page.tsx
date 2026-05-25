@@ -159,7 +159,7 @@ export default function CalendarPage() {
                   style={{
                     borderBottom: "1px solid var(--border)",
                     borderRight: idx % 7 !== 6 ? "1px solid var(--border)" : "none",
-                    background: isToday ? "rgba(232, 122, 46, 0.04)" : "transparent",
+                    background: isToday ? "var(--brand-light)" : "transparent",
                   }}
                 >
                   {/* Day Number */}
@@ -212,7 +212,7 @@ export default function CalendarPage() {
               return (
                 <div key={dateStr} style={{
                   borderRight: idx < 6 ? "1px solid var(--border)" : "none",
-                  background: isToday ? "rgba(232, 122, 46, 0.04)" : "transparent",
+                  background: isToday ? "var(--brand-light)" : "transparent",
                 }}>
                   {/* Day Header */}
                   <div className="text-center py-3" style={{ borderBottom: "1px solid var(--border)" }}>

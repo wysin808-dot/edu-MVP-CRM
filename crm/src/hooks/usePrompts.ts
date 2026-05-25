@@ -4,8 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { AiPrompt, AiPromptInsert } from "@/lib/types";
 
-const supabase = createClient();
-
 export function usePromptList(filters?: {
   category?: string;
   platform?: string;
@@ -13,6 +11,7 @@ export function usePromptList(filters?: {
   return useQuery({
     queryKey: ["ai_prompts", filters],
     queryFn: async () => {
+      const supabase = createClient();
       let query = supabase
         .from("ai_prompts")
         .select("*, persona:personas(*)")
@@ -34,6 +33,7 @@ export function useCreatePrompt() {
 
   return useMutation({
     mutationFn: async (prompt: AiPromptInsert) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("ai_prompts")
         .insert(prompt)
@@ -56,6 +56,7 @@ export function useUpdatePrompt() {
       id,
       ...updates
     }: Partial<AiPrompt> & { id: string }) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("ai_prompts")
         .update(updates)
@@ -76,6 +77,7 @@ export function useIncrementPromptUsage() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const supabase = createClient();
       // Fetch current count, increment
       const { data: current } = await supabase
         .from("ai_prompts")

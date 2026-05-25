@@ -4,8 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { KnowledgeItem, KnowledgeInsert } from "@/lib/types";
 
-const supabase = createClient();
-
 export function useKnowledgeList(filters?: {
   itemType?: string;
   visibility?: string;
@@ -13,6 +11,7 @@ export function useKnowledgeList(filters?: {
   return useQuery({
     queryKey: ["knowledge", filters],
     queryFn: async () => {
+      const supabase = createClient();
       let query = supabase
         .from("knowledge")
         .select("*")
@@ -32,6 +31,7 @@ export function useKnowledge(id: string) {
   return useQuery({
     queryKey: ["knowledge", id],
     queryFn: async () => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("knowledge")
         .select("*")
@@ -49,6 +49,7 @@ export function useCreateKnowledge() {
 
   return useMutation({
     mutationFn: async (item: KnowledgeInsert) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("knowledge")
         .insert(item)
@@ -71,6 +72,7 @@ export function useUpdateKnowledge() {
       id,
       ...updates
     }: Partial<KnowledgeItem> & { id: string }) => {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from("knowledge")
         .update(updates)
@@ -92,6 +94,7 @@ export function useDeleteKnowledge() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const supabase = createClient();
       const { error } = await supabase.from("knowledge").delete().eq("id", id);
       if (error) throw error;
     },

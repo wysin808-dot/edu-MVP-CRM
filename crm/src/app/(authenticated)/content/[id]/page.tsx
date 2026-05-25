@@ -9,6 +9,7 @@ import {
   useAddComment,
   useRepurposeContent,
 } from "@/hooks/useContents";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { PLATFORMS, CONTENT_STATUSES, FUNNEL_STAGES, EMOTIONAL_TRIGGERS, CONTENT_TYPES, TOPIC_CLUSTERS, REPURPOSE_STATUSES } from "@/lib/constants";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -22,6 +23,7 @@ export default function ContentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { profile } = useAuth();
   const { data: content, isLoading } = useContentWithMetrics(id);
   const updateContent = useUpdateContent();
   const addReview = useAddReview();
@@ -77,7 +79,7 @@ export default function ContentDetailPage({
   const handleReview = async (action: "approve" | "reject") => {
     await addReview.mutateAsync({
       content_id: id,
-      reviewer_name: "当前用户",
+      reviewer_name: profile?.display_name || "未知用户",
       action,
       comment: reviewComment || undefined,
     });
@@ -88,7 +90,7 @@ export default function ContentDetailPage({
     if (!newComment.trim()) return;
     await addComment.mutateAsync({
       content_id: id,
-      author_name: "当前用户",
+      author_name: profile?.display_name || "未知用户",
       body: newComment.trim(),
     });
     setNewComment("");
@@ -358,7 +360,7 @@ export default function ContentDetailPage({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Select label="情绪钩子" value={editForm.emotional_trigger} onChange={(e) => setEditForm({ ...editForm, emotional_trigger: e.target.value })}
-              options={[{ value: "待定", label: "待定" }, ...EMOTIONAL_TRIGGERS.map((s) => ({ value: s, label: s }))]} />
+              options={EMOTIONAL_TRIGGERS.map((s) => ({ value: s, label: s }))} />
             <Select label="内容类型" value={editForm.content_type} onChange={(e) => setEditForm({ ...editForm, content_type: e.target.value })}
               options={CONTENT_TYPES.map((s) => ({ value: s, label: s }))} />
           </div>
