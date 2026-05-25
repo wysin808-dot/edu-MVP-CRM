@@ -1833,7 +1833,12 @@ const modalTemplates = {
         <label>Topic Cluster<select><option value="">选择主题簇</option><option>WACE</option><option>A-Level</option><option>IB</option><option>升学</option><option>择校</option><option>陪读</option><option>校园</option><option>签证</option><option>学费</option><option>NUS / NTU</option><option>毕业生案例</option></select></label>
         <label>WACE Focus<select><option>否</option><option>是</option></select></label>
         <label class="full-field">CTA<input placeholder="如：评论「关键词」，获取XXX" /></label>
-        <label class="full-field">References<input placeholder="引用的知识库资料，用 / 分隔" /></label>
+        <label class="full-field">引用真实资料<input id="kb-refs-input" placeholder="点击下方选择知识库资料" readonly /></label>
+        <div class="full-field kb-picker-section" style="margin-top:-8px">
+          <div class="kb-picker-list" id="kb-picker-list" style="max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:6px;display:flex;flex-wrap:wrap;gap:4px">
+            ${knowledge.map((k) => `<button type="button" class="kb-pick-btn" data-kb-title="${escapeHtml(k.title)}" style="padding:4px 10px;border:1px solid var(--line);border-radius:16px;background:var(--card);font-size:12px;cursor:pointer;white-space:nowrap">${escapeHtml(k.title)}</button>`).join("")}
+          </div>
+        </div>
         <label class="full-field">Notes<textarea placeholder="备注信息"></textarea></label>
         <label>阅读数<input type="number" placeholder="0" /></label>
         <label>点赞数<input type="number" placeholder="0" /></label>
@@ -2848,7 +2853,15 @@ function buildResubmitEditForm(item) {
         </select>
       </label>
       <label>WACE Focus<select id="edit-wace-focus"><option value="否"${!item.waceFocus ? " selected" : ""}>否</option><option value="是"${item.waceFocus ? " selected" : ""}>是</option></select></label>
-      <label>引用资料<input type="text" id="edit-references" value="${escapeHtml(item.references || "")}" /></label>
+      <label>引用真实资料<input type="text" id="edit-references" value="${escapeHtml(item.references || "")}" readonly placeholder="点击下方选择" /></label>
+      <div class="kb-picker-section" style="margin-top:-4px;margin-bottom:8px">
+        <div class="kb-picker-list" style="max-height:120px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:6px;display:flex;flex-wrap:wrap;gap:4px">
+          ${knowledge.map((k) => {
+            const isSelected = (item.references || "").split(/[/／]/).map(r => r.trim()).some(r => k.title.includes(r) || r.includes(k.title));
+            return `<button type="button" class="kb-pick-btn${isSelected ? " kb-selected" : ""}" data-kb-title="${escapeHtml(k.title)}" style="padding:4px 10px;border:1px solid ${isSelected ? "var(--brand)" : "var(--line)"};border-radius:16px;background:${isSelected ? "var(--brand)" : "var(--card)"};color:${isSelected ? "#fff" : ""};font-size:12px;cursor:pointer;white-space:nowrap">${escapeHtml(k.title)}</button>`;
+          }).join("")}
+        </div>
+      </div>
       <label>修改说明<textarea id="edit-comment" rows="2" placeholder="说明本次修改了什么…"></textarea></label>
     </div>
     <div class="modal-section">
@@ -3583,6 +3596,7 @@ function buildReviewForm(item) {
       <div><strong>漏斗阶段</strong><span>${item.funnelStage || "—"}</span></div>
       <div><strong>情绪钩子</strong><span>${item.emotionalTrigger || "—"}</span></div>
       <div><strong>内容类型</strong><span>${item.contentType || "—"}</span></div>
+      <div><strong>引用资料</strong><span>${buildRefLinks(item.references) || '<span style="color:var(--muted)">未引用知识库资料</span>'}</span></div>
     </div>
     <div class="modal-section">
       <h3>审核历史</h3>
@@ -4638,6 +4652,28 @@ function wireRoleSwitch() {
 
 function wireActions() {
   document.addEventListener("click", (event) => {
+    // KB picker button toggle in content creation / edit forms
+    const kbPickBtn = event.target.closest(".kb-pick-btn");
+    if (kbPickBtn) {
+      kbPickBtn.classList.toggle("kb-selected");
+      if (kbPickBtn.classList.contains("kb-selected")) {
+        kbPickBtn.style.background = "var(--brand)";
+        kbPickBtn.style.color = "#fff";
+        kbPickBtn.style.borderColor = "var(--brand)";
+      } else {
+        kbPickBtn.style.background = "var(--card)";
+        kbPickBtn.style.color = "";
+        kbPickBtn.style.borderColor = "var(--line)";
+      }
+      // Update the readonly input
+      const allSelected = document.querySelectorAll(".kb-pick-btn.kb-selected");
+      const refInput = document.querySelector("#kb-refs-input") || document.querySelector("#edit-references");
+      if (refInput) {
+        refInput.value = Array.from(allSelected).map(b => b.dataset.kbTitle).join(" / ");
+      }
+      return;
+    }
+
     const librarySearchButton = event.target.closest(".library-search-button");
     if (librarySearchButton) {
       runLibrarySearch(librarySearchButton.dataset.library);
