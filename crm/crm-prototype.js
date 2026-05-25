@@ -3108,7 +3108,7 @@ function renderReviewQueue() {
                 ${c.publishDate ? badge(c.publishDate) : ""}
               </div>
               <h4>${escapeHtml(c.title)}</h4>
-              <p>${c.account || "—"} · ${c.author || "—"}</p>
+              <p><strong style="color:var(--brand)">提交人：${c.author || "—"}</strong> · ${c.account || "—"} · ${c.persona || "—"}</p>
             </div>
             <div class="daily-task-actions">
               <button class="ghost-button content-detail" type="button" data-title="${escapeHtml(c.title)}">详情</button>
@@ -3489,9 +3489,15 @@ function buildReviewForm(item) {
   return `
     <div class="detail-list">
       <div><strong>内容标题</strong><span>${escapeHtml(item.title)}</span></div>
+      <div><strong>提交人</strong><span style="color:var(--brand);font-weight:600">${item.author || "—"}</span></div>
       <div><strong>当前状态</strong><span>${item.status}</span></div>
-      <div><strong>账号</strong><span>${item.account}</span></div>
-      <div><strong>漏斗阶段</strong><span>${item.funnelStage}</span></div>
+      <div><strong>账号</strong><span>${item.account || "—"}</span></div>
+      <div><strong>所属 IP</strong><span>${item.persona || "—"}</span></div>
+      <div><strong>平台</strong><span>${item.platform || "—"}</span></div>
+      <div><strong>发布日期</strong><span>${item.publishDate || "—"}</span></div>
+      <div><strong>漏斗阶段</strong><span>${item.funnelStage || "—"}</span></div>
+      <div><strong>情绪钩子</strong><span>${item.emotionalTrigger || "—"}</span></div>
+      <div><strong>内容类型</strong><span>${item.contentType || "—"}</span></div>
     </div>
     <div class="modal-section">
       <h3>审核历史</h3>
