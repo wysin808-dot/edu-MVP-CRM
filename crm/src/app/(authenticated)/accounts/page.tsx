@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAccountList, useCreateAccount, useUpdateAccount } from "@/hooks/useAccounts";
 import { usePersonaList } from "@/hooks/usePersonas";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { PLATFORMS, ACCOUNT_STAGES } from "@/lib/constants";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -12,18 +13,24 @@ import { formatNumber } from "@/lib/utils";
 import type { Account } from "@/lib/types";
 
 export default function AccountsPage() {
+  const { profile, role } = useAuth();
+  const isOperator = role === "operator";
+
   const [platformFilter, setPlatformFilter] = useState("");
   const [stageFilter, setStageFilter] = useState("");
 
   const { data: accounts, isLoading } = useAccountList({
     platform: platformFilter || undefined,
     stage: stageFilter || undefined,
+    // 运营人员只看自己负责的账号
+    operatorName: isOperator ? (profile?.display_name || undefined) : undefined,
   });
   const { data: personas } = usePersonaList();
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
 
   const [showModal, setShowModal] = useState(false);
+  const [viewing, setViewing] = useState<Account | null>(null);
   const [editing, setEditing] = useState<Account | null>(null);
   const [form, setForm] = useState({
     account_name: "",
@@ -35,6 +42,10 @@ export default function AccountsPage() {
     total_posts: 0,
     total_leads: 0,
   });
+
+  const openView = (a: Account) => {
+    setViewing(a);
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -93,10 +104,18 @@ export default function AccountsPage() {
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>账号矩阵</h2>
-          <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>管理所有平台账号及运营状态</p>
+          <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>
+            {isOperator ? "我的账号" : "账号矩阵"}
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
+            {isOperator
+              ? `${profile?.display_name || ""}负责运营的平台账号`
+              : "管理所有平台账号及运营状态"}
+          </p>
         </div>
-        <Button variant="primary" onClick={openCreate}>+ 新建账号</Button>
+        {!isOperator && (
+          <Button variant="primary" onClick={openCreate}>+ 新建账号</Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -124,7 +143,7 @@ export default function AccountsPage() {
                 return (
                   <tr key={account.id} className="cursor-pointer transition-colors"
                     style={{ borderBottom: "1px solid var(--border)" }}
-                    onClick={() => openEdit(account)}
+                    onClick={() => isOperator ? openView(account) : openEdit(account)}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-soft)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                     <td className="px-4 py-3 text-sm">{platform ? `${platform.icon} ${platform.label}` : account.platform}</td>
@@ -144,8 +163,61 @@ export default function AccountsPage() {
       ) : (
         <div className="rounded-xl p-12 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="text-4xl mb-3">📱</div>
-          <p className="text-sm" style={{ color: "var(--muted)" }}>还没有账号，点击上方按钮创建第一个</p>
+          <p className="text-sm" style={{ color: "var(--muted)" }}>
+            {isOperator ? "暂无分配给你的账号，请联系管理员" : "还没有账号，点击上方按钮创建第一个"}
+          </p>
         </div>
+      )}
+
+      {/* Operator View Modal */}
+      {viewing && (
+        <Modal isOpen={!!viewing} onClose={() => setViewing(null)}
+          title={`📱 ${viewing.account_name}`}
+          footer={
+            <Button variant="secondary" onClick={() => setViewing(null)}>关闭</Button>
+          }>
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>平台</label>
+                <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+                  {getPlatformInfo(viewing.platform)
+                    ? `${getPlatformInfo(viewing.platform)!.icon} ${getPlatformInfo(viewing.platform)!.label}`
+                    : viewing.platform}
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>账号阶段</label>
+                <Badge variant={stageColor(viewing.stage)}>{viewing.stage}</Badge>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>IP 角色</label>
+                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.persona?.name || "-"}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>运营人</label>
+                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.operator_name || "-"}</p>
+              </div>
+            </div>
+            <div className="rounded-lg p-4" style={{ background: "var(--surface-soft)" }}>
+              <h4 className="text-xs font-medium mb-3" style={{ color: "var(--muted)" }}>运营数据</h4>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-xl font-bold" style={{ color: "var(--ink)" }}>{formatNumber(viewing.follower_count)}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>粉丝</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold" style={{ color: "var(--ink)" }}>{viewing.total_posts}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>发布</p>
+                </div>
+                <div>
+                  <p className="text-xl font-bold" style={{ color: "var(--brand)" }}>{viewing.total_leads}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>线索</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Modal */}

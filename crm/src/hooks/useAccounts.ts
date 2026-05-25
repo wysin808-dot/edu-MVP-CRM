@@ -4,7 +4,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Account, AccountInsert } from "@/lib/types";
 
-export function useAccountList(filters?: { platform?: string; stage?: string }) {
+export function useAccountList(filters?: {
+  platform?: string;
+  stage?: string;
+  operatorName?: string;
+}) {
   return useQuery({
     queryKey: ["accounts", filters],
     queryFn: async () => {
@@ -16,6 +20,8 @@ export function useAccountList(filters?: { platform?: string; stage?: string }) 
 
       if (filters?.platform) query = query.eq("platform", filters.platform);
       if (filters?.stage) query = query.eq("stage", filters.stage);
+      if (filters?.operatorName)
+        query = query.eq("operator_name", filters.operatorName);
 
       const { data, error } = await query;
       if (error) throw error;

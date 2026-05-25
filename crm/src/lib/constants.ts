@@ -115,7 +115,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
   operator: {
     title: "运营人员",
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
-    nav: ["dashboard", "publishing", "content", "knowledge", "calendar", "crm"],
+    nav: ["dashboard", "publishing", "content", "knowledge", "accounts", "calendar", "crm"],
     defaultUser: "运营 A",
     team: "china",
   },
