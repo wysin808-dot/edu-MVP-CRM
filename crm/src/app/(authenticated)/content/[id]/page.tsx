@@ -23,7 +23,7 @@ export default function ContentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { data: content, isLoading } = useContentWithMetrics(id);
   const updateContent = useUpdateContent();
   const addReview = useAddReview();
@@ -198,18 +198,27 @@ export default function ContentDetailPage({
           <div className="rounded-xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--ink)" }}>审核操作</h3>
             {(content.status === "待审核" || content.status === "审核中") ? (
-              <div className="flex flex-col gap-3">
-                <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="审核意见（可选）..." rows={2}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
-                  style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
-                <div className="flex gap-2">
-                  <Button variant="primary" size="sm" onClick={() => handleReview("approve")}
-                    disabled={addReview.isPending}>✓ 通过</Button>
-                  <Button variant="danger" size="sm" onClick={() => handleReview("reject")}
-                    disabled={addReview.isPending}>✗ 退回</Button>
+              (role === "admin" || role === "lead") ? (
+                <div className="flex flex-col gap-3">
+                  <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="审核意见（可选）..." rows={2}
+                    className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
+                    style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
+                  <div className="flex gap-2">
+                    <Button variant="primary" size="sm" onClick={() => handleReview("approve")}
+                      disabled={addReview.isPending}>✓ 通过</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleReview("reject")}
+                      disabled={addReview.isPending}>✗ 退回</Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: "var(--surface-soft)" }}>
+                  <span className="text-base">⏳</span>
+                  <p className="text-xs m-0" style={{ color: "var(--muted)" }}>
+                    已提交审核，等待负责人审批
+                  </p>
+                </div>
+              )
             ) : (
               <p className="text-xs" style={{ color: "var(--muted)" }}>
                 当前状态为「{content.status}」，{content.status === "草稿" ? "提交审核后可操作" : "无需审核"}
