@@ -48,6 +48,7 @@ export default function ContentDetailPage({
     title: "", status: "", funnel_stage: "", emotional_trigger: "",
     content_type: "", topic_cluster: "", publish_date: "", notes: "",
     wace_focus: false, author_name: "", cta: "", primary_keyword: "",
+    cover_image_url: "", body: "",
   });
 
   const getPlatformInfo = (pid: string) => PLATFORMS.find((p) => p.id === pid);
@@ -61,6 +62,7 @@ export default function ContentDetailPage({
       publish_date: content.publish_date || "", notes: content.notes || "",
       wace_focus: content.wace_focus, author_name: content.author_name || "",
       cta: content.cta || "", primary_keyword: content.primary_keyword || "",
+      cover_image_url: content.cover_image_url || "", body: content.body || "",
     });
     setIsEditing(true);
   };
@@ -80,6 +82,8 @@ export default function ContentDetailPage({
       author_name: editForm.author_name || null,
       cta: editForm.cta || null,
       primary_keyword: editForm.primary_keyword || null,
+      cover_image_url: editForm.cover_image_url || null,
+      body: editForm.body || null,
     });
     setIsEditing(false);
   };
@@ -192,6 +196,18 @@ export default function ContentDetailPage({
         ← 返回内容库
       </Link>
 
+      {/* Cover Image */}
+      {content.cover_image_url && (
+        <div className="rounded-xl overflow-hidden mb-4" style={{ border: "1px solid var(--border)" }}>
+          <img
+            src={content.cover_image_url}
+            alt={content.title}
+            className="w-full object-cover"
+            style={{ maxHeight: "320px" }}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="rounded-xl p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <div className="flex items-start justify-between mb-3">
@@ -258,6 +274,16 @@ export default function ContentDetailPage({
           </div>
         )}
       </div>
+
+      {/* Body Content */}
+      {content.body && (
+        <div className="rounded-xl p-6 mb-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--ink)" }}>正文内容</h3>
+          <div className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: "var(--ink)" }}>
+            {content.body}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left: Metrics + Reviews */}
@@ -486,6 +512,25 @@ export default function ContentDetailPage({
                 className="w-full px-3 py-2 rounded-lg text-sm outline-none"
                 style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>封面图 URL</label>
+            <input type="url" value={editForm.cover_image_url} onChange={(e) => setEditForm({ ...editForm, cover_image_url: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="粘贴封面图链接" />
+            {editForm.cover_image_url && (
+              <div className="mt-2 rounded-lg overflow-hidden h-24 w-full">
+                <img src={editForm.cover_image_url} alt="预览" className="w-full h-full object-cover" />
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>正文内容</label>
+            <textarea value={editForm.body} onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}
+              rows={6} className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="输入正文内容..." />
           </div>
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>备注</label>

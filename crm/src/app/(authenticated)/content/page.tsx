@@ -27,6 +27,7 @@ export default function ContentPage() {
     title: "", platform: "", status: "草稿", funnel_stage: "Awareness",
     emotional_trigger: "待定", content_type: "干货", topic_cluster: "未分类",
     publish_date: "", notes: "", wace_focus: false,
+    cover_image_url: "", body: "",
   });
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -43,12 +44,15 @@ export default function ContentPage() {
       publish_date: form.publish_date || null,
       notes: form.notes || null,
       wace_focus: form.wace_focus,
+      cover_image_url: form.cover_image_url || null,
+      body: form.body || null,
     } as Partial<Content>);
     setShowCreate(false);
     setForm({
       title: "", platform: "", status: "草稿", funnel_stage: "Awareness",
       emotional_trigger: "待定", content_type: "干货", topic_cluster: "未分类",
       publish_date: "", notes: "", wace_focus: false,
+      cover_image_url: "", body: "",
     });
   };
 
@@ -88,7 +92,7 @@ export default function ContentPage() {
             return (
               <Link key={content.id} href={`/content/${content.id}`} className="no-underline">
                 <div
-                  className="rounded-xl p-4 cursor-pointer transition-all h-full"
+                  className="rounded-xl cursor-pointer transition-all h-full overflow-hidden"
                   style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
@@ -99,36 +103,56 @@ export default function ContentPage() {
                     e.currentTarget.style.transform = "none";
                   }}
                 >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-xs" style={{ color: "var(--muted)" }}>
-                      {platform ? `${platform.icon} ${platform.label}` : content.platform}
-                    </span>
-                    <Badge variant={statusVariant(content.status)}>{content.status}</Badge>
-                  </div>
+                  {/* Cover Image */}
+                  {content.cover_image_url && (
+                    <div className="w-full h-36 overflow-hidden">
+                      <img
+                        src={content.cover_image_url}
+                        alt={content.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
 
-                  {/* Title */}
-                  <h3
-                    className="text-sm font-semibold mb-2 line-clamp-2"
-                    style={{ color: "var(--ink)", minHeight: "2.5em" }}
-                  >
-                    {content.title}
-                  </h3>
+                  <div className="p-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-xs" style={{ color: "var(--muted)" }}>
+                        {platform ? `${platform.icon} ${platform.label}` : content.platform}
+                      </span>
+                      <Badge variant={statusVariant(content.status)}>{content.status}</Badge>
+                    </div>
 
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    <Badge variant="outline">{content.funnel_stage}</Badge>
-                    <Badge variant="outline">{content.content_type}</Badge>
-                    {content.wace_focus && <Badge variant="warning">WACE</Badge>}
-                  </div>
+                    {/* Title */}
+                    <h3
+                      className="text-sm font-semibold mb-2 line-clamp-2"
+                      style={{ color: "var(--ink)", minHeight: "2.5em" }}
+                    >
+                      {content.title}
+                    </h3>
 
-                  {/* Footer */}
-                  <div
-                    className="flex items-center justify-between pt-2 text-xs"
-                    style={{ borderTop: "1px solid var(--border)", color: "var(--muted)" }}
-                  >
-                    <span>{content.author_name || "未指定"}</span>
-                    <span>{content.publish_date || "未排期"}</span>
+                    {/* Body preview */}
+                    {content.body && (
+                      <p className="text-xs mb-2 line-clamp-2" style={{ color: "var(--muted)" }}>
+                        {content.body}
+                      </p>
+                    )}
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      <Badge variant="outline">{content.funnel_stage}</Badge>
+                      <Badge variant="outline">{content.content_type}</Badge>
+                      {content.wace_focus && <Badge variant="warning">WACE</Badge>}
+                    </div>
+
+                    {/* Footer */}
+                    <div
+                      className="flex items-center justify-between pt-2 text-xs"
+                      style={{ borderTop: "1px solid var(--border)", color: "var(--muted)" }}
+                    >
+                      <span>{content.author_name || "未指定"}</span>
+                      <span>{content.publish_date || "未排期"}</span>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -185,6 +209,25 @@ export default function ContentPage() {
             <input type="date" value={form.publish_date} onChange={(e) => setForm({ ...form, publish_date: e.target.value })}
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>封面图 URL</label>
+            <input type="url" value={form.cover_image_url} onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="粘贴小红书封面图链接" />
+            {form.cover_image_url && (
+              <div className="mt-2 rounded-lg overflow-hidden h-24 w-full">
+                <img src={form.cover_image_url} alt="预览" className="w-full h-full object-cover" />
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>正文内容</label>
+            <textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })}
+              rows={5} className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="输入正文内容..." />
           </div>
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>备注</label>

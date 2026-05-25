@@ -71,6 +71,9 @@ export interface Content {
   // Publishing
   publish_date: string | null;
   notes: string | null;
+  // Content body & cover
+  cover_image_url: string | null;
+  body: string | null;
   // AI
   prompts_used: string | null;
   ai_search_ready: boolean;
