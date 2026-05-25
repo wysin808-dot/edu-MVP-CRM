@@ -2,4 +2,21 @@
 .claude/
 node_modules/
 *.zip
-crm/.env
+
+# env files
+.env*
+!.env.example
+
+# next.js
+.next/
+out/
+
+# build
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
