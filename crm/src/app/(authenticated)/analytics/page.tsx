@@ -1,15 +1,42 @@
 "use client";
 
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase/client";
 import { useContentList } from "@/hooks/useContents";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
-import { PLATFORMS, CRM_STAGES, FUNNEL_STAGES, CONTENT_TYPES } from "@/lib/constants";
+import { PLATFORMS, CRM_STAGES, FUNNEL_STAGES, CONTENT_TYPES, CONTENT_STATUSES } from "@/lib/constants";
 import { Badge } from "@/components/ui/Badge";
-import { getWeekStart, localDateStr } from "@/lib/utils";
+import { getWeekStart } from "@/lib/utils";
+
+// Fetch aggregated metrics from content_metrics table
+function useAggregatedMetrics() {
+  return useQuery({
+    queryKey: ["content_metrics", "aggregated"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("content_metrics")
+        .select("reads, likes, comments, shares, private_messages, leads");
+      if (error) throw error;
+      const totals = { reads: 0, likes: 0, comments: 0, shares: 0, private_messages: 0, leads: 0 };
+      (data || []).forEach((row) => {
+        totals.reads += row.reads || 0;
+        totals.likes += row.likes || 0;
+        totals.comments += row.comments || 0;
+        totals.shares += row.shares || 0;
+        totals.private_messages += row.private_messages || 0;
+        totals.leads += row.leads || 0;
+      });
+      return totals;
+    },
+  });
+}
 
 export default function AnalyticsPage() {
   const { data: contents, isLoading: loadingContents } = useContentList();
   const { data: leads, isLoading: loadingLeads } = useCrmLeadList();
+  const { data: metrics } = useAggregatedMetrics();
 
   // Platform performance
   const platformStats = useMemo(() => {
@@ -38,6 +65,15 @@ export default function AnalyticsPage() {
   }, [leads]);
 
   const totalLeads = leads?.length || 0;
+
+  // Content status distribution
+  const statusDist = useMemo(() => {
+    if (!contents) return [];
+    return CONTENT_STATUSES.map((status) => ({
+      status,
+      count: contents.filter((c) => c.status === status).length,
+    })).filter((s) => s.count > 0);
+  }, [contents]);
 
   // Content strategy distribution
   const funnelDist = useMemo(() => {
@@ -76,11 +112,39 @@ export default function AnalyticsPage() {
     "已流失": "var(--red)",
   };
 
+  const statusColors: Record<string, string> = {
+    "草稿": "#94a3b8",
+    "待审核": "#f59e0b",
+    "审核中": "#3b82f6",
+    "已通过": "#10b981",
+    "已发布": "#e87a2e",
+    "已归档": "#6b7280",
+  };
+
   if (loadingContents || loadingLeads) return <PageSkeleton />;
 
   return (
     <div className="max-w-7xl mx-auto">
       <h2 className="text-lg font-bold mb-6" style={{ color: "var(--ink)" }}>数据复盘</h2>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        {[
+          { label: "总阅读", value: metrics?.reads || 0, icon: "👁️", color: "var(--ink)" },
+          { label: "总点赞", value: metrics?.likes || 0, icon: "👍", color: "var(--brand)" },
+          { label: "总评论", value: metrics?.comments || 0, icon: "💬", color: "var(--blue)" },
+          { label: "总分享", value: metrics?.shares || 0, icon: "🔗", color: "var(--green)" },
+          { label: "总私信", value: metrics?.private_messages || 0, icon: "✉️", color: "var(--amber)" },
+          { label: "总线索", value: metrics?.leads || 0, icon: "🎯", color: "var(--red)" },
+        ].map((stat) => (
+          <div key={stat.label} className="rounded-xl p-4 text-center"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <div className="text-lg mb-1">{stat.icon}</div>
+            <div className="text-xl font-bold" style={{ color: stat.color }}>{stat.value.toLocaleString()}</div>
+            <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{stat.label}</div>
+          </div>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Platform Performance Table */}
@@ -118,7 +182,7 @@ export default function AnalyticsPage() {
             招生漏斗 <span className="font-normal text-xs" style={{ color: "var(--muted)" }}>· 共 {totalLeads} 条线索</span>
           </h3>
           <div className="flex flex-col gap-3">
-            {funnelData.map((item, idx) => {
+            {funnelData.map((item) => {
               const maxCount = Math.max(...funnelData.map((f) => f.count), 1);
               const widthPercent = Math.max((item.count / maxCount) * 100, 8);
               return (
@@ -141,7 +205,45 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Content Strategy Distribution */}
+        {/* Content Status Distribution */}
+        <div className="rounded-xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--ink)" }}>
+            内容状态分布 <span className="font-normal text-xs" style={{ color: "var(--muted)" }}>· 共 {contents?.length || 0} 条</span>
+          </h3>
+          {statusDist.length > 0 ? (
+            <>
+              {/* Visual bar */}
+              <div className="h-8 rounded-lg overflow-hidden flex mb-4">
+                {statusDist.map((item) => {
+                  const percent = ((item.count / (contents?.length || 1)) * 100);
+                  return (
+                    <div key={item.status} className="h-full flex items-center justify-center transition-all"
+                      style={{
+                        width: `${percent}%`,
+                        background: statusColors[item.status] || "var(--muted)",
+                        minWidth: percent > 0 ? "24px" : "0",
+                      }}>
+                      {percent >= 10 && <span className="text-xs font-bold text-white">{item.count}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Legend */}
+              <div className="flex flex-wrap gap-3">
+                {statusDist.map((item) => (
+                  <div key={item.status} className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm" style={{ background: statusColors[item.status] || "var(--muted)" }} />
+                    <span className="text-xs" style={{ color: "var(--muted)" }}>{item.status} ({item.count})</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-center py-8" style={{ color: "var(--muted)" }}>暂无内容</p>
+          )}
+        </div>
+
+        {/* Content Funnel Stage Distribution */}
         <div className="rounded-xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--ink)" }}>内容漏斗阶段分布</h3>
           <div className="flex flex-col gap-2">
@@ -154,7 +256,7 @@ export default function AnalyticsPage() {
                   <div className="flex-1 h-5 rounded-full overflow-hidden" style={{ background: "var(--surface-soft)" }}>
                     <div className="h-full rounded-full" style={{ width: `${percent}%`, background: "var(--brand)", minWidth: item.count > 0 ? "20px" : "0" }} />
                   </div>
-                  <span className="text-xs w-12 text-right shrink-0" style={{ color: "var(--ink)" }}>{item.count} ({percent}%)</span>
+                  <span className="text-xs w-16 text-right shrink-0" style={{ color: "var(--ink)" }}>{item.count} ({percent}%)</span>
                 </div>
               );
             })}
@@ -176,10 +278,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* WACE Weekly Tracker */}
-        <div className="rounded-xl p-6 lg:col-span-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-          <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--ink)" }}>
-            WACE 周报追踪
-          </h3>
+        <div className="rounded-xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--ink)" }}>WACE 周报追踪</h3>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-full flex items-center justify-center"
@@ -200,8 +300,8 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>
                   {waceWeekly.current >= waceWeekly.target
-                    ? "✅ 已达标！保持 WACE 内容产出节奏"
-                    : `⚠️ 还需 ${waceWeekly.target - waceWeekly.current} 篇 WACE 内容达标`
+                    ? "已达标！保持 WACE 内容产出节奏"
+                    : `还需 ${waceWeekly.target - waceWeekly.current} 篇 WACE 内容达标`
                   }
                 </div>
               </div>
@@ -226,11 +326,15 @@ function PageSkeleton() {
   return (
     <div className="max-w-7xl mx-auto animate-pulse">
       <div className="h-6 w-24 rounded mb-6" style={{ background: "var(--surface-soft)" }} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="h-24 rounded-xl" style={{ background: "var(--surface-soft)" }} />
+        ))}
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map((i) => (
+        {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="h-64 rounded-xl" style={{ background: "var(--surface-soft)" }} />
         ))}
-        <div className="h-32 rounded-xl lg:col-span-2" style={{ background: "var(--surface-soft)" }} />
       </div>
     </div>
   );

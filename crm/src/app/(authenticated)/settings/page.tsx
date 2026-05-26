@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ROLE_CONFIG, PLATFORMS, type UserRole } from "@/lib/constants";
+import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
@@ -42,10 +43,31 @@ function useUpdateUserRole() {
   });
 }
 
+function useUpdateUserProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<UserProfile> & { id: string }) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("user_profiles")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
+    },
+  });
+}
+
 export default function SettingsPage() {
   const { role, profile } = useAuth();
   const { data: users, isLoading } = useUserProfiles();
   const updateRole = useUpdateUserRole();
+  const updateProfile = useUpdateUserProfile();
+
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editForm, setEditForm] = useState({ display_name: "", team: "" });
 
   if (role !== "admin" && role !== "lead") {
     return (
@@ -60,11 +82,60 @@ export default function SettingsPage() {
     );
   }
 
+  const openEditUser = (user: UserProfile) => {
+    setEditingUser(user);
+    setEditForm({
+      display_name: user.display_name || "",
+      team: user.team || "china",
+    });
+  };
+
+  const handleSaveUser = async () => {
+    if (!editingUser) return;
+    try {
+      await updateProfile.mutateAsync({
+        id: editingUser.id,
+        display_name: editForm.display_name || null,
+        team: editForm.team,
+      });
+      setEditingUser(null);
+    } catch {
+      alert("保存失败，请重试");
+    }
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    try {
+      await updateRole.mutateAsync({ id: userId, role: newRole });
+    } catch {
+      alert("角色更改失败，请重试");
+    }
+  };
+
   if (isLoading) return <PageSkeleton />;
+
+  // Count by role
+  const roleCounts = users?.reduce((acc, u) => {
+    acc[u.role] = (acc[u.role] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
 
   return (
     <div className="max-w-4xl mx-auto">
       <h2 className="text-lg font-bold mb-6" style={{ color: "var(--ink)" }}>系统设置</h2>
+
+      {/* Team Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        {Object.entries(ROLE_CONFIG).map(([key, config]) => (
+          <div key={key} className="rounded-xl p-3 text-center"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            <div className="text-xl font-bold" style={{ color: "var(--brand)" }}>
+              {roleCounts[key] || 0}
+            </div>
+            <div className="text-xs mt-1" style={{ color: "var(--muted)" }}>{config.title}</div>
+          </div>
+        ))}
+      </div>
 
       {/* Team Members */}
       <div className="rounded-xl p-6 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
@@ -92,7 +163,7 @@ export default function SettingsPage() {
 
               return (
                 <div key={user.id} className="flex items-center gap-4 p-3 rounded-lg"
-                  style={{ background: isCurrentUser ? "var(--brand-light)" : "var(--surface-soft)" }}>
+                  style={{ background: isCurrentUser ? "rgba(232,122,46,0.05)" : "var(--surface-soft)" }}>
                   {/* Avatar */}
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
                     style={{ background: "var(--brand)" }}>
@@ -120,12 +191,25 @@ export default function SettingsPage() {
                   {/* Role */}
                   {role === "admin" && !isCurrentUser ? (
                     <Select label="" value={user.role}
-                      onChange={(e) => updateRole.mutate({ id: user.id, role: e.target.value })}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
                       options={Object.entries(ROLE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))} />
                   ) : (
                     <Badge variant={roleBadge()}>
                       {roleConfig?.title || user.role}
                     </Badge>
+                  )}
+
+                  {/* Edit button for admin */}
+                  {role === "admin" && (
+                    <button
+                      onClick={() => openEditUser(user)}
+                      className="text-xs px-2 py-1 rounded transition-colors"
+                      style={{ color: "var(--brand)", background: "transparent" }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(232,122,46,0.1)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >
+                      编辑
+                    </button>
                   )}
                 </div>
               );
@@ -143,7 +227,7 @@ export default function SettingsPage() {
           {Object.entries(ROLE_CONFIG).map(([key, config]) => (
             <div key={key} className="flex items-start gap-3 p-3 rounded-lg" style={{ background: "var(--surface-soft)" }}>
               <span className="text-xs font-mono px-2 py-0.5 rounded shrink-0 mt-0.5"
-                style={{ background: "var(--brand-light, rgba(232,122,46,0.1))", color: "var(--brand)" }}>
+                style={{ background: "rgba(232,122,46,0.1)", color: "var(--brand)" }}>
                 {key}
               </span>
               <div className="flex-1 min-w-0">
@@ -178,6 +262,35 @@ export default function SettingsPage() {
           ))}
         </div>
       </div>
+
+      {/* Edit User Modal */}
+      <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)}
+        title={`编辑成员: ${editingUser?.display_name || "未命名"}`}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setEditingUser(null)}>取消</Button>
+            <Button variant="primary" onClick={handleSaveUser} disabled={updateProfile.isPending}>
+              {updateProfile.isPending ? "保存中..." : "保存"}
+            </Button>
+          </div>
+        }>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>显示名称</label>
+            <input type="text" value={editForm.display_name}
+              onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="输入显示名称" />
+          </div>
+          <Select label="所属团队" value={editForm.team}
+            onChange={(e) => setEditForm({ ...editForm, team: e.target.value })}
+            options={[
+              { value: "china", label: "中国区" },
+              { value: "hq", label: "总部 (新加坡)" },
+            ]} />
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -186,6 +299,11 @@ function PageSkeleton() {
   return (
     <div className="max-w-4xl mx-auto animate-pulse">
       <div className="h-6 w-24 rounded mb-6" style={{ background: "var(--surface-soft)" }} />
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-16 rounded-xl" style={{ background: "var(--surface-soft)" }} />
+        ))}
+      </div>
       <div className="h-64 rounded-xl mb-6" style={{ background: "var(--surface-soft)" }} />
       <div className="h-48 rounded-xl" style={{ background: "var(--surface-soft)" }} />
     </div>
