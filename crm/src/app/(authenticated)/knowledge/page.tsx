@@ -100,7 +100,7 @@ export default function KnowledgePage() {
     <div className="max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>真实资料库</h2>
+          <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>知识库</h2>
           <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
             共 {filtered?.length || 0} 条资料
           </p>

@@ -141,7 +141,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
   },
   ai: {
     title: "AI 内容编辑",
-    summary: "基于真实资料库生成内容，保存 prompt、版本和采用记录。",
+    summary: "基于知识库生成内容，保存 prompt、版本和采用记录。",
     nav: ["dashboard", "content", "knowledge", "ai", "calendar"],
     defaultUser: "AI 编辑",
     team: "china",
@@ -167,7 +167,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "工作台", icon: "📊", href: "/dashboard" },
   { id: "publishing", label: "今日发布", icon: "📤", href: "/publishing" },
   { id: "content", label: "内容资产库", icon: "📝", href: "/content" },
-  { id: "knowledge", label: "真实资料库", icon: "📚", href: "/knowledge" },
+  { id: "knowledge", label: "知识库", icon: "📚", href: "/knowledge" },
   { id: "ai", label: "AI 内容库", icon: "🤖", href: "/ai" },
   { id: "personas", label: "IP 矩阵", icon: "👤", href: "/personas" },
   { id: "accounts", label: "账号矩阵", icon: "📱", href: "/accounts" },
