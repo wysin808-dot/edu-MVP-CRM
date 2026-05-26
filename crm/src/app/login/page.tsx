@@ -54,11 +54,8 @@ export default function LoginPage() {
           <img
             src="/seda-logo.jpg"
             alt="SEDA International Education"
-            className="h-10 object-contain mb-2"
+            className="w-56 object-contain"
           />
-          <div style={{ color: "#8a7d6b", fontSize: "10px", letterSpacing: "2px", marginTop: "4px" }}>
-            SINGAPORE EDUCATION PATHWAYS
-          </div>
         </div>
 
         {/* Form */}
@@ -113,7 +110,7 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-opacity disabled:opacity-60"
-            style={{ background: "#C49A3C" }}
+            style={{ background: "#1a3a5c" }}
           >
             {loading ? "登录中..." : "登 录"}
           </button>
