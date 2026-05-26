@@ -51,24 +51,11 @@ export default function LoginPage() {
       >
         {/* SEDA Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-1 mb-1">
-            <svg width="140" height="36" viewBox="0 0 140 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* S */}
-              <path d="M0 28.5C0 28.5 2.5 32 8.5 32C14.5 32 17 28.5 17 25.5C17 19 0 20 0 13.5C0 10.5 3 7 9 7C15 7 17.5 10.5 17.5 10.5" stroke="#C49A3C" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
-              {/* E */}
-              <path d="M24 31V8H38M24 19.5H36M24 31H38" stroke="#C49A3C" strokeWidth="3.5" strokeLinecap="round"/>
-              {/* D */}
-              <path d="M45 8H53C60 8 65 13 65 19.5C65 26 60 31 53 31H45V8Z" stroke="#C49A3C" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-              {/* A with dark triangle */}
-              <path d="M72 31L84 8L96 31" stroke="#C49A3C" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M77 22H91" stroke="#C49A3C" strokeWidth="3.5" strokeLinecap="round"/>
-              <polygon points="84,10 79,20 89,20" fill="#1e2a3a"/>
-              {/* Separator */}
-              <line x1="106" y1="7" x2="106" y2="32" stroke="#d4c5a9" strokeWidth="1.5"/>
-              {/* OS */}
-              <text x="115" y="24" fontFamily="Arial, sans-serif" fontSize="16" fontWeight="700" fill="#1e2a3a" letterSpacing="2">OS</text>
-            </svg>
-          </div>
+          <img
+            src="/seda-logo.svg"
+            alt="SEDA International Education"
+            className="h-10 object-contain mb-2"
+          />
           <div style={{ color: "#8a7d6b", fontSize: "10px", letterSpacing: "2px", marginTop: "4px" }}>
             SINGAPORE EDUCATION PATHWAYS
           </div>
