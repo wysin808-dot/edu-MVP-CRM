@@ -25,10 +25,16 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session - important for Server Components
+  // Use getSession() for fast local JWT check (no network round-trip).
+  // getUser() hits Supabase servers every time (~200-500ms), which causes
+  // noticeable lag on every page navigation. getSession() decodes the JWT
+  // locally and is nearly instant. The AuthProvider still calls getUser()
+  // once on mount for a secure server-side verification.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const user = session?.user ?? null;
 
   // Redirect unauthenticated users to login
   if (
