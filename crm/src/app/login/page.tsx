@@ -52,7 +52,7 @@ export default function LoginPage() {
         {/* SEDA Logo */}
         <div className="flex flex-col items-center mb-8">
           <img
-            src="/seda-logo.jpg"
+            src="/seda-logo.png"
             alt="SEDA International Education"
             className="w-72 object-contain"
           />
