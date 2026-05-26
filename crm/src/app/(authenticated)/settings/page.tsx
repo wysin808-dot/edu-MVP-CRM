@@ -61,6 +61,7 @@ function useUpdateUserProfile() {
 }
 
 export default function SettingsPage() {
+  const queryClient = useQueryClient();
   const { role, profile } = useAuth();
   const { data: users, isLoading } = useUserProfiles();
   const updateRole = useUpdateUserRole();
@@ -68,6 +69,12 @@ export default function SettingsPage() {
 
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [editForm, setEditForm] = useState({ display_name: "", team: "" });
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    email: "", password: "", display_name: "", role: "operator", team: "china",
+  });
+  const [inviting, setInviting] = useState(false);
+  const [inviteResult, setInviteResult] = useState<{ success?: boolean; error?: string; email?: string } | null>(null);
 
   if (role !== "admin" && role !== "lead") {
     return (
@@ -112,6 +119,32 @@ export default function SettingsPage() {
     }
   };
 
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteForm.email || !inviteForm.password || !inviteForm.display_name) return;
+    setInviting(true);
+    setInviteResult(null);
+    try {
+      const res = await fetch("/api/invite-member", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(inviteForm),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setInviteResult({ success: true, email: inviteForm.email });
+        setInviteForm({ email: "", password: "", display_name: "", role: "operator", team: "china" });
+        queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
+      } else {
+        setInviteResult({ error: data.error || "邀请失败" });
+      }
+    } catch {
+      setInviteResult({ error: "网络错误，请重试" });
+    } finally {
+      setInviting(false);
+    }
+  };
+
   if (isLoading) return <PageSkeleton />;
 
   // Count by role
@@ -143,6 +176,11 @@ export default function SettingsPage() {
           <h3 className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
             团队成员 <span className="font-normal text-xs" style={{ color: "var(--muted)" }}>· {users?.length || 0} 人</span>
           </h3>
+          {role === "admin" && (
+            <Button variant="primary" size="sm" onClick={() => { setShowInvite(true); setInviteResult(null); }}>
+              + 邀请成员
+            </Button>
+          )}
         </div>
 
         {users && users.length > 0 ? (
@@ -262,6 +300,65 @@ export default function SettingsPage() {
           ))}
         </div>
       </div>
+
+      {/* Invite Member Modal */}
+      <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="邀请新成员"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setShowInvite(false)}>取消</Button>
+            <Button variant="primary" onClick={handleInvite} disabled={inviting}>
+              {inviting ? "邀请中..." : "创建并邀请"}
+            </Button>
+          </div>
+        }>
+        <form onSubmit={handleInvite} className="flex flex-col gap-4">
+          {inviteResult?.success && (
+            <div className="p-3 rounded-lg text-sm" style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#166534" }}>
+              ✅ 成员 {inviteResult.email} 已创建成功！请将登录邮箱和密码告知该成员。
+            </div>
+          )}
+          {inviteResult?.error && (
+            <div className="p-3 rounded-lg text-sm" style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#991b1b" }}>
+              ❌ {inviteResult.error}
+            </div>
+          )}
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>登录邮箱 *</label>
+            <input type="email" value={inviteForm.email}
+              onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })} required
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="employee@bci.edu.sg" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>初始密码 *</label>
+            <input type="text" value={inviteForm.password}
+              onChange={(e) => setInviteForm({ ...inviteForm, password: e.target.value })} required
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="至少 6 位" minLength={6} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>显示名称 *</label>
+            <input type="text" value={inviteForm.display_name}
+              onChange={(e) => setInviteForm({ ...inviteForm, display_name: e.target.value })} required
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="例: 运营小李" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Select label="角色" value={inviteForm.role}
+              onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
+              options={Object.entries(ROLE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))} />
+            <Select label="团队" value={inviteForm.team}
+              onChange={(e) => setInviteForm({ ...inviteForm, team: e.target.value })}
+              options={[
+                { value: "china", label: "中国区" },
+                { value: "hq", label: "总部 (新加坡)" },
+              ]} />
+          </div>
+        </form>
+      </Modal>
 
       {/* Edit User Modal */}
       <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)}
