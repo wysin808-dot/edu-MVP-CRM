@@ -501,7 +501,7 @@ function PromptsTab() {
               {selectedPrompt.prompt_text}
             </div>
             <p className="text-xs" style={{ color: "var(--muted)" }}>
-              点击"复制 Prompt"后粘贴到 AI 工具中使用。
+              点击「复制 Prompt」后粘贴到 AI 工具中使用。
             </p>
           </div>
         )}

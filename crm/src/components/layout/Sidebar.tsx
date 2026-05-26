@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_ITEMS, ROLE_CONFIG, type UserRole } from "@/lib/constants";
+import { NAV_ITEMS, ROLE_CONFIG } from "@/lib/constants";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function Sidebar() {

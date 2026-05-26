@@ -23,7 +23,7 @@ export default function PublishingPage() {
   const handleMarkPublished = async (contentId: string) => {
     try {
       await updateContent.mutateAsync({ id: contentId, status: "已发布" });
-    } catch (err) {
+    } catch {
       alert("操作失败，请重试");
     }
   };
@@ -36,7 +36,7 @@ export default function PublishingPage() {
         id: contentId,
         publish_date: localDateStr(tomorrow),
       });
-    } catch (err) {
+    } catch {
       alert("操作失败，请重试");
     }
   };

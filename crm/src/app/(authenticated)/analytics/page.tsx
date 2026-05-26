@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useContentList } from "@/hooks/useContents";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
 import { PLATFORMS, CRM_STAGES, FUNNEL_STAGES, CONTENT_TYPES, CONTENT_STATUSES } from "@/lib/constants";
-import { Badge } from "@/components/ui/Badge";
 import { getWeekStart, localDateStr } from "@/lib/utils";
 
 // Fetch aggregated metrics from content_metrics table

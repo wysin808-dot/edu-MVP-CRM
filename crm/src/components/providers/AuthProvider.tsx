@@ -47,6 +47,17 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const [simulatedRole, setSimulatedRole] = useState<UserRole | null>(null);
   const [supabase] = useState(() => createClient());
 
+  async function loadProfile(userId: string) {
+    const { data } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    setProfile(data as UserProfile | null);
+    setLoading(false);
+  }
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -75,17 +86,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function loadProfile(userId: string) {
-    const { data } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    setProfile(data as UserProfile | null);
-    setLoading(false);
-  }
 
   async function signOut() {
     await supabase.auth.signOut();

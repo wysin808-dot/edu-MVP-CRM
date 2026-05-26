@@ -62,7 +62,7 @@ export default function PersonasPage() {
         await createPersona.mutateAsync({ ...payload, avatar_url: null });
       }
       setShowModal(false);
-    } catch (err) {
+    } catch {
       alert("保存失败，请重试");
     }
   };
