@@ -54,7 +54,7 @@ export default function LoginPage() {
           <img
             src="/seda-logo.jpg"
             alt="SEDA International Education"
-            className="w-56 object-contain"
+            className="w-72 object-contain"
           />
         </div>
 
