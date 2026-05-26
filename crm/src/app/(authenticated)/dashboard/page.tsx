@@ -1,17 +1,41 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useContentList } from "@/hooks/useContents";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
-import { localDateStr } from "@/lib/utils";
+import { localDateStr, getWeekStart } from "@/lib/utils";
+import { generateNotifications, type Notification } from "@/lib/notifications";
 
 export default function DashboardPage() {
   const { profile, loading } = useAuth();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: pendingContents } = useContentList({ status: "待审核" });
+  const { data: allContents } = useContentList();
   const { data: allLeads } = useCrmLeadList();
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
+
+  // Generate notifications from all data
+  const notifications = useMemo(() => {
+    if (!allContents || !allLeads) return [];
+    const weekStart = getWeekStart(new Date());
+    weekStart.setHours(0, 0, 0, 0);
+    const weekStartTime = weekStart.getTime();
+    const waceThisWeek = allContents.filter(
+      (c) => c.wace_focus && new Date(c.created_at).getTime() >= weekStartTime
+    ).length;
+    return generateNotifications({
+      contents: allContents,
+      leads: allLeads,
+      waceThisWeek,
+      waceTarget: 2,
+    });
+  }, [allContents, allLeads]);
+
+  const highPriorityCount = notifications.filter((n) => n.priority === "high").length;
+  const visibleNotifications = showAllNotifications ? notifications : notifications.slice(0, 5);
 
   if (loading) {
     return <PageSkeleton />;
@@ -91,6 +115,52 @@ export default function DashboardPage() {
           href="/content"
         />
       </div>
+
+      {/* Notification Center */}
+      {notifications.length > 0 && (
+        <div
+          className="rounded-xl p-6 mb-6"
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--ink)" }}>
+              通知中心
+              {highPriorityCount > 0 && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full font-medium"
+                  style={{ background: "rgba(239,68,68,0.15)", color: "var(--red)" }}
+                >
+                  {highPriorityCount} 条紧急
+                </span>
+              )}
+            </h3>
+            <span className="text-xs" style={{ color: "var(--muted)" }}>
+              共 {notifications.length} 条通知
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            {visibleNotifications.map((notif) => (
+              <NotificationRow key={notif.id} notification={notif} />
+            ))}
+          </div>
+
+          {notifications.length > 5 && (
+            <button
+              onClick={() => setShowAllNotifications(!showAllNotifications)}
+              className="w-full mt-3 text-xs py-2 rounded-lg transition-colors"
+              style={{ color: "var(--brand)", background: "transparent" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-soft)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              {showAllNotifications ? "收起" : `查看全部 ${notifications.length} 条通知`}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Priority Queue */}
       <div
@@ -290,6 +360,67 @@ function QuickAction({
       <span>{label}</span>
     </Link>
   );
+}
+
+function NotificationRow({ notification }: { notification: Notification }) {
+  const priorityStyles: Record<string, { bg: string; border: string }> = {
+    high: { bg: "rgba(239,68,68,0.05)", border: "rgba(239,68,68,0.15)" },
+    medium: { bg: "rgba(245,158,11,0.05)", border: "rgba(245,158,11,0.15)" },
+    low: { bg: "var(--surface-soft)", border: "var(--border)" },
+  };
+  const style = priorityStyles[notification.priority] || priorityStyles.low;
+
+  const content = (
+    <div
+      className="flex items-start gap-3 rounded-lg px-4 py-3 transition-colors"
+      style={{
+        background: style.bg,
+        border: `1px solid ${style.border}`,
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+    >
+      <span className="text-lg flex-shrink-0 mt-0.5">{notification.icon}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
+            {notification.title}
+          </span>
+          <span
+            className="text-xs px-1.5 py-0.5 rounded font-medium flex-shrink-0"
+            style={{
+              background:
+                notification.priority === "high"
+                  ? "rgba(239,68,68,0.15)"
+                  : notification.priority === "medium"
+                  ? "rgba(245,158,11,0.15)"
+                  : "rgba(148,163,184,0.15)",
+              color:
+                notification.priority === "high"
+                  ? "var(--red)"
+                  : notification.priority === "medium"
+                  ? "var(--amber)"
+                  : "var(--muted)",
+            }}
+          >
+            {notification.priority === "high" ? "紧急" : notification.priority === "medium" ? "注意" : "提示"}
+          </span>
+        </div>
+        <p className="text-xs mt-0.5 truncate" style={{ color: "var(--muted)" }}>
+          {notification.message}
+        </p>
+      </div>
+    </div>
+  );
+
+  if (notification.href) {
+    return (
+      <Link href={notification.href} style={{ textDecoration: "none", color: "inherit" }}>
+        {content}
+      </Link>
+    );
+  }
+  return content;
 }
 
 function PageSkeleton() {

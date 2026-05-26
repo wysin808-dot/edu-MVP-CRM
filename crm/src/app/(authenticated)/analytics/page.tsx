@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useContentList } from "@/hooks/useContents";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
 import { PLATFORMS, CRM_STAGES, FUNNEL_STAGES, CONTENT_TYPES, CONTENT_STATUSES } from "@/lib/constants";
 import { Badge } from "@/components/ui/Badge";
-import { getWeekStart } from "@/lib/utils";
+import { getWeekStart, localDateStr } from "@/lib/utils";
 
 // Fetch aggregated metrics from content_metrics table
 function useAggregatedMetrics() {
@@ -102,6 +102,73 @@ export default function AnalyticsPage() {
       c.wace_focus && new Date(c.created_at).getTime() >= weekStartTime
     ).length;
     return { current: waceThisWeek, target: 2 };
+  }, [contents]);
+
+  // ── Time trends: weekly content creation (last 8 weeks) ──
+  const weeklyContentTrend = useMemo(() => {
+    if (!contents) return [];
+    const weeks: { label: string; start: Date; end: Date; count: number }[] = [];
+    const now = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i * 7);
+      const start = getWeekStart(d);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+      const label = `${String(start.getMonth() + 1).padStart(2, "0")}/${String(start.getDate()).padStart(2, "0")}`;
+      const count = contents.filter((c) => {
+        const t = new Date(c.created_at).getTime();
+        return t >= start.getTime() && t <= end.getTime();
+      }).length;
+      weeks.push({ label, start, end, count });
+    }
+    return weeks;
+  }, [contents]);
+
+  // ── Time trends: monthly lead acquisition (last 6 months) ──
+  const monthlyLeadTrend = useMemo(() => {
+    if (!leads) return [];
+    const months: { label: string; year: number; month: number; count: number }[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const month = d.getMonth();
+      const label = `${year}-${String(month + 1).padStart(2, "0")}`;
+      const count = leads.filter((l) => {
+        const ld = new Date(l.created_at);
+        return ld.getFullYear() === year && ld.getMonth() === month;
+      }).length;
+      months.push({ label, year, month, count });
+    }
+    return months;
+  }, [leads]);
+
+  // ── Weekly published vs drafted ──
+  const weeklyPublishTrend = useMemo(() => {
+    if (!contents) return [];
+    const weeks: { label: string; published: number; drafted: number }[] = [];
+    const now = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i * 7);
+      const start = getWeekStart(d);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+      const label = `${String(start.getMonth() + 1).padStart(2, "0")}/${String(start.getDate()).padStart(2, "0")}`;
+      const weekContents = contents.filter((c) => {
+        const t = new Date(c.created_at).getTime();
+        return t >= start.getTime() && t <= end.getTime();
+      });
+      weeks.push({
+        label,
+        published: weekContents.filter((c) => c.status === "已发布").length,
+        drafted: weekContents.filter((c) => c.status !== "已发布").length,
+      });
+    }
+    return weeks;
   }, [contents]);
 
   const funnelColors: Record<string, string> = {
@@ -316,6 +383,150 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Time Trends Section ── */}
+      <h3 className="text-base font-bold mt-8 mb-4" style={{ color: "var(--ink)" }}>趋势分析</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Weekly Content Creation Trend */}
+        <div className="rounded-xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--ink)" }}>
+            周内容产出趋势 <span className="font-normal text-xs" style={{ color: "var(--muted)" }}>· 近8周</span>
+          </h3>
+          {weeklyContentTrend.length > 0 ? (
+            <div className="flex items-end gap-2" style={{ height: "160px" }}>
+              {weeklyContentTrend.map((week, i) => {
+                const maxVal = Math.max(...weeklyContentTrend.map((w) => w.count), 1);
+                const heightPct = (week.count / maxVal) * 100;
+                const isCurrentWeek = i === weeklyContentTrend.length - 1;
+                return (
+                  <div key={week.label} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-xs font-medium" style={{ color: "var(--ink)" }}>
+                      {week.count}
+                    </span>
+                    <div className="w-full flex items-end" style={{ height: "120px" }}>
+                      <div
+                        className="w-full rounded-t-md transition-all"
+                        style={{
+                          height: `${Math.max(heightPct, 4)}%`,
+                          background: isCurrentWeek
+                            ? "var(--brand)"
+                            : "color-mix(in srgb, var(--brand) 40%, transparent)",
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs" style={{ color: isCurrentWeek ? "var(--brand)" : "var(--muted)", fontWeight: isCurrentWeek ? 600 : 400 }}>
+                      {week.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-center py-8" style={{ color: "var(--muted)" }}>暂无数据</p>
+          )}
+        </div>
+
+        {/* Monthly Lead Acquisition Trend */}
+        <div className="rounded-xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--ink)" }}>
+            月度线索趋势 <span className="font-normal text-xs" style={{ color: "var(--muted)" }}>· 近6个月</span>
+          </h3>
+          {monthlyLeadTrend.length > 0 ? (
+            <div className="flex items-end gap-3" style={{ height: "160px" }}>
+              {monthlyLeadTrend.map((month, i) => {
+                const maxVal = Math.max(...monthlyLeadTrend.map((m) => m.count), 1);
+                const heightPct = (month.count / maxVal) * 100;
+                const isCurrent = i === monthlyLeadTrend.length - 1;
+                return (
+                  <div key={month.label} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-xs font-medium" style={{ color: "var(--ink)" }}>
+                      {month.count}
+                    </span>
+                    <div className="w-full flex items-end" style={{ height: "120px" }}>
+                      <div
+                        className="w-full rounded-t-md transition-all"
+                        style={{
+                          height: `${Math.max(heightPct, 4)}%`,
+                          background: isCurrent
+                            ? "var(--green)"
+                            : "color-mix(in srgb, var(--green) 40%, transparent)",
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs" style={{ color: isCurrent ? "var(--green)" : "var(--muted)", fontWeight: isCurrent ? 600 : 400 }}>
+                      {month.label.slice(5)}月
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-center py-8" style={{ color: "var(--muted)" }}>暂无数据</p>
+          )}
+        </div>
+
+        {/* Weekly Published vs Other */}
+        <div className="lg:col-span-2 rounded-xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--ink)" }}>
+            周发布 vs 未发布 <span className="font-normal text-xs" style={{ color: "var(--muted)" }}>· 近8周</span>
+          </h3>
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm" style={{ background: "var(--green)" }} />
+              <span className="text-xs" style={{ color: "var(--muted)" }}>已发布</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm" style={{ background: "var(--blue)" }} />
+              <span className="text-xs" style={{ color: "var(--muted)" }}>其他状态</span>
+            </div>
+          </div>
+          {weeklyPublishTrend.length > 0 ? (
+            <div className="flex items-end gap-2" style={{ height: "140px" }}>
+              {weeklyPublishTrend.map((week, i) => {
+                const total = week.published + week.drafted;
+                const maxVal = Math.max(...weeklyPublishTrend.map((w) => w.published + w.drafted), 1);
+                const pubPct = (week.published / maxVal) * 100;
+                const draftPct = (week.drafted / maxVal) * 100;
+                const isCurrentWeek = i === weeklyPublishTrend.length - 1;
+                return (
+                  <div key={week.label} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-xs font-medium" style={{ color: "var(--ink)" }}>
+                      {total}
+                    </span>
+                    <div className="w-full flex flex-col items-stretch justify-end" style={{ height: "100px" }}>
+                      {week.drafted > 0 && (
+                        <div
+                          className="w-full rounded-t-sm"
+                          style={{
+                            height: `${Math.max(draftPct, 2)}%`,
+                            background: "color-mix(in srgb, var(--blue) 60%, transparent)",
+                          }}
+                        />
+                      )}
+                      {week.published > 0 && (
+                        <div
+                          className="w-full"
+                          style={{
+                            height: `${Math.max(pubPct, 2)}%`,
+                            background: "var(--green)",
+                            borderRadius: week.drafted > 0 ? "0" : "4px 4px 0 0",
+                          }}
+                        />
+                      )}
+                    </div>
+                    <span className="text-xs" style={{ color: isCurrentWeek ? "var(--brand)" : "var(--muted)", fontWeight: isCurrentWeek ? 600 : 400 }}>
+                      {week.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-center py-8" style={{ color: "var(--muted)" }}>暂无数据</p>
+          )}
         </div>
       </div>
     </div>
