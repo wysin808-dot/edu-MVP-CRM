@@ -33,7 +33,7 @@ export default function KnowledgePage() {
 
       {/* Tab Switcher */}
       <div className="flex items-center gap-1 mb-5 p-1 rounded-lg" style={{ background: "var(--surface-soft)", display: "inline-flex" }}>
-        <TabButton active={activeTab === "knowledge"} onClick={() => setActiveTab("knowledge")} icon="📚" label="资料库" />
+        <TabButton active={activeTab === "knowledge"} onClick={() => setActiveTab("knowledge")} icon="📚" label="知识库" />
         <TabButton active={activeTab === "prompts"} onClick={() => setActiveTab("prompts")} icon="🤖" label="Prompt 模板" />
       </div>
 
