@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BCI 自媒体矩阵获客系统",
-  description: "Content to Enrollment - BCI WACE 7-12 招生增长系统",
+  title: "SEDA OS",
+  description: "Singapore Education Pathways - Marketing & Enrollment System",
 };
 
 export default function RootLayout({
