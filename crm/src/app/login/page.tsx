@@ -36,61 +36,68 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center"
+    <div className="min-h-screen flex flex-col items-center justify-center"
       style={{
-        background: "linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f0f4ff 100%)",
+        background: "linear-gradient(145deg, #faf8f5 0%, #f5f0ea 50%, #faf8f5 100%)",
       }}
     >
       <div
         className="w-full max-w-sm mx-4 p-8 rounded-2xl"
         style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+          background: "#ffffff",
+          border: "1px solid #e8e0d6",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
         }}
       >
-        {/* Brand */}
-        <div className="flex items-center gap-3 mb-8">
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-            style={{ background: "var(--brand)" }}
-          >
-            BCI
+        {/* SEDA Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex items-center gap-1 mb-1">
+            <svg width="140" height="36" viewBox="0 0 140 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* S */}
+              <path d="M0 28.5C0 28.5 2.5 32 8.5 32C14.5 32 17 28.5 17 25.5C17 19 0 20 0 13.5C0 10.5 3 7 9 7C15 7 17.5 10.5 17.5 10.5" stroke="#C49A3C" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+              {/* E */}
+              <path d="M24 31V8H38M24 19.5H36M24 31H38" stroke="#C49A3C" strokeWidth="3.5" strokeLinecap="round"/>
+              {/* D */}
+              <path d="M45 8H53C60 8 65 13 65 19.5C65 26 60 31 53 31H45V8Z" stroke="#C49A3C" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              {/* A with dark triangle */}
+              <path d="M72 31L84 8L96 31" stroke="#C49A3C" strokeWidth="3.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M77 22H91" stroke="#C49A3C" strokeWidth="3.5" strokeLinecap="round"/>
+              <polygon points="84,10 79,20 89,20" fill="#1e2a3a"/>
+              {/* Separator */}
+              <line x1="106" y1="7" x2="106" y2="32" stroke="#d4c5a9" strokeWidth="1.5"/>
+              {/* OS */}
+              <text x="115" y="24" fontFamily="Arial, sans-serif" fontSize="16" fontWeight="700" fill="#1e2a3a" letterSpacing="2">OS</text>
+            </svg>
           </div>
-          <div>
-            <div className="font-bold text-base" style={{ color: "var(--ink)" }}>
-              自媒体矩阵获客系统
-            </div>
-            <div className="text-xs" style={{ color: "var(--muted)" }}>
-              Content to Enrollment
-            </div>
+          <div style={{ color: "#8a7d6b", fontSize: "10px", letterSpacing: "2px", marginTop: "4px" }}>
+            SINGAPORE EDUCATION PATHWAYS
           </div>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1">
-            <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>
+            <span className="text-xs font-medium" style={{ color: "#8a7d6b" }}>
               邮箱
             </span>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@bci.edu.sg"
+              placeholder="name@seda.edu.sg"
               required
               autoComplete="email"
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-colors"
+              className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
               style={{
-                background: "var(--surface-soft)",
-                border: "1px solid var(--border)",
-                color: "var(--ink)",
+                background: "#faf8f5",
+                border: "1px solid #e8e0d6",
+                color: "#2c2c2c",
               }}
             />
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>
+            <span className="text-xs font-medium" style={{ color: "#8a7d6b" }}>
               密码
             </span>
             <input
@@ -100,17 +107,17 @@ export default function LoginPage() {
               placeholder="输入密码"
               required
               autoComplete="current-password"
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none transition-colors"
+              className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
               style={{
-                background: "var(--surface-soft)",
-                border: "1px solid var(--border)",
-                color: "var(--ink)",
+                background: "#faf8f5",
+                border: "1px solid #e8e0d6",
+                color: "#2c2c2c",
               }}
             />
           </label>
 
           {error && (
-            <p className="text-xs px-1" style={{ color: "var(--red)" }}>
+            <p className="text-xs px-1" style={{ color: "#d94f4f" }}>
               {error}
             </p>
           )}
@@ -119,18 +126,20 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-opacity disabled:opacity-60"
-            style={{ background: "var(--brand)" }}
+            style={{ background: "#C49A3C" }}
           >
             {loading ? "登录中..." : "登 录"}
           </button>
         </form>
 
-        <p className="text-center text-xs mt-6" style={{ color: "var(--muted)" }}>
-          BCI WACE 7-12 招生增长系统
-          <br />
+        <p className="text-center mt-6" style={{ color: "#b0a694", fontSize: "10px", lineHeight: "1.6" }}>
           如需账号请联系管理员
         </p>
       </div>
+
+      <p className="mt-6" style={{ color: "#b0a694", fontSize: "10px", letterSpacing: "0.5px" }}>
+        &copy; 2026 Marketing Department, Singapore Education Development Association
+      </p>
     </div>
   );
 }
