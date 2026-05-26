@@ -55,12 +55,16 @@ export default function PersonasPage() {
       monthly_target: form.monthly_target,
     };
 
-    if (editing) {
-      await updatePersona.mutateAsync({ id: editing.id, ...payload });
-    } else {
-      await createPersona.mutateAsync({ ...payload, avatar_url: null });
+    try {
+      if (editing) {
+        await updatePersona.mutateAsync({ id: editing.id, ...payload });
+      } else {
+        await createPersona.mutateAsync({ ...payload, avatar_url: null });
+      }
+      setShowModal(false);
+    } catch (err) {
+      alert("保存失败，请重试");
     }
-    setShowModal(false);
   };
 
   const togglePlatform = (platformId: string) => {

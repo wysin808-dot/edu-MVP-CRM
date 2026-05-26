@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
-import { relativeTime } from "@/lib/utils";
+import { relativeTime, localDateStr } from "@/lib/utils";
 import type { CrmLead } from "@/lib/types";
 
 const INTEREST_PROGRAMS = ["WACE", "A-Level", "IB", "VCE", "预科", "其他"];
@@ -66,12 +66,16 @@ export default function CrmPage() {
       notes: form.notes || null,
       next_followup: form.next_followup || null,
     };
-    if (editing) {
-      await updateLead.mutateAsync({ id: editing.id, ...payload, stage: form.stage });
-    } else {
-      await createLead.mutateAsync({ ...payload, stage: "新线索", source_content_id: null });
+    try {
+      if (editing) {
+        await updateLead.mutateAsync({ id: editing.id, ...payload, stage: form.stage });
+      } else {
+        await createLead.mutateAsync({ ...payload, stage: "新线索", source_content_id: null });
+      }
+      setShowModal(false);
+    } catch (err) {
+      alert("保存失败，请重试");
     }
-    setShowModal(false);
   };
 
   const handleDragStart = (leadId: string) => {
@@ -94,7 +98,11 @@ export default function CrmPage() {
   const handleDrop = async (stage: string) => {
     setDragOverStage(null);
     if (dragItem.current) {
-      await moveLead.mutateAsync({ id: dragItem.current, newStage: stage });
+      try {
+        await moveLead.mutateAsync({ id: dragItem.current, newStage: stage });
+      } catch (err) {
+        alert("移动失败，请重试");
+      }
       dragItem.current = null;
     }
   };
@@ -104,7 +112,9 @@ export default function CrmPage() {
 
   const isOverdue = (lead: CrmLead) => {
     if (!lead.next_followup) return false;
-    return new Date(lead.next_followup) < new Date();
+    // Compare date strings directly to avoid timezone parsing issues
+    const today = localDateStr(new Date());
+    return lead.next_followup < today;
   };
 
   const stageColor = (stage: string) => {

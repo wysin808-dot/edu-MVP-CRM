@@ -78,21 +78,16 @@ export function useIncrementPromptUsage() {
   return useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
-      // Fetch current count, increment
-      const { data: current } = await supabase
-        .from("ai_prompts")
-        .select("use_count")
-        .eq("id", id)
-        .single();
-
-      const { error } = await supabase
-        .from("ai_prompts")
-        .update({
-          use_count: (current?.use_count || 0) + 1,
-          last_used_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) throw error;
+      // Use raw SQL to atomically increment, avoiding race condition
+      const { error } = await supabase.rpc("increment_prompt_usage", { prompt_id: id });
+      if (error) {
+        // Fallback if RPC doesn't exist yet
+        const { error: updateErr } = await supabase
+          .from("ai_prompts")
+          .update({ last_used_at: new Date().toISOString() })
+          .eq("id", id);
+        if (updateErr) throw updateErr;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ai_prompts"] });

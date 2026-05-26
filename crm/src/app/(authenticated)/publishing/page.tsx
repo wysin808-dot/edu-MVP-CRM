@@ -21,16 +21,24 @@ export default function PublishingPage() {
   const getPlatformInfo = (id: string) => PLATFORMS.find((p) => p.id === id);
 
   const handleMarkPublished = async (contentId: string) => {
-    await updateContent.mutateAsync({ id: contentId, status: "已发布" });
+    try {
+      await updateContent.mutateAsync({ id: contentId, status: "已发布" });
+    } catch (err) {
+      alert("操作失败，请重试");
+    }
   };
 
   const handleMarkDelayed = async (contentId: string) => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    await updateContent.mutateAsync({
-      id: contentId,
-      publish_date: localDateStr(tomorrow),
-    });
+    try {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      await updateContent.mutateAsync({
+        id: contentId,
+        publish_date: localDateStr(tomorrow),
+      });
+    } catch (err) {
+      alert("操作失败，请重试");
+    }
   };
 
   if (loadingContents) return <PageSkeleton />;

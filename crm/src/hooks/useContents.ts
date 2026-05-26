@@ -356,13 +356,14 @@ export function useUpdateMetrics() {
     }) => {
       const supabase = createClient();
       // Check if a metrics row already exists for this content
+      // Use maybeSingle() to avoid error when no rows exist
       const { data: existing } = await supabase
         .from("content_metrics")
         .select("id")
         .eq("content_id", metrics.content_id)
         .order("recorded_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         // Update existing row

@@ -68,12 +68,16 @@ export default function AiPage() {
       target_platform: form.target_platform || null,
       prompt_text: form.prompt_text.trim(),
     };
-    if (editing) {
-      await updatePrompt.mutateAsync({ id: editing.id, ...payload });
-    } else {
-      await createPrompt.mutateAsync({ ...payload, use_count: 0, last_used_at: null });
+    try {
+      if (editing) {
+        await updatePrompt.mutateAsync({ id: editing.id, ...payload });
+      } else {
+        await createPrompt.mutateAsync({ ...payload, use_count: 0, last_used_at: null });
+      }
+      setShowModal(false);
+    } catch (err) {
+      alert("保存失败，请重试");
     }
-    setShowModal(false);
   };
 
   const handleUsePrompt = (prompt: AiPrompt) => {
@@ -82,8 +86,15 @@ export default function AiPage() {
     incrementUsage.mutate(prompt.id);
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const [copied, setCopied] = useState(false);
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      alert("复制失败，请手动复制");
+    }
   };
 
   const getPlatformInfo = (id: string) => PLATFORMS.find((p) => p.id === id);

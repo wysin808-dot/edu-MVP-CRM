@@ -106,13 +106,17 @@ export function useDeleteMedia() {
     }) => {
       const supabase = createClient();
 
-      // Extract storage path from URL
-      const url = new URL(media.file_url);
-      const pathMatch = url.pathname.match(/\/content-media\/(.+)$/);
-      if (pathMatch) {
-        await supabase.storage
-          .from("content-media")
-          .remove([pathMatch[1]]);
+      // Try to clean up storage file (best effort)
+      try {
+        const url = new URL(media.file_url);
+        const pathMatch = url.pathname.match(/\/content-media\/(.+)$/);
+        if (pathMatch) {
+          await supabase.storage
+            .from("content-media")
+            .remove([decodeURIComponent(pathMatch[1])]);
+        }
+      } catch {
+        // Storage cleanup failed, continue with DB record deletion
       }
 
       // Delete record

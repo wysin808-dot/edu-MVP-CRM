@@ -73,12 +73,16 @@ export default function KnowledgePage() {
       visibility: form.visibility,
       verified_by: form.verified_by || null,
     };
-    if (editing) {
-      await updateKnowledge.mutateAsync({ id: editing.id, ...payload });
-    } else {
-      await createKnowledge.mutateAsync({ ...payload, last_verified: null, used_count: 0 });
+    try {
+      if (editing) {
+        await updateKnowledge.mutateAsync({ id: editing.id, ...payload });
+      } else {
+        await createKnowledge.mutateAsync({ ...payload, last_verified: null, used_count: 0 });
+      }
+      setShowModal(false);
+    } catch (err) {
+      alert("保存失败，请重试");
     }
-    setShowModal(false);
   };
 
   const visBadge = (v: string): "success" | "info" | "warning" => {
