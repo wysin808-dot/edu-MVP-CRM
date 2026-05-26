@@ -161,6 +161,7 @@ export function useUpdateContent() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["contents"] });
       queryClient.setQueryData(["contents", data.id], data);
+      queryClient.invalidateQueries({ queryKey: ["contents", data.id, "metrics"] });
     },
   });
 }
@@ -202,15 +203,17 @@ export function useAddReview() {
 
       // Update content status based on action
       if (review.action === "approve") {
-        await supabase
+        const { error: statusErr } = await supabase
           .from("contents")
           .update({ status: "已通过" })
           .eq("id", review.content_id);
+        if (statusErr) throw statusErr;
       } else if (review.action === "reject") {
-        await supabase
+        const { error: statusErr } = await supabase
           .from("contents")
           .update({ status: "草稿" })
           .eq("id", review.content_id);
+        if (statusErr) throw statusErr;
       }
 
       return data;
@@ -219,6 +222,9 @@ export function useAddReview() {
       queryClient.invalidateQueries({ queryKey: ["contents"] });
       queryClient.invalidateQueries({
         queryKey: ["contents", variables.content_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["contents", variables.content_id, "metrics"],
       });
     },
   });
@@ -247,6 +253,9 @@ export function useAddComment() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["contents", variables.content_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["contents", variables.content_id, "metrics"],
       });
     },
   });
@@ -295,12 +304,13 @@ export function useRepurposeContent() {
       title: string;
     }) => {
       const supabase = createClient();
-      const { data: parent } = await supabase
+      const { data: parent, error: parentErr } = await supabase
         .from("contents")
         .select("*")
         .eq("id", parentId)
         .single();
 
+      if (parentErr) throw parentErr;
       if (!parent) throw new Error("Parent content not found");
 
       const { data, error } = await supabase
@@ -390,6 +400,9 @@ export function useUpdateMetrics() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["contents", variables.content_id, "metrics"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["content_metrics", "aggregated"],
       });
     },
   });

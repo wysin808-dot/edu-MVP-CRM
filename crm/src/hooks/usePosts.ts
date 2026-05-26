@@ -15,7 +15,10 @@ export function usePostList(filters?: { date?: string; status?: string }) {
         .order("scheduled_time", { ascending: true });
 
       if (filters?.status) query = query.eq("status", filters.status);
-      if (filters?.date) query = query.eq("scheduled_time::date", filters.date);
+      if (filters?.date) {
+        query = query.gte("scheduled_time", `${filters.date}T00:00:00`)
+                      .lt("scheduled_time", `${filters.date}T23:59:59.999`);
+      }
 
       const { data, error } = await query;
       if (error) throw error;

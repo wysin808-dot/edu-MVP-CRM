@@ -25,7 +25,7 @@ export default function ContentPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({
     title: "", platform: "", status: "草稿", funnel_stage: "Awareness",
-    emotional_trigger: "待定", content_type: "干货", topic_cluster: "未分类",
+    emotional_trigger: "待定", content_type: "干货", topic_cluster: "其他",
     publish_date: "", notes: "", wace_focus: false,
     cover_image_url: "", body: "",
   });
@@ -50,7 +50,7 @@ export default function ContentPage() {
     setShowCreate(false);
     setForm({
       title: "", platform: "", status: "草稿", funnel_stage: "Awareness",
-      emotional_trigger: "待定", content_type: "干货", topic_cluster: "未分类",
+      emotional_trigger: "待定", content_type: "干货", topic_cluster: "其他",
       publish_date: "", notes: "", wace_focus: false,
       cover_image_url: "", body: "",
     });

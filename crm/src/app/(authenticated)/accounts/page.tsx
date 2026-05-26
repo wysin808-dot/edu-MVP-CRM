@@ -80,12 +80,16 @@ export default function AccountsPage() {
       total_posts: form.total_posts,
       total_leads: form.total_leads,
     };
-    if (editing) {
-      await updateAccount.mutateAsync({ id: editing.id, ...payload });
-    } else {
-      await createAccount.mutateAsync(payload);
+    try {
+      if (editing) {
+        await updateAccount.mutateAsync({ id: editing.id, ...payload });
+      } else {
+        await createAccount.mutateAsync(payload);
+      }
+      setShowModal(false);
+    } catch (err) {
+      alert("保存失败: " + (err instanceof Error ? err.message : "未知错误"));
     }
-    setShowModal(false);
   };
 
   const getPlatformInfo = (id: string) => PLATFORMS.find((p) => p.id === id);

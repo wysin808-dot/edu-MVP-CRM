@@ -81,10 +81,18 @@ export function useIncrementPromptUsage() {
       // Use raw SQL to atomically increment, avoiding race condition
       const { error } = await supabase.rpc("increment_prompt_usage", { prompt_id: id });
       if (error) {
-        // Fallback if RPC doesn't exist yet
+        // Fallback if RPC doesn't exist yet — read current count and increment
+        const { data: current } = await supabase
+          .from("ai_prompts")
+          .select("use_count")
+          .eq("id", id)
+          .single();
         const { error: updateErr } = await supabase
           .from("ai_prompts")
-          .update({ last_used_at: new Date().toISOString() })
+          .update({
+            use_count: (current?.use_count || 0) + 1,
+            last_used_at: new Date().toISOString(),
+          })
           .eq("id", id);
         if (updateErr) throw updateErr;
       }

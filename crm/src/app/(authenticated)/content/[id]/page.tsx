@@ -69,34 +69,42 @@ export default function ContentDetailPage({
   };
 
   const handleSave = async () => {
-    await updateContent.mutateAsync({
-      id,
-      title: editForm.title.trim(),
-      status: editForm.status,
-      funnel_stage: editForm.funnel_stage,
-      emotional_trigger: editForm.emotional_trigger,
-      content_type: editForm.content_type,
-      topic_cluster: editForm.topic_cluster,
-      publish_date: editForm.publish_date || null,
-      notes: editForm.notes || null,
-      wace_focus: editForm.wace_focus,
-      author_name: editForm.author_name || null,
-      cta: editForm.cta || null,
-      primary_keyword: editForm.primary_keyword || null,
-      cover_image_url: editForm.cover_image_url || null,
-      body: editForm.body || null,
-    });
-    setIsEditing(false);
+    try {
+      await updateContent.mutateAsync({
+        id,
+        title: editForm.title.trim(),
+        status: editForm.status,
+        funnel_stage: editForm.funnel_stage,
+        emotional_trigger: editForm.emotional_trigger,
+        content_type: editForm.content_type,
+        topic_cluster: editForm.topic_cluster,
+        publish_date: editForm.publish_date || null,
+        notes: editForm.notes || null,
+        wace_focus: editForm.wace_focus,
+        author_name: editForm.author_name || null,
+        cta: editForm.cta || null,
+        primary_keyword: editForm.primary_keyword || null,
+        cover_image_url: editForm.cover_image_url || null,
+        body: editForm.body || null,
+      });
+      setIsEditing(false);
+    } catch (err) {
+      alert("保存失败: " + (err instanceof Error ? err.message : "未知错误"));
+    }
   };
 
   const handleReview = async (action: "approve" | "reject") => {
-    await addReview.mutateAsync({
-      content_id: id,
-      reviewer_name: profile?.display_name || "未知用户",
-      action,
-      comment: reviewComment || undefined,
-    });
-    setReviewComment("");
+    try {
+      await addReview.mutateAsync({
+        content_id: id,
+        reviewer_name: profile?.display_name || "未知用户",
+        action,
+        comment: reviewComment || undefined,
+      });
+      setReviewComment("");
+    } catch (err) {
+      alert("审核操作失败: " + (err instanceof Error ? err.message : "未知错误"));
+    }
   };
 
   const handleComment = async () => {
@@ -123,8 +131,12 @@ export default function ContentDetailPage({
   };
 
   const handleMetricsSave = async () => {
-    await updateMetrics.mutateAsync({ content_id: id, ...metricsForm });
-    setShowMetrics(false);
+    try {
+      await updateMetrics.mutateAsync({ content_id: id, ...metricsForm });
+      setShowMetrics(false);
+    } catch (err) {
+      alert("数据保存失败: " + (err instanceof Error ? err.message : "未知错误"));
+    }
   };
 
   const handleAiReview = async () => {
@@ -152,13 +164,17 @@ export default function ContentDetailPage({
       const data = await res.json();
       if (res.ok) {
         setAiResult(data);
-        // Auto-add as a review record
-        await addReview.mutateAsync({
-          content_id: id,
-          reviewer_name: "DeepSeek AI",
-          action: data.suggestion === "approve" ? "approve" : data.suggestion === "reject" ? "reject" : "comment",
-          comment: data.comment,
-        });
+        // Auto-add as a review record (non-blocking)
+        try {
+          await addReview.mutateAsync({
+            content_id: id,
+            reviewer_name: "DeepSeek AI",
+            action: data.suggestion === "approve" ? "approve" : data.suggestion === "reject" ? "reject" : "comment",
+            comment: data.comment,
+          });
+        } catch {
+          // Review save failed, but AI result is still shown to user
+        }
       } else {
         setAiResult({ suggestion: "error", comment: data.error || "AI 审核失败" });
       }
