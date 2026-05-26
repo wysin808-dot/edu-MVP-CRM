@@ -13,8 +13,8 @@ import { relativeTime } from "@/lib/utils";
 import type { KnowledgeItem, AiPrompt } from "@/lib/types";
 
 const ITEM_TYPES = ["资料", "数据", "案例", "政策"];
-const VISIBILITIES = ["内部", "公开", "仅管理"];
-const SOURCE_TYPES = ["人工整理", "官方数据", "新闻报道", "研究报告"];
+const VISIBILITIES = ["内部", "公开", "受限"];
+const SOURCE_TYPES = ["官方数据", "行业报告", "人工整理", "第三方平台"];
 const REVIEW_CYCLES = ["每月", "每季", "每半年", "每年"];
 const PROMPT_CATEGORIES = ["内容创作", "标题优化", "SEO优化", "评论互动", "私信话术", "数据分析", "其他"];
 
@@ -141,7 +141,7 @@ function KnowledgeTab() {
     switch (v) {
       case "公开": return "success";
       case "内部": return "info";
-      case "仅管理": return "warning";
+      case "受限": return "warning";
       default: return "info";
     }
   };

@@ -109,12 +109,16 @@ export default function ContentDetailPage({
 
   const handleComment = async () => {
     if (!newComment.trim()) return;
-    await addComment.mutateAsync({
-      content_id: id,
-      author_name: profile?.display_name || "未知用户",
-      body: newComment.trim(),
-    });
-    setNewComment("");
+    try {
+      await addComment.mutateAsync({
+        content_id: id,
+        author_name: profile?.display_name || "未知用户",
+        body: newComment.trim(),
+      });
+      setNewComment("");
+    } catch (err) {
+      alert("评论发送失败: " + (err instanceof Error ? err.message : "未知错误"));
+    }
   };
 
   const openMetricsForm = () => {
@@ -187,13 +191,17 @@ export default function ContentDetailPage({
 
   const handleRepurpose = async () => {
     if (!repurposeForm.platform || !repurposeForm.title.trim()) return;
-    await repurpose.mutateAsync({
-      parentId: id,
-      targetPlatform: repurposeForm.platform,
-      title: repurposeForm.title.trim(),
-    });
-    setShowRepurpose(false);
-    setRepurposeForm({ platform: "", title: "" });
+    try {
+      await repurpose.mutateAsync({
+        parentId: id,
+        targetPlatform: repurposeForm.platform,
+        title: repurposeForm.title.trim(),
+      });
+      setShowRepurpose(false);
+      setRepurposeForm({ platform: "", title: "" });
+    } catch (err) {
+      alert("复用创建失败: " + (err instanceof Error ? err.message : "未知错误"));
+    }
   };
 
   if (isLoading) return <PageSkeleton />;
@@ -462,19 +470,22 @@ export default function ContentDetailPage({
             <div className="flex flex-col gap-2">
               {content.status === "草稿" && (
                 <Button variant="primary" size="sm" className="w-full"
-                  onClick={() => updateContent.mutateAsync({ id, status: "待审核" })}>
+                  disabled={updateContent.isPending}
+                  onClick={() => updateContent.mutateAsync({ id, status: "待审核" }).catch((err) => alert("操作失败: " + (err instanceof Error ? err.message : "未知错误")))}>
                   提交审核
                 </Button>
               )}
               {content.status === "已通过" && (
                 <Button variant="primary" size="sm" className="w-full"
-                  onClick={() => updateContent.mutateAsync({ id, status: "已发布" })}>
+                  disabled={updateContent.isPending}
+                  onClick={() => updateContent.mutateAsync({ id, status: "已发布" }).catch((err) => alert("操作失败: " + (err instanceof Error ? err.message : "未知错误")))}>
                   标记已发布
                 </Button>
               )}
               {content.status === "已发布" && (
                 <Button variant="secondary" size="sm" className="w-full"
-                  onClick={() => updateContent.mutateAsync({ id, status: "已归档" })}>
+                  disabled={updateContent.isPending}
+                  onClick={() => updateContent.mutateAsync({ id, status: "已归档" }).catch((err) => alert("操作失败: " + (err instanceof Error ? err.message : "未知错误")))}>
                   归档
                 </Button>
               )}

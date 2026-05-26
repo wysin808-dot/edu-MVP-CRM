@@ -134,7 +134,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
     summary: "管理用户、角色、账号、IP、资料库和全局数据权限。",
     nav: [
       "dashboard", "publishing", "content", "knowledge",
-      "personas", "accounts", "calendar", "crm", "analytics", "team", "settings",
+      "personas", "accounts", "calendar", "crm", "analytics", "settings",
     ],
     defaultUser: "管理员",
     team: "hq",

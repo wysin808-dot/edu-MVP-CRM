@@ -85,6 +85,9 @@ export function useContentWithMetrics(id: string) {
         ]);
 
       if (contentResult.error) throw contentResult.error;
+      if (metricsResult.error) console.warn("Metrics fetch failed:", metricsResult.error);
+      if (refsResult.error) console.warn("Knowledge refs fetch failed:", refsResult.error);
+      if (childrenResult.error) console.warn("Repurpose children fetch failed:", childrenResult.error);
 
       const content = contentResult.data as Content;
       content.metrics = metricsResult.data?.[0] ?? undefined;
@@ -336,10 +339,11 @@ export function useRepurposeContent() {
       if (error) throw error;
 
       // Update parent repurpose status
-      await supabase
+      const { error: parentUpdateErr } = await supabase
         .from("contents")
         .update({ repurpose_status: "已发多平台" })
         .eq("id", parentId);
+      if (parentUpdateErr) console.warn("Failed to update parent repurpose status:", parentUpdateErr);
 
       return data as Content;
     },

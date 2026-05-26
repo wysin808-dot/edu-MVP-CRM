@@ -78,9 +78,8 @@ export function useUpdateCrmLead() {
       if (error) throw error;
       return data as CrmLead;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["crm_leads"] });
-      queryClient.setQueryData(["crm_leads", data.id], data);
     },
   });
 }

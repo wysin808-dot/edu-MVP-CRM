@@ -26,12 +26,29 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Parse request body
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON in request body" },
+      { status: 400 }
+    );
+  }
   const { email, password, display_name, role, team } = body;
 
   if (!email || !password || !display_name || !role) {
     return NextResponse.json(
       { error: "Missing required fields: email, password, display_name, role" },
+      { status: 400 }
+    );
+  }
+
+  // Validate role against whitelist
+  const VALID_ROLES = ["admin", "lead", "operator", "ai", "admission"];
+  if (!VALID_ROLES.includes(role)) {
+    return NextResponse.json(
+      { error: `Invalid role. Must be one of: ${VALID_ROLES.join(", ")}` },
       { status: 400 }
     );
   }
