@@ -18,6 +18,7 @@ import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { relativeTime } from "@/lib/utils";
 import { MediaUploader } from "@/components/ui/MediaUploader";
+import { useContentMedia } from "@/hooks/useContentMedia";
 
 export default function ContentDetailPage({
   params,
@@ -27,6 +28,7 @@ export default function ContentDetailPage({
   const { id } = use(params);
   const { profile, role } = useAuth();
   const { data: content, isLoading } = useContentWithMetrics(id);
+  const { data: mediaFiles } = useContentMedia(id);
   const updateContent = useUpdateContent();
   const updateMetrics = useUpdateMetrics();
   const addReview = useAddReview();
@@ -44,6 +46,7 @@ export default function ContentDetailPage({
   });
   const [aiReviewing, setAiReviewing] = useState(false);
   const [aiResult, setAiResult] = useState<{ suggestion: string; comment: string } | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [editForm, setEditForm] = useState({
     title: "", status: "", funnel_stage: "", emotional_trigger: "",
@@ -201,6 +204,27 @@ export default function ContentDetailPage({
       setRepurposeForm({ platform: "", title: "" });
     } catch (err) {
       alert("复用创建失败: " + (err instanceof Error ? err.message : "未知错误"));
+    }
+  };
+
+  const handleSubmitForReview = async () => {
+    if (!content) return;
+    setSubmitError(null);
+
+    const hasCover = !!content.cover_image_url;
+    const hasBody = !!content.body?.trim();
+    const hasMedia = (mediaFiles && mediaFiles.length > 0) || false;
+
+    if (!hasCover && !hasBody && !hasMedia) {
+      setSubmitError("提交审核前，请至少完成以下一项：上传封面图、填写正文文案、或上传视频/图片素材");
+      return;
+    }
+
+    try {
+      await updateContent.mutateAsync({ id, status: "待审核" });
+      setSubmitError(null);
+    } catch (err) {
+      alert("操作失败: " + (err instanceof Error ? err.message : "未知错误"));
     }
   };
 
@@ -469,11 +493,18 @@ export default function ContentDetailPage({
             <h3 className="text-xs font-semibold mb-3" style={{ color: "var(--ink)" }}>快速操作</h3>
             <div className="flex flex-col gap-2">
               {content.status === "草稿" && (
-                <Button variant="primary" size="sm" className="w-full"
-                  disabled={updateContent.isPending}
-                  onClick={() => updateContent.mutateAsync({ id, status: "待审核" }).catch((err) => alert("操作失败: " + (err instanceof Error ? err.message : "未知错误")))}>
-                  提交审核
-                </Button>
+                <>
+                  <Button variant="primary" size="sm" className="w-full"
+                    disabled={updateContent.isPending}
+                    onClick={handleSubmitForReview}>
+                    提交审核
+                  </Button>
+                  {submitError && (
+                    <div className="p-2.5 rounded-lg text-xs" style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#991b1b" }}>
+                      ⚠️ {submitError}
+                    </div>
+                  )}
+                </>
               )}
               {content.status === "已通过" && (
                 <Button variant="primary" size="sm" className="w-full"
