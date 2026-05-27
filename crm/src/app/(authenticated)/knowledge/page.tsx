@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useKnowledgeList, useCreateKnowledge, useUpdateKnowledge } from "@/hooks/useKnowledge";
+import { useKnowledgeMedia, useUploadKnowledgeMedia, useDeleteKnowledgeMedia } from "@/hooks/useKnowledgeMedia";
 import { usePromptList, useCreatePrompt, useUpdatePrompt, useIncrementPromptUsage } from "@/hooks/usePrompts";
 import { usePersonaList } from "@/hooks/usePersonas";
 import { PLATFORMS } from "@/lib/constants";
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { relativeTime } from "@/lib/utils";
-import type { KnowledgeItem, AiPrompt } from "@/lib/types";
+import type { KnowledgeItem, KnowledgeMedia, AiPrompt } from "@/lib/types";
 
 const ITEM_TYPES = ["资料", "数据", "案例", "政策"];
 const VISIBILITIES = ["内部", "公开", "受限"];
@@ -62,6 +63,131 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
 }
 
 // ═══════════════════════════════════════
+// Knowledge Media Uploader (inline)
+// ═══════════════════════════════════════
+
+function KnowledgeMediaSection({ knowledgeId }: { knowledgeId: string }) {
+  const { data: mediaFiles, isLoading } = useKnowledgeMedia(knowledgeId);
+  const uploadMedia = useUploadKnowledgeMedia();
+  const deleteMedia = useDeleteKnowledgeMedia();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    for (const file of Array.from(files)) {
+      try {
+        await uploadMedia.mutateAsync({ knowledgeId, file });
+      } catch {
+        alert(`上传失败: ${file.name}`);
+      }
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDelete = async (media: KnowledgeMedia) => {
+    if (!confirm(`确定删除 "${media.file_name}"？`)) return;
+    try {
+      await deleteMedia.mutateAsync({ media });
+    } catch {
+      alert("删除失败");
+    }
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1048576).toFixed(1)} MB`;
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-xs font-medium" style={{ color: "var(--ink)" }}>
+          附件与图片
+        </label>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadMedia.isPending}
+          className="text-xs px-2.5 py-1 rounded-md border-none cursor-pointer"
+          style={{ background: "var(--brand)", color: "#fff", opacity: uploadMedia.isPending ? 0.6 : 1 }}
+        >
+          {uploadMedia.isPending ? "上传中..." : "📎 上传文件"}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+          onChange={handleUpload}
+          className="hidden"
+        />
+      </div>
+
+      {isLoading && (
+        <div className="text-xs py-2" style={{ color: "var(--muted)" }}>加载中...</div>
+      )}
+
+      {mediaFiles && mediaFiles.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 mt-1">
+          {mediaFiles.map((media) => (
+            <div key={media.id} className="rounded-lg overflow-hidden relative group"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)" }}>
+              {media.file_type === "image" ? (
+                <img
+                  src={media.file_url}
+                  alt={media.file_name}
+                  className="w-full h-24 object-cover cursor-pointer"
+                  onClick={() => setPreviewUrl(media.file_url)}
+                />
+              ) : (
+                <div className="w-full h-24 flex flex-col items-center justify-center p-2">
+                  <span className="text-2xl mb-1">📄</span>
+                  <span className="text-xs truncate w-full text-center" style={{ color: "var(--muted)" }}>
+                    {media.file_name}
+                  </span>
+                </div>
+              )}
+              <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1 flex items-center justify-between"
+                style={{ background: "rgba(0,0,0,0.5)" }}>
+                <span className="text-xs truncate" style={{ color: "#fff", maxWidth: "70%" }}>
+                  {formatSize(media.file_size)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(media)}
+                  className="text-xs border-none cursor-pointer rounded px-1"
+                  style={{ background: "rgba(255,0,0,0.7)", color: "#fff" }}
+                  disabled={deleteMedia.isPending}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Image preview modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.8)" }}
+          onClick={() => setPreviewUrl(null)}>
+          <img src={previewUrl} alt="Preview" className="max-w-[90vw] max-h-[90vh] rounded-lg" />
+          <button
+            className="absolute top-4 right-4 text-white text-2xl bg-transparent border-none cursor-pointer"
+            onClick={() => setPreviewUrl(null)}>
+            ✕
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════
 // Knowledge Tab
 // ═══════════════════════════════════════
 
@@ -84,6 +210,9 @@ function KnowledgeTab() {
     subject_tags: "", item_type: "资料", numeric_data: "",
     review_cycle: "每年", visibility: "内部", verified_by: "",
   });
+
+  // Detail view state
+  const [viewingItem, setViewingItem] = useState<KnowledgeItem | null>(null);
 
   const filtered = items?.filter((item) =>
     !search || item.title.toLowerCase().includes(search.toLowerCase())
@@ -180,32 +309,40 @@ function KnowledgeTab() {
           {filtered.map((item) => (
             <div
               key={item.id}
-              className="rounded-xl p-4 cursor-pointer transition-all flex items-center gap-4"
+              className="rounded-xl p-4 cursor-pointer transition-all"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-              onClick={() => openEdit(item)}
+              onClick={() => setViewingItem(item)}
               onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)")}
               onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
             >
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
-                style={{ background: "var(--surface-soft)" }}>
-                {item.item_type === "数据" ? "📊" : item.item_type === "案例" ? "📋" : item.item_type === "政策" ? "📜" : "📄"}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate" style={{ color: "var(--ink)" }}>{item.title}</div>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {item.subject_tags?.slice(0, 3).map((tag) => (
-                    <span key={tag} className="text-xs px-1.5 py-0.5 rounded"
-                      style={{ background: "var(--surface-soft)", color: "var(--muted)" }}>{tag}</span>
-                  ))}
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+                  style={{ background: "var(--surface-soft)" }}>
+                  {item.item_type === "数据" ? "📊" : item.item_type === "案例" ? "📋" : item.item_type === "政策" ? "📜" : "📄"}
                 </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate" style={{ color: "var(--ink)" }}>{item.title}</div>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {item.subject_tags?.slice(0, 3).map((tag) => (
+                      <span key={tag} className="text-xs px-1.5 py-0.5 rounded"
+                        style={{ background: "var(--surface-soft)", color: "var(--muted)" }}>{tag}</span>
+                    ))}
+                  </div>
+                </div>
+                <Badge variant="outline">{item.item_type}</Badge>
+                <Badge variant={visBadge(item.visibility)}>{item.visibility}</Badge>
+                <div className="text-xs text-center shrink-0" style={{ color: "var(--muted)", width: "50px" }}>
+                  <div style={{ color: "var(--brand)", fontWeight: 600 }}>{item.used_count}</div>
+                  <div>引用</div>
+                </div>
+                <div className="text-xs shrink-0" style={{ color: "var(--muted)" }}>{item.review_cycle}</div>
               </div>
-              <Badge variant="outline">{item.item_type}</Badge>
-              <Badge variant={visBadge(item.visibility)}>{item.visibility}</Badge>
-              <div className="text-xs text-center shrink-0" style={{ color: "var(--muted)", width: "50px" }}>
-                <div style={{ color: "var(--brand)", fontWeight: 600 }}>{item.used_count}</div>
-                <div>引用</div>
-              </div>
-              <div className="text-xs shrink-0" style={{ color: "var(--muted)" }}>{item.review_cycle}</div>
+              {/* Preview snippet of detail text */}
+              {item.detail && (
+                <p className="text-xs mt-2 line-clamp-2 ml-14" style={{ color: "var(--muted)", lineHeight: "1.6" }}>
+                  {item.detail.slice(0, 120)}{item.detail.length > 120 ? "..." : ""}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -213,9 +350,86 @@ function KnowledgeTab() {
         <EmptyState icon="📚" message={search || typeFilter || visFilter ? "没有匹配的资料" : "还没有资料，点击上方按钮添加"} />
       )}
 
-      {/* Knowledge Modal */}
+      {/* ── Detail View Modal (document-like) ── */}
+      <Modal isOpen={!!viewingItem} onClose={() => setViewingItem(null)}
+        title={viewingItem?.title || ""}
+        width="800px"
+        footer={
+          <div className="flex justify-between w-full">
+            <Button variant="secondary" onClick={() => setViewingItem(null)}>关闭</Button>
+            <Button variant="primary" onClick={() => {
+              if (viewingItem) { openEdit(viewingItem); setViewingItem(null); }
+            }}>
+              编辑资料
+            </Button>
+          </div>
+        }>
+        {viewingItem && (
+          <div className="flex flex-col gap-4">
+            {/* Meta info bar */}
+            <div className="flex flex-wrap gap-2 pb-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <Badge variant="outline">{viewingItem.item_type}</Badge>
+              <Badge variant={visBadge(viewingItem.visibility)}>{viewingItem.visibility}</Badge>
+              <Badge variant="outline">{viewingItem.source_type}</Badge>
+              <Badge variant="outline">{viewingItem.review_cycle}</Badge>
+              {viewingItem.verified_by && <Badge variant="success">核实: {viewingItem.verified_by}</Badge>}
+              <span className="text-xs ml-auto" style={{ color: "var(--muted)" }}>
+                引用 {viewingItem.used_count} 次 · 更新于 {relativeTime(viewingItem.updated_at)}
+              </span>
+            </div>
+
+            {/* Tags */}
+            {viewingItem.subject_tags && viewingItem.subject_tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {viewingItem.subject_tags.map((tag) => (
+                  <span key={tag} className="text-xs px-2 py-1 rounded-md"
+                    style={{ background: "var(--surface-soft)", color: "var(--ink)" }}>
+                    🏷️ {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Detail content - document-like view */}
+            {viewingItem.detail && (
+              <div className="rounded-lg p-4 text-sm whitespace-pre-wrap"
+                style={{
+                  background: "var(--surface-soft)",
+                  border: "1px solid var(--border)",
+                  color: "var(--ink)",
+                  lineHeight: "1.8",
+                  minHeight: "120px",
+                }}>
+                {viewingItem.detail}
+              </div>
+            )}
+
+            {/* Numeric data */}
+            {viewingItem.numeric_data && (
+              <div className="rounded-lg p-3" style={{ background: "color-mix(in srgb, var(--brand) 5%, transparent)", border: "1px solid color-mix(in srgb, var(--brand) 15%, transparent)" }}>
+                <div className="text-xs font-medium mb-1" style={{ color: "var(--brand)" }}>📊 数值数据</div>
+                <div className="text-sm" style={{ color: "var(--ink)" }}>{viewingItem.numeric_data}</div>
+              </div>
+            )}
+
+            {/* Source URL */}
+            {viewingItem.source_url && (
+              <div className="text-xs" style={{ color: "var(--muted)" }}>
+                🔗 来源: <a href={viewingItem.source_url} target="_blank" rel="noopener noreferrer"
+                  style={{ color: "var(--brand)" }}>{viewingItem.source_url}</a>
+              </div>
+            )}
+
+            {/* Media / Attachments */}
+            <KnowledgeMediaSection knowledgeId={viewingItem.id} />
+          </div>
+        )}
+      </Modal>
+
+      {/* ── Create/Edit Modal ── */}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}
         title={editing ? `编辑: ${editing.title}` : "新增资料"}
+        width="750px"
         footer={
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setShowModal(false)}>取消</Button>
@@ -233,12 +447,27 @@ function KnowledgeTab() {
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
               placeholder="资料标题" />
           </div>
+
+          {/* Document-like detail editor */}
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>详细内容</label>
             <textarea value={form.detail} onChange={(e) => setForm({ ...form, detail: e.target.value })}
-              rows={4} className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
-              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
+              rows={12} className="w-full px-4 py-3 rounded-lg text-sm outline-none resize-y"
+              style={{
+                background: "var(--surface-soft)",
+                border: "1px solid var(--border)",
+                color: "var(--ink)",
+                lineHeight: "1.8",
+                minHeight: "200px",
+              }}
+              placeholder="在此输入详细内容，支持多行文本...&#10;&#10;可以像写文档一样自由编辑，内容会保留格式。" />
           </div>
+
+          {/* Media upload (only for editing existing items) */}
+          {editing && (
+            <KnowledgeMediaSection knowledgeId={editing.id} />
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>来源 URL</label>
@@ -255,6 +484,13 @@ function KnowledgeTab() {
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
               placeholder="例: 数学, WACE, 12年级" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>数值数据</label>
+            <input type="text" value={form.numeric_data} onChange={(e) => setForm({ ...form, numeric_data: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="例: 录取率95%, 学费$15000/年" />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <Select label="资料类型" value={form.item_type} onChange={(e) => setForm({ ...form, item_type: e.target.value })}

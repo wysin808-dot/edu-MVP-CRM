@@ -193,6 +193,17 @@ export interface ContentMedia {
   created_at: string;
 }
 
+export interface KnowledgeMedia {
+  id: string;
+  knowledge_id: string;
+  file_url: string;
+  file_name: string;
+  file_type: string;  // image, document
+  file_size: number;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface AuditLogEntry {
   id: string;
   user_id: string | null;

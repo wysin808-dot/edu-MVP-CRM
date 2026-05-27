@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useContentList } from "@/hooks/useContents";
 import { PLATFORMS } from "@/lib/constants";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -9,6 +10,7 @@ import { localDateStr, DAY_NAMES, getWeekStart, getWeekDates } from "@/lib/utils
 export default function CalendarPage() {
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: contents, isLoading } = useContentList();
 
   // Month navigation
@@ -51,17 +53,19 @@ export default function CalendarPage() {
   const weekMonday = getWeekStart(currentDate);
   const weekDates = getWeekDates(weekMonday);
 
-  // Content lookup by date
+  // Content lookup by date (filtered by search)
   const contentsByDate = useMemo(() => {
     const map: Record<string, typeof contents> = {};
+    const query = searchQuery.trim().toLowerCase();
     contents?.forEach((c) => {
       if (c.publish_date) {
+        if (query && !c.title.toLowerCase().includes(query)) return;
         if (!map[c.publish_date]) map[c.publish_date] = [];
         map[c.publish_date]!.push(c);
       }
     });
     return map;
-  }, [contents]);
+  }, [contents, searchQuery]);
 
   const todayStr = localDateStr(new Date());
   const getPlatformInfo = (id: string) => PLATFORMS.find((p) => p.id === id);
@@ -87,6 +91,22 @@ export default function CalendarPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="搜索内容..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 pl-8 pr-3 rounded-lg text-xs border-none outline-none"
+              style={{ background: "var(--surface-soft)", color: "var(--ink)", width: "160px" }}
+            />
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs pointer-events-none"
+              style={{ color: "var(--muted)" }}>
+              🔍
+            </span>
+          </div>
+
           {/* Navigation */}
           <div className="flex items-center gap-1">
             <button onClick={() => viewMode === "month" ? navigateMonth(-1) : navigateWeek(-1)}
@@ -162,7 +182,7 @@ export default function CalendarPage() {
                     background: isToday ? "var(--brand-light)" : "transparent",
                   }}
                 >
-                  {/* Day Number */}
+                  {/* Day Number + Add button */}
                   <div className="flex items-center justify-between mb-0.5 px-1">
                     <span className="text-xs font-medium" style={{
                       color: isToday ? "var(--brand)" : "var(--ink)",
@@ -170,23 +190,33 @@ export default function CalendarPage() {
                     }}>
                       {date.getDate()}
                     </span>
-                    {dayContents.length > 0 && (
-                      <span className="text-xs px-1.5 py-0 rounded-full" style={{ background: "var(--brand)", color: "#fff", fontSize: "10px" }}>
-                        {dayContents.length}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {dayContents.length > 0 && (
+                        <span className="text-xs px-1.5 py-0 rounded-full" style={{ background: "var(--brand)", color: "#fff", fontSize: "10px" }}>
+                          {dayContents.length}
+                        </span>
+                      )}
+                      <Link href="/content"
+                        className="w-4 h-4 rounded flex items-center justify-center no-underline opacity-0 hover:opacity-100 transition-opacity"
+                        style={{ background: "var(--brand)", color: "#fff", fontSize: "10px", lineHeight: 1 }}
+                        title="新建内容">
+                        +
+                      </Link>
+                    </div>
                   </div>
 
-                  {/* Content Dots */}
+                  {/* Content Items (clickable) */}
                   <div className="flex flex-col gap-0.5">
                     {dayContents.slice(0, 3).map((c) => {
                       const p = getPlatformInfo(c.platform);
                       return (
-                        <div key={c.id} className="text-xs truncate px-1 py-0.5 rounded"
-                          style={{ background: "var(--surface-soft)", color: "var(--muted)", fontSize: "10px" }}
-                          title={c.title}>
-                          {p?.icon} {c.title.slice(0, 8)}
-                        </div>
+                        <Link key={c.id} href={`/content/${c.id}`} className="no-underline block">
+                          <div className="text-xs truncate px-1 py-0.5 rounded cursor-pointer hover:ring-1 hover:ring-[var(--brand)] transition-all"
+                            style={{ background: "var(--surface-soft)", color: "var(--muted)", fontSize: "10px" }}
+                            title={c.title}>
+                            {p?.icon} {c.title.slice(0, 8)}
+                          </div>
+                        </Link>
                       );
                     })}
                     {dayContents.length > 3 && (
@@ -215,7 +245,7 @@ export default function CalendarPage() {
                   background: isToday ? "var(--brand-light)" : "transparent",
                 }}>
                   {/* Day Header */}
-                  <div className="text-center py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+                  <div className="text-center py-3 relative" style={{ borderBottom: "1px solid var(--border)" }}>
                     <div className="text-xs" style={{ color: "var(--muted)" }}>
                       {DAY_NAMES[date.getDay()]}
                     </div>
@@ -224,24 +254,33 @@ export default function CalendarPage() {
                     }}>
                       {date.getDate()}
                     </div>
+                    <Link href="/content"
+                      className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center no-underline opacity-30 hover:opacity-100 transition-opacity"
+                      style={{ background: "var(--brand)", color: "#fff", fontSize: "12px", lineHeight: 1 }}
+                      title="新建内容">
+                      +
+                    </Link>
                   </div>
 
-                  {/* Content Cards */}
+                  {/* Content Cards (clickable) */}
                   <div className="p-2 min-h-[400px] flex flex-col gap-2">
                     {dayContents.map((c) => {
                       const p = getPlatformInfo(c.platform);
                       return (
-                        <div key={c.id} className="rounded-lg p-2" style={{ background: "var(--surface-soft)", border: "1px solid var(--border)" }}>
-                          <div className="text-xs mb-1" style={{ color: "var(--muted)" }}>
-                            {p ? `${p.icon} ${p.label}` : c.platform}
+                        <Link key={c.id} href={`/content/${c.id}`} className="no-underline block">
+                          <div className="rounded-lg p-2 cursor-pointer hover:ring-1 hover:ring-[var(--brand)] transition-all"
+                            style={{ background: "var(--surface-soft)", border: "1px solid var(--border)" }}>
+                            <div className="text-xs mb-1" style={{ color: "var(--muted)" }}>
+                              {p ? `${p.icon} ${p.label}` : c.platform}
+                            </div>
+                            <div className="text-xs font-medium truncate" style={{ color: "var(--ink)" }} title={c.title}>
+                              {c.title}
+                            </div>
+                            <div className="mt-1">
+                              <Badge variant={statusVariant(c.status)}>{c.status}</Badge>
+                            </div>
                           </div>
-                          <div className="text-xs font-medium truncate" style={{ color: "var(--ink)" }} title={c.title}>
-                            {c.title}
-                          </div>
-                          <div className="mt-1">
-                            <Badge variant={statusVariant(c.status)}>{c.status}</Badge>
-                          </div>
-                        </div>
+                        </Link>
                       );
                     })}
                     {dayContents.length === 0 && (
