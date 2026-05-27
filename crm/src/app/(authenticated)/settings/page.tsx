@@ -88,6 +88,12 @@ export default function SettingsPage() {
   const [inviting, setInviting] = useState(false);
   const [inviteResult, setInviteResult] = useState<{ success?: boolean; error?: string; email?: string } | null>(null);
 
+  // Password reset state
+  const [resetUser, setResetUser] = useState<UserProfile | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<{ success?: boolean; error?: string } | null>(null);
+
   if (role !== "admin" && role !== "lead") {
     return (
       <div className="max-w-4xl mx-auto">
@@ -162,6 +168,31 @@ export default function SettingsPage() {
       setInviteResult({ error: "网络错误，请重试" });
     } finally {
       setInviting(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetUser || !newPassword) return;
+    setResetting(true);
+    setResetResult(null);
+    try {
+      const res = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: resetUser.id, newPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResetResult({ success: true });
+        setNewPassword("");
+      } else {
+        setResetResult({ error: data.error || "重置失败" });
+      }
+    } catch {
+      setResetResult({ error: "网络错误，请重试" });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -288,15 +319,26 @@ export default function SettingsPage() {
                   )}
 
                   {canEditUser(user) && (
-                    <button
-                      onClick={() => openEditUser(user)}
-                      className="text-xs px-2 py-1 rounded transition-colors"
-                      style={{ color: "var(--brand)", background: "transparent" }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(232,122,46,0.1)"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                    >
-                      编辑
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => openEditUser(user)}
+                        className="text-xs px-2 py-1 rounded transition-colors"
+                        style={{ color: "var(--brand)", background: "transparent" }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "rgba(232,122,46,0.1)"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                      >
+                        编辑
+                      </button>
+                      <button
+                        onClick={() => { setResetUser(user); setNewPassword(""); setResetResult(null); }}
+                        className="text-xs px-2 py-1 rounded transition-colors"
+                        style={{ color: "var(--blue)", background: "transparent" }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "rgba(59,130,246,0.1)"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                      >
+                        密码
+                      </button>
+                    </div>
                   )}
                 </div>
               );
@@ -457,6 +499,42 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+      </Modal>
+
+      {/* Reset Password Modal */}
+      <Modal isOpen={!!resetUser} onClose={() => setResetUser(null)}
+        title={`重置密码: ${resetUser?.display_name || "未命名"}`}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setResetUser(null)}>取消</Button>
+            <Button variant="primary" onClick={handleResetPassword} disabled={resetting || !newPassword || newPassword.length < 6}>
+              {resetting ? "重置中..." : "确认重置"}
+            </Button>
+          </div>
+        }>
+        <form onSubmit={handleResetPassword} className="flex flex-col gap-4">
+          {resetResult?.success && (
+            <div className="p-3 rounded-lg text-sm" style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#166534" }}>
+              密码已重置成功！请将新密码告知该成员。
+            </div>
+          )}
+          {resetResult?.error && (
+            <div className="p-3 rounded-lg text-sm" style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#991b1b" }}>
+              {resetResult.error}
+            </div>
+          )}
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>新密码 *</label>
+            <input type="text" value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)} required
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="至少 6 位" minLength={6} />
+            <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+              重置后请将新密码告知成员，成员下次登录需使用新密码
+            </p>
+          </div>
+        </form>
       </Modal>
     </div>
   );
