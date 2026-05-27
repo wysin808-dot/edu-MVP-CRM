@@ -18,6 +18,7 @@ import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { relativeTime } from "@/lib/utils";
 import { MediaUploader } from "@/components/ui/MediaUploader";
+import { CoverUploader } from "@/components/ui/CoverUploader";
 import { useContentMedia } from "@/hooks/useContentMedia";
 
 export default function ContentDetailPage({
@@ -578,18 +579,10 @@ export default function ContentDetailPage({
                 style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>封面图 URL</label>
-            <input type="url" value={editForm.cover_image_url} onChange={(e) => setEditForm({ ...editForm, cover_image_url: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
-              placeholder="粘贴封面图链接" />
-            {editForm.cover_image_url && (
-              <div className="mt-2 rounded-lg overflow-hidden h-24 w-full">
-                <img src={editForm.cover_image_url} alt="预览" className="w-full h-full object-cover" />
-              </div>
-            )}
-          </div>
+          <CoverUploader
+            value={editForm.cover_image_url}
+            onChange={(url) => setEditForm({ ...editForm, cover_image_url: url })}
+          />
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>正文内容</label>
             <textarea value={editForm.body} onChange={(e) => setEditForm({ ...editForm, body: e.target.value })}

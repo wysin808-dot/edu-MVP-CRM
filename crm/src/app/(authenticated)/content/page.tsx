@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useContentList, useCreateContent } from "@/hooks/useContents";
 import { PLATFORMS, CONTENT_STATUSES, FUNNEL_STAGES, TOPIC_CLUSTERS, EMOTIONAL_TRIGGERS, CONTENT_TYPES } from "@/lib/constants";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
+import { CoverUploader } from "@/components/ui/CoverUploader";
 import type { Content } from "@/lib/types";
 
 export default function ContentPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get("status") || "";
   const [filters, setFilters] = useState({ platform: "", status: initialStatus, funnelStage: "", topicCluster: "" });
@@ -33,27 +35,35 @@ export default function ContentPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim() || !form.platform) return;
-    await createContent.mutateAsync({
-      title: form.title.trim(),
-      platform: form.platform,
-      status: form.status,
-      funnel_stage: form.funnel_stage,
-      emotional_trigger: form.emotional_trigger,
-      content_type: form.content_type,
-      topic_cluster: form.topic_cluster,
-      publish_date: form.publish_date || null,
-      notes: form.notes || null,
-      wace_focus: form.wace_focus,
-      cover_image_url: form.cover_image_url || null,
-      body: form.body || null,
-    } as Partial<Content>);
-    setShowCreate(false);
-    setForm({
-      title: "", platform: "", status: "草稿", funnel_stage: "Awareness",
-      emotional_trigger: "待定", content_type: "干货", topic_cluster: "其他",
-      publish_date: "", notes: "", wace_focus: false,
-      cover_image_url: "", body: "",
-    });
+    try {
+      const newContent = await createContent.mutateAsync({
+        title: form.title.trim(),
+        platform: form.platform,
+        status: form.status,
+        funnel_stage: form.funnel_stage,
+        emotional_trigger: form.emotional_trigger,
+        content_type: form.content_type,
+        topic_cluster: form.topic_cluster,
+        publish_date: form.publish_date || null,
+        notes: form.notes || null,
+        wace_focus: form.wace_focus,
+        cover_image_url: form.cover_image_url || null,
+        body: form.body || null,
+      } as Partial<Content>);
+      setShowCreate(false);
+      setForm({
+        title: "", platform: "", status: "草稿", funnel_stage: "Awareness",
+        emotional_trigger: "待定", content_type: "干货", topic_cluster: "其他",
+        publish_date: "", notes: "", wace_focus: false,
+        cover_image_url: "", body: "",
+      });
+      // Redirect to detail page to upload more media
+      if (newContent?.id) {
+        router.push(`/content/${newContent.id}`);
+      }
+    } catch {
+      alert("创建失败，请重试");
+    }
   };
 
   const getPlatform = (id: string) => PLATFORMS.find((p) => p.id === id);
@@ -210,18 +220,10 @@ export default function ContentPage() {
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
           </div>
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>封面图 URL</label>
-            <input type="url" value={form.cover_image_url} onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
-              placeholder="粘贴小红书封面图链接" />
-            {form.cover_image_url && (
-              <div className="mt-2 rounded-lg overflow-hidden h-24 w-full">
-                <img src={form.cover_image_url} alt="预览" className="w-full h-full object-cover" />
-              </div>
-            )}
-          </div>
+          <CoverUploader
+            value={form.cover_image_url}
+            onChange={(url) => setForm({ ...form, cover_image_url: url })}
+          />
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>正文内容</label>
             <textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })}
@@ -239,6 +241,11 @@ export default function ContentPage() {
             <input type="checkbox" checked={form.wace_focus} onChange={(e) => setForm({ ...form, wace_focus: e.target.checked })} />
             <span className="text-sm" style={{ color: "var(--ink)" }}>WACE 重点内容</span>
           </label>
+          <div className="p-3 rounded-lg" style={{ background: "color-mix(in srgb, var(--brand) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--brand) 15%, transparent)" }}>
+            <p className="text-xs m-0" style={{ color: "var(--brand)" }}>
+              💡 创建后将自动进入详情页，可继续上传视频、图片等素材文件
+            </p>
+          </div>
         </form>
       </Modal>
     </div>
