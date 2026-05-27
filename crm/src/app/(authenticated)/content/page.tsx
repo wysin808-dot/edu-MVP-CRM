@@ -32,9 +32,21 @@ export default function ContentPage() {
     cover_image_url: "", body: "",
   });
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.title.trim() || !form.platform) return;
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  const handleCreate = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault();
+    setCreateError(null);
+
+    if (!form.title.trim()) {
+      setCreateError("请输入内容标题");
+      return;
+    }
+    if (!form.platform) {
+      setCreateError("请选择发布平台");
+      return;
+    }
+
     try {
       const newContent = await createContent.mutateAsync({
         title: form.title.trim(),
@@ -57,12 +69,14 @@ export default function ContentPage() {
         publish_date: "", notes: "", wace_focus: false,
         cover_image_url: "", body: "",
       });
+      setCreateError(null);
       // Redirect to detail page to upload more media
       if (newContent?.id) {
         router.push(`/content/${newContent.id}`);
       }
-    } catch {
-      alert("创建失败，请重试");
+    } catch (err) {
+      console.error("创建内容失败:", err);
+      setCreateError("创建失败: " + (err instanceof Error ? err.message : "请重试"));
     }
   };
 
@@ -189,6 +203,11 @@ export default function ContentPage() {
           </div>
         }>
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
+          {createError && (
+            <div className="p-3 rounded-lg text-sm" style={{ background: "color-mix(in srgb, var(--red, #dc2626) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--red, #dc2626) 25%, transparent)", color: "var(--red, #dc2626)" }}>
+              ⚠️ {createError}
+            </div>
+          )}
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>标题 *</label>
             <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
