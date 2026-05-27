@@ -26,15 +26,14 @@ export default function Sidebar() {
     >
       {/* Brand */}
       <div className="px-4 py-5 flex items-center gap-2.5">
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-xs"
-          style={{ background: "var(--brand)" }}
-        >
-          BCI
-        </div>
+        <img
+          src="/seda-logo.png"
+          alt="SEDA International Education"
+          className="w-9 h-9 rounded-lg object-contain"
+        />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm truncate" style={{ color: "var(--ink)" }}>
-            获客系统
+            SEDA 获客系统
           </div>
           <div className="text-[10px] truncate" style={{ color: "var(--muted)" }}>
             {config.title}

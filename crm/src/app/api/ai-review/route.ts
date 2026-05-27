@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing title" }, { status: 400 });
   }
 
-  const prompt = `你是 BCI 国际学校自媒体内容审核 AI。请从专业内容运营角度审核以下内容，给出审核意见。
+  const prompt = `你是 SEDA 国际教育自媒体内容审核 AI。请从专业内容运营角度审核以下内容，给出审核意见。
 
 ## 待审核内容信息
 - 标题：${title}
@@ -105,7 +105,7 @@ RESULT:reject
           {
             role: "system",
             content:
-              "你是专业的自媒体内容审核专家，服务于新加坡 BCI 国际学校的招生获客团队。审核要严谨但建设性，重点关注内容是否能有效吸引目标家长群体并推动招生转化。",
+              "你是专业的自媒体内容审核专家，服务于 SEDA 国际教育的招生获客团队。审核要严谨但建设性，重点关注内容是否能有效吸引目标家长群体并推动招生转化。",
           },
           { role: "user", content: prompt },
         ],

@@ -17,7 +17,7 @@ export default function TopBar() {
       (item.href !== "/dashboard" && pathname.startsWith(item.href))
   );
 
-  const pageTitle = currentNav?.label || "BCI 获客系统";
+  const pageTitle = currentNav?.label || "SEDA 获客系统";
   const pageIcon = currentNav?.icon || "📊";
 
   return (

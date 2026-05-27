@@ -243,7 +243,7 @@ export default function AccountsPage() {
               onChange={(e) => setForm({ ...form, account_name: e.target.value })} required
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
-              placeholder="例: BCI留学日记" />
+              placeholder="例: SEDA留学日记" />
           </div>
           <Select label="平台 *" value={form.platform}
             onChange={(e) => setForm({ ...form, platform: e.target.value })}
