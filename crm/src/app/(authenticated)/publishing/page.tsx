@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTodayPublishing, useUpdateContent } from "@/hooks/useContents";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { PLATFORMS } from "@/lib/constants";
 import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -9,6 +10,7 @@ import { localDateStr } from "@/lib/utils";
 
 export default function PublishingPage() {
   const today = localDateStr(new Date());
+  const { profile } = useAuth();
   const { data: todayContents, isLoading: loadingContents } = useTodayPublishing();
   const updateContent = useUpdateContent();
 
@@ -16,7 +18,9 @@ export default function PublishingPage() {
 
   const publishedCount = todayContents?.filter((c) => c.status === "已发布").length || 0;
   const totalCount = todayContents?.length || 0;
-  const progressPercent = totalCount > 0 ? Math.round((publishedCount / totalCount) * 100) : 0;
+  const kpiTarget = profile?.daily_publish_target || 0;
+  const effectiveTarget = kpiTarget > 0 ? kpiTarget : totalCount;
+  const progressPercent = effectiveTarget > 0 ? Math.min(100, Math.round((publishedCount / effectiveTarget) * 100)) : 0;
 
   const getPlatformInfo = (id: string) => PLATFORMS.find((p) => p.id === id);
 
@@ -52,8 +56,13 @@ export default function PublishingPage() {
         </div>
         <div className="text-right">
           <div className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-            完成度: {publishedCount}/{totalCount}
+            完成度: {publishedCount}/{effectiveTarget}
           </div>
+          {kpiTarget > 0 && (
+            <p className="text-xs mt-0.5" style={{ color: publishedCount >= kpiTarget ? "var(--green)" : "var(--brand)" }}>
+              🎯 KPI 目标: {kpiTarget} 篇/日
+            </p>
+          )}
         </div>
       </div>
 
@@ -75,9 +84,14 @@ export default function PublishingPage() {
             {progressPercent}%
           </span>
         </div>
-        {progressPercent === 100 && totalCount > 0 && (
+        {progressPercent === 100 && effectiveTarget > 0 && (
           <p className="text-xs mt-2 text-center" style={{ color: "var(--green)" }}>
-            🎉 今日任务全部完成！
+            🎉 {kpiTarget > 0 ? "今日 KPI 已达标！" : "今日任务全部完成！"}
+          </p>
+        )}
+        {kpiTarget > 0 && publishedCount < kpiTarget && totalCount > 0 && (
+          <p className="text-xs mt-2 text-center" style={{ color: "var(--amber)" }}>
+            📌 还需发布 {kpiTarget - publishedCount} 篇达成今日 KPI
           </p>
         )}
       </div>

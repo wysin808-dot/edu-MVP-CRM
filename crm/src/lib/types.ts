@@ -178,6 +178,7 @@ export interface UserProfile {
   role: string;
   team: string;
   avatar_url: string | null;
+  daily_publish_target: number;
   created_at: string;
 }
 

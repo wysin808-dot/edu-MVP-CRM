@@ -79,7 +79,7 @@ export default function SettingsPage() {
   const updateProfile = useUpdateUserProfile();
 
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
-  const [editForm, setEditForm] = useState({ display_name: "", team: "" });
+  const [editForm, setEditForm] = useState({ display_name: "", team: "", daily_publish_target: 0 });
   const [showInvite, setShowInvite] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     email: "", password: "", display_name: "", role: "operator",
@@ -112,6 +112,7 @@ export default function SettingsPage() {
     setEditForm({
       display_name: user.display_name || "",
       team: user.team || "china",
+      daily_publish_target: user.daily_publish_target || 0,
     });
   };
 
@@ -121,6 +122,7 @@ export default function SettingsPage() {
       const updates: Partial<UserProfile> & { id: string } = {
         id: editingUser.id,
         display_name: editForm.display_name || null,
+        daily_publish_target: editForm.daily_publish_target,
       };
       if (isAdmin) {
         updates.team = editForm.team;
@@ -307,6 +309,9 @@ export default function SettingsPage() {
                   </div>
 
                   <Badge variant="outline">{user.team === "hq" ? "总部" : "中国区"}</Badge>
+                  {(user.role === "operator" || user.role === "ai") && user.daily_publish_target > 0 && (
+                    <Badge variant="info">KPI: {user.daily_publish_target}篇/日</Badge>
+                  )}
 
                   {canChangeRole(user) ? (
                     <Select label="" value={user.role}
@@ -496,6 +501,19 @@ export default function SettingsPage() {
                 style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--muted)" }}>
                 {editForm.team === "hq" ? "总部 (新加坡)" : "中国区"}
               </div>
+            </div>
+          )}
+          {(editingUser?.role === "operator" || editingUser?.role === "ai") && (
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>每日发布 KPI 目标</label>
+              <input type="number" min={0} max={20} value={editForm.daily_publish_target}
+                onChange={(e) => setEditForm({ ...editForm, daily_publish_target: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+                placeholder="每日需发布的内容数量" />
+              <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+                设置后运营人员登录将直接进入今日发布页面，0 表示不设限
+              </p>
             </div>
           )}
         </div>
