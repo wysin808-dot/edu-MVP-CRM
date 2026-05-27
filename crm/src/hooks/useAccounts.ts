@@ -2,15 +2,23 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/providers/AuthProvider";
 import type { Account, AccountInsert } from "@/lib/types";
+
+function useTeamFilter() {
+  const { profile, role } = useAuth();
+  return role === "admin" ? null : profile?.team || null;
+}
 
 export function useAccountList(filters?: {
   platform?: string;
   stage?: string;
   operatorName?: string;
 }) {
+  const team = useTeamFilter();
+
   return useQuery({
-    queryKey: ["accounts", filters],
+    queryKey: ["accounts", filters, { team }],
     queryFn: async () => {
       const supabase = createClient();
       let query = supabase
@@ -22,6 +30,7 @@ export function useAccountList(filters?: {
       if (filters?.stage) query = query.eq("stage", filters.stage);
       if (filters?.operatorName)
         query = query.eq("operator_name", filters.operatorName);
+      if (team) query = query.eq("team", team);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -32,13 +41,14 @@ export function useAccountList(filters?: {
 
 export function useCreateAccount() {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   return useMutation({
     mutationFn: async (account: AccountInsert) => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("accounts")
-        .insert(account)
+        .insert({ ...account, team: profile?.team || "china" })
         .select()
         .single();
       if (error) throw error;

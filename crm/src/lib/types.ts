@@ -9,6 +9,7 @@ export interface Persona {
   platforms: string[];
   avatar_url: string | null;
   monthly_target: number;
+  team: string;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +24,7 @@ export interface Account {
   follower_count: number;
   total_posts: number;
   total_leads: number;
+  team: string;
   created_at: string;
   updated_at: string;
   // Joined fields
@@ -77,6 +79,7 @@ export interface Content {
   // AI
   prompts_used: string | null;
   ai_search_ready: boolean;
+  team: string;
   created_at: string;
   updated_at: string;
   // Joined fields (optional)
@@ -115,6 +118,7 @@ export interface CrmLead {
   interest_program: string | null;
   notes: string | null;
   next_followup: string | null;
+  team: string;
   created_at: string;
   updated_at: string;
   // Joined
@@ -130,6 +134,7 @@ export interface AiPrompt {
   prompt_text: string;
   use_count: number;
   last_used_at: string | null;
+  team: string;
   created_at: string;
   // Joined
   persona?: Persona;
@@ -198,10 +203,10 @@ export interface AuditLogEntry {
 }
 
 // ── Form Input Types ──
-export type ContentInsert = Omit<Content, "id" | "created_at" | "updated_at" | "account" | "persona" | "metrics" | "reviews" | "comments" | "knowledge_refs" | "repurpose_children">;
+export type ContentInsert = Omit<Content, "id" | "created_at" | "updated_at" | "team" | "account" | "persona" | "metrics" | "reviews" | "comments" | "knowledge_refs" | "repurpose_children" | "media">;
 export type ContentUpdate = Partial<ContentInsert>;
 export type KnowledgeInsert = Omit<KnowledgeItem, "id" | "created_at" | "updated_at">;
-export type PersonaInsert = Omit<Persona, "id" | "created_at" | "updated_at">;
-export type AccountInsert = Omit<Account, "id" | "created_at" | "updated_at" | "persona">;
-export type CrmLeadInsert = Omit<CrmLead, "id" | "created_at" | "updated_at" | "source_content">;
-export type AiPromptInsert = Omit<AiPrompt, "id" | "created_at" | "persona">;
+export type PersonaInsert = Omit<Persona, "id" | "created_at" | "updated_at" | "team">;
+export type AccountInsert = Omit<Account, "id" | "created_at" | "updated_at" | "team" | "persona">;
+export type CrmLeadInsert = Omit<CrmLead, "id" | "created_at" | "updated_at" | "team" | "source_content">;
+export type AiPromptInsert = Omit<AiPrompt, "id" | "created_at" | "team" | "persona">;

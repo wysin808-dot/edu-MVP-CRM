@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { localDateStr, getWeekStart } from "@/lib/utils";
 
 export interface DashboardStats {
@@ -12,37 +13,47 @@ export interface DashboardStats {
 }
 
 export function useDashboardStats() {
+  const { profile, role } = useAuth();
+  const team = role === "admin" ? null : profile?.team || null;
+
   return useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", { team }],
     queryFn: async (): Promise<DashboardStats> => {
       const supabase = createClient();
       const today = new Date();
       const todayStr = localDateStr(today);
-      // Use ISO timestamp for TIMESTAMPTZ comparison
       const weekStartDate = getWeekStart(today);
       weekStartDate.setHours(0, 0, 0, 0);
       const weekStartISO = weekStartDate.toISOString();
 
+      let todayQuery = supabase
+        .from("contents")
+        .select("id", { count: "exact", head: true })
+        .eq("publish_date", todayStr);
+      if (team) todayQuery = todayQuery.eq("team", team);
+
+      let reviewQuery = supabase
+        .from("contents")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["待审核", "审核中"]);
+      if (team) reviewQuery = reviewQuery.eq("team", team);
+
+      let leadsQuery = supabase
+        .from("crm_leads")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", weekStartISO);
+      if (team) leadsQuery = leadsQuery.eq("team", team);
+
+      let totalQuery = supabase
+        .from("contents")
+        .select("id", { count: "exact", head: true });
+      if (team) totalQuery = totalQuery.eq("team", team);
+
       const [todayRes, reviewRes, leadsRes, totalRes] = await Promise.all([
-        // Today's publishing count
-        supabase
-          .from("contents")
-          .select("id", { count: "exact", head: true })
-          .eq("publish_date", todayStr),
-        // Pending review count
-        supabase
-          .from("contents")
-          .select("id", { count: "exact", head: true })
-          .in("status", ["待审核", "审核中"]),
-        // This week's leads
-        supabase
-          .from("crm_leads")
-          .select("id", { count: "exact", head: true })
-          .gte("created_at", weekStartISO),
-        // Total contents
-        supabase
-          .from("contents")
-          .select("id", { count: "exact", head: true }),
+        todayQuery,
+        reviewQuery,
+        leadsQuery,
+        totalQuery,
       ]);
 
       return {
@@ -52,6 +63,6 @@ export function useDashboardStats() {
         totalContents: totalRes.count || 0,
       };
     },
-    staleTime: 60_000, // refresh every minute
+    staleTime: 60_000,
   });
 }

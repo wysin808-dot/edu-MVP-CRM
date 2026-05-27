@@ -2,7 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/providers/AuthProvider";
 import type { Content, ContentUpdate } from "@/lib/types";
+
+function useTeamFilter() {
+  const { profile, role } = useAuth();
+  const team = role === "admin" ? null : profile?.team || null;
+  return team;
+}
 
 // ── Queries ──
 
@@ -12,8 +19,10 @@ export function useContentList(filters?: {
   funnelStage?: string;
   topicCluster?: string;
 }) {
+  const team = useTeamFilter();
+
   return useQuery({
-    queryKey: ["contents", filters],
+    queryKey: ["contents", filters, { team }],
     queryFn: async () => {
       const supabase = createClient();
       let query = supabase
@@ -25,6 +34,7 @@ export function useContentList(filters?: {
       if (filters?.status) query = query.eq("status", filters.status);
       if (filters?.funnelStage) query = query.eq("funnel_stage", filters.funnelStage);
       if (filters?.topicCluster) query = query.eq("topic_cluster", filters.topicCluster);
+      if (team) query = query.eq("team", team);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -105,19 +115,24 @@ export function useContentWithMetrics(id: string) {
 // ── Today's publishing list ──
 
 export function useTodayPublishing() {
+  const team = useTeamFilter();
+
   return useQuery({
-    queryKey: ["contents", "today"],
+    queryKey: ["contents", "today", { team }],
     queryFn: async () => {
       const supabase = createClient();
       const today = new Date();
       const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("contents")
         .select("*, account:accounts(*)")
         .eq("publish_date", dateStr)
         .order("created_at", { ascending: true });
 
+      if (team) query = query.eq("team", team);
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data as Content[]) || [];
     },
@@ -128,13 +143,14 @@ export function useTodayPublishing() {
 
 export function useCreateContent() {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   return useMutation({
     mutationFn: async (content: Partial<Content>) => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("contents")
-        .insert(content)
+        .insert({ ...content, team: content.team || profile?.team || "china" })
         .select()
         .single();
       if (error) throw error;
@@ -204,7 +220,6 @@ export function useAddReview() {
         .single();
       if (error) throw error;
 
-      // Update content status based on action
       if (review.action === "approve") {
         const { error: statusErr } = await supabase
           .from("contents")
@@ -295,6 +310,7 @@ export function useLinkKnowledge() {
 
 export function useRepurposeContent() {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -332,13 +348,13 @@ export function useRepurposeContent() {
           repurpose_status: "改写中",
           repurpose_parent_id: parentId,
           audience_personas: parent.audience_personas,
+          team: parent.team || profile?.team || "china",
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Update parent repurpose status
       const { error: parentUpdateErr } = await supabase
         .from("contents")
         .update({ repurpose_status: "已发多平台" })
@@ -369,8 +385,6 @@ export function useUpdateMetrics() {
       leads?: number;
     }) => {
       const supabase = createClient();
-      // Check if a metrics row already exists for this content
-      // Use maybeSingle() to avoid error when no rows exist
       const { data: existing } = await supabase
         .from("content_metrics")
         .select("id")
@@ -380,7 +394,6 @@ export function useUpdateMetrics() {
         .maybeSingle();
 
       if (existing) {
-        // Update existing row
         const { content_id: _cid, ...updates } = metrics;
         const { data, error } = await supabase
           .from("content_metrics")
@@ -391,7 +404,6 @@ export function useUpdateMetrics() {
         if (error) throw error;
         return data;
       } else {
-        // Insert new row
         const { data, error } = await supabase
           .from("content_metrics")
           .insert(metrics)

@@ -3,7 +3,6 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
-  // 1. Verify caller is authenticated admin
   const serverSupabase = await createServerClient();
   const {
     data: { user },
@@ -12,20 +11,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Check caller is admin
   const { data: callerProfile } = await serverSupabase
     .from("user_profiles")
-    .select("role")
+    .select("role, team")
     .eq("id", user.id)
     .single();
-  if (callerProfile?.role !== "admin") {
+
+  const callerRole = callerProfile?.role;
+  const callerTeam = callerProfile?.team;
+
+  if (callerRole !== "admin" && callerRole !== "lead") {
     return NextResponse.json(
-      { error: "Only admin can invite members" },
+      { error: "只有管理员和部门负责人可以邀请成员" },
       { status: 403 }
     );
   }
 
-  // 2. Parse request body
   let body;
   try {
     body = await request.json();
@@ -44,13 +45,27 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Validate role against whitelist
   const VALID_ROLES = ["admin", "lead", "operator", "ai", "admission"];
   if (!VALID_ROLES.includes(role)) {
     return NextResponse.json(
       { error: `Invalid role. Must be one of: ${VALID_ROLES.join(", ")}` },
       { status: 400 }
     );
+  }
+
+  if (callerRole === "lead") {
+    if (role === "admin" || role === "lead") {
+      return NextResponse.json(
+        { error: "部门负责人不能创建管理员或负责人角色" },
+        { status: 403 }
+      );
+    }
+    if (team && team !== callerTeam) {
+      return NextResponse.json(
+        { error: "部门负责人只能邀请自己团队的成员" },
+        { status: 403 }
+      );
+    }
   }
 
   if (password.length < 6) {
@@ -60,7 +75,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 3. Create user with service role key (admin API)
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     return NextResponse.json(
@@ -75,12 +89,13 @@ export async function POST(request: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  // Create auth user
+  const finalTeam = callerRole === "lead" ? callerTeam : (team || "china");
+
   const { data: newUser, error: authError } =
     await adminSupabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Skip email verification
+      email_confirm: true,
       user_metadata: { display_name },
     });
 
@@ -98,18 +113,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // 4. Create user_profiles record
   const { error: profileError } = await adminSupabase
     .from("user_profiles")
     .upsert({
       id: newUser.user.id,
       display_name,
       role: role || "operator",
-      team: team || "china",
+      team: finalTeam,
     });
 
   if (profileError) {
-    // Rollback: delete the auth user if profile creation fails
     await adminSupabase.auth.admin.deleteUser(newUser.user.id);
     return NextResponse.json(
       { error: "Failed to create profile: " + profileError.message },
@@ -124,7 +137,7 @@ export async function POST(request: NextRequest) {
       email: newUser.user.email,
       display_name,
       role,
-      team: team || "china",
+      team: finalTeam,
     },
   });
 }

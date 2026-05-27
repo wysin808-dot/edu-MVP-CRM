@@ -12,14 +12,21 @@ import { Select } from "@/components/ui/Select";
 import type { UserProfile } from "@/lib/types";
 
 function useUserProfiles() {
+  const { role, profile } = useAuth();
+  const team = role === "lead" ? profile?.team : null;
+
   return useQuery({
-    queryKey: ["user_profiles"],
+    queryKey: ["user_profiles", { team }],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
+      let query = supabase
         .from("user_profiles")
         .select("*")
         .order("created_at", { ascending: true });
+
+      if (team) query = query.eq("team", team);
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data as UserProfile[]) || [];
     },
@@ -60,9 +67,13 @@ function useUpdateUserProfile() {
   });
 }
 
+const LEAD_ASSIGNABLE_ROLES: UserRole[] = ["operator", "ai", "admission"];
+
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const { role, profile } = useAuth();
+  const isAdmin = role === "admin";
+  const isLead = role === "lead";
   const { data: users, isLoading } = useUserProfiles();
   const updateRole = useUpdateUserRole();
   const updateProfile = useUpdateUserProfile();
@@ -71,7 +82,8 @@ export default function SettingsPage() {
   const [editForm, setEditForm] = useState({ display_name: "", team: "" });
   const [showInvite, setShowInvite] = useState(false);
   const [inviteForm, setInviteForm] = useState({
-    email: "", password: "", display_name: "", role: "operator", team: "china",
+    email: "", password: "", display_name: "", role: "operator",
+    team: profile?.team || "china",
   });
   const [inviting, setInviting] = useState(false);
   const [inviteResult, setInviteResult] = useState<{ success?: boolean; error?: string; email?: string } | null>(null);
@@ -100,11 +112,14 @@ export default function SettingsPage() {
   const handleSaveUser = async () => {
     if (!editingUser) return;
     try {
-      await updateProfile.mutateAsync({
+      const updates: Partial<UserProfile> & { id: string } = {
         id: editingUser.id,
         display_name: editForm.display_name || null,
-        team: editForm.team,
-      });
+      };
+      if (isAdmin) {
+        updates.team = editForm.team;
+      }
+      await updateProfile.mutateAsync(updates);
       setEditingUser(null);
     } catch {
       alert("保存失败，请重试");
@@ -112,6 +127,7 @@ export default function SettingsPage() {
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
+    if (isLead && (newRole === "admin" || newRole === "lead")) return;
     try {
       await updateRole.mutateAsync({ id: userId, role: newRole });
     } catch {
@@ -125,15 +141,19 @@ export default function SettingsPage() {
     setInviting(true);
     setInviteResult(null);
     try {
+      const payload = {
+        ...inviteForm,
+        team: isLead ? profile?.team : inviteForm.team,
+      };
       const res = await fetch("/api/invite-member", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(inviteForm),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (res.ok) {
         setInviteResult({ success: true, email: inviteForm.email });
-        setInviteForm({ email: "", password: "", display_name: "", role: "operator", team: "china" });
+        setInviteForm({ email: "", password: "", display_name: "", role: "operator", team: profile?.team || "china" });
         queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
       } else {
         setInviteResult({ error: data.error || "邀请失败" });
@@ -147,15 +167,48 @@ export default function SettingsPage() {
 
   if (isLoading) return <PageSkeleton />;
 
-  // Count by role
   const roleCounts = users?.reduce((acc, u) => {
     acc[u.role] = (acc[u.role] || 0) + 1;
     return acc;
   }, {} as Record<string, number>) || {};
 
+  const inviteRoleOptions = isLead
+    ? LEAD_ASSIGNABLE_ROLES.map((k) => ({ value: k, label: ROLE_CONFIG[k].title }))
+    : Object.entries(ROLE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }));
+
+  const canChangeRole = (targetUser: UserProfile) => {
+    if (targetUser.id === profile?.id) return false;
+    if (isAdmin) return true;
+    if (isLead && targetUser.role !== "admin" && targetUser.role !== "lead") return true;
+    return false;
+  };
+
+  const roleChangeOptions = (targetUser: UserProfile) => {
+    if (isAdmin) {
+      return Object.entries(ROLE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }));
+    }
+    if (isLead) {
+      return LEAD_ASSIGNABLE_ROLES.map((k) => ({ value: k, label: ROLE_CONFIG[k].title }));
+    }
+    return [];
+  };
+
+  const canEditUser = (targetUser: UserProfile) => {
+    if (targetUser.id === profile?.id) return false;
+    if (isAdmin) return true;
+    if (isLead && targetUser.role !== "admin" && targetUser.role !== "lead") return true;
+    return false;
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
-      <h2 className="text-lg font-bold mb-6" style={{ color: "var(--ink)" }}>系统设置</h2>
+      <h2 className="text-lg font-bold mb-1" style={{ color: "var(--ink)" }}>系统设置</h2>
+      {isLead && (
+        <p className="text-xs mb-6" style={{ color: "var(--muted)" }}>
+          当前管理: {profile?.team === "hq" ? "总部 (新加坡)" : "中国区"} 团队
+        </p>
+      )}
+      {isAdmin && <div className="mb-6" />}
 
       {/* Team Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
@@ -174,9 +227,10 @@ export default function SettingsPage() {
       <div className="rounded-xl p-6 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
-            团队成员 <span className="font-normal text-xs" style={{ color: "var(--muted)" }}>· {users?.length || 0} 人</span>
+            {isLead ? "我的团队" : "团队成员"}{" "}
+            <span className="font-normal text-xs" style={{ color: "var(--muted)" }}>· {users?.length || 0} 人</span>
           </h3>
-          {role === "admin" && (
+          {(isAdmin || isLead) && (
             <Button variant="primary" size="sm" onClick={() => { setShowInvite(true); setInviteResult(null); }}>
               + 邀请成员
             </Button>
@@ -202,13 +256,11 @@ export default function SettingsPage() {
               return (
                 <div key={user.id} className="flex items-center gap-4 p-3 rounded-lg"
                   style={{ background: isCurrentUser ? "rgba(232,122,46,0.05)" : "var(--surface-soft)" }}>
-                  {/* Avatar */}
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
                     style={{ background: "var(--brand)" }}>
                     {(user.display_name || "?").charAt(0)}
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium" style={{ color: "var(--ink)" }}>
@@ -223,22 +275,19 @@ export default function SettingsPage() {
                     </span>
                   </div>
 
-                  {/* Team */}
                   <Badge variant="outline">{user.team === "hq" ? "总部" : "中国区"}</Badge>
 
-                  {/* Role */}
-                  {role === "admin" && !isCurrentUser ? (
+                  {canChangeRole(user) ? (
                     <Select label="" value={user.role}
                       onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                      options={Object.entries(ROLE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))} />
+                      options={roleChangeOptions(user)} />
                   ) : (
                     <Badge variant={roleBadge()}>
                       {roleConfig?.title || user.role}
                     </Badge>
                   )}
 
-                  {/* Edit button for admin */}
-                  {role === "admin" && (
+                  {canEditUser(user) && (
                     <button
                       onClick={() => openEditUser(user)}
                       className="text-xs px-2 py-1 rounded transition-colors"
@@ -314,12 +363,12 @@ export default function SettingsPage() {
         <form onSubmit={handleInvite} className="flex flex-col gap-4">
           {inviteResult?.success && (
             <div className="p-3 rounded-lg text-sm" style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#166534" }}>
-              ✅ 成员 {inviteResult.email} 已创建成功！请将登录邮箱和密码告知该成员。
+              成员 {inviteResult.email} 已创建成功！请将登录邮箱和密码告知该成员。
             </div>
           )}
           {inviteResult?.error && (
             <div className="p-3 rounded-lg text-sm" style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#991b1b" }}>
-              ❌ {inviteResult.error}
+              {inviteResult.error}
             </div>
           )}
           <div>
@@ -328,7 +377,7 @@ export default function SettingsPage() {
               onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })} required
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
-              placeholder="employee@bci.edu.sg" />
+              placeholder="employee@seda.edu.sg" />
           </div>
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>初始密码 *</label>
@@ -349,13 +398,23 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-3">
             <Select label="角色" value={inviteForm.role}
               onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
-              options={Object.entries(ROLE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }))} />
-            <Select label="团队" value={inviteForm.team}
-              onChange={(e) => setInviteForm({ ...inviteForm, team: e.target.value })}
-              options={[
-                { value: "china", label: "中国区" },
-                { value: "hq", label: "总部 (新加坡)" },
-              ]} />
+              options={inviteRoleOptions} />
+            {isAdmin ? (
+              <Select label="团队" value={inviteForm.team}
+                onChange={(e) => setInviteForm({ ...inviteForm, team: e.target.value })}
+                options={[
+                  { value: "china", label: "中国区" },
+                  { value: "hq", label: "总部 (新加坡)" },
+                ]} />
+            ) : (
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>团队</label>
+                <div className="px-3 py-2 rounded-lg text-sm"
+                  style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--muted)" }}>
+                  {profile?.team === "hq" ? "总部 (新加坡)" : "中国区"}
+                </div>
+              </div>
+            )}
           </div>
         </form>
       </Modal>
@@ -380,12 +439,23 @@ export default function SettingsPage() {
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
               placeholder="输入显示名称" />
           </div>
-          <Select label="所属团队" value={editForm.team}
-            onChange={(e) => setEditForm({ ...editForm, team: e.target.value })}
-            options={[
-              { value: "china", label: "中国区" },
-              { value: "hq", label: "总部 (新加坡)" },
-            ]} />
+          {isAdmin && (
+            <Select label="所属团队" value={editForm.team}
+              onChange={(e) => setEditForm({ ...editForm, team: e.target.value })}
+              options={[
+                { value: "china", label: "中国区" },
+                { value: "hq", label: "总部 (新加坡)" },
+              ]} />
+          )}
+          {isLead && (
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>所属团队</label>
+              <div className="px-3 py-2 rounded-lg text-sm"
+                style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--muted)" }}>
+                {editForm.team === "hq" ? "总部 (新加坡)" : "中国区"}
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

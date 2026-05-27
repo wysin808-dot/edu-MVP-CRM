@@ -2,11 +2,19 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/providers/AuthProvider";
 import type { CrmLead, CrmLeadInsert } from "@/lib/types";
 
+function useTeamFilter() {
+  const { profile, role } = useAuth();
+  return role === "admin" ? null : profile?.team || null;
+}
+
 export function useCrmLeadList(filters?: { stage?: string }) {
+  const team = useTeamFilter();
+
   return useQuery({
-    queryKey: ["crm_leads", filters],
+    queryKey: ["crm_leads", filters, { team }],
     queryFn: async () => {
       const supabase = createClient();
       let query = supabase
@@ -15,6 +23,7 @@ export function useCrmLeadList(filters?: { stage?: string }) {
         .order("created_at", { ascending: false });
 
       if (filters?.stage) query = query.eq("stage", filters.stage);
+      if (team) query = query.eq("team", team);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -42,13 +51,14 @@ export function useCrmLead(id: string) {
 
 export function useCreateCrmLead() {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   return useMutation({
     mutationFn: async (lead: CrmLeadInsert) => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("crm_leads")
-        .insert(lead)
+        .insert({ ...lead, team: profile?.team || "china" })
         .select()
         .single();
       if (error) throw error;
