@@ -283,35 +283,73 @@ function DailyTab({
         <p className="text-sm mb-4 opacity-90">
           选择一个主题，系统将自动生成 4 条朋友圈 + 1 条小红书 + 1 条视频脚本 + 3 条私聊话术
         </p>
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <input
-              type="text"
-              list="batch-topic-list"
-              value={batchTopic}
-              onChange={(e) => setBatchTopic(e.target.value)}
-              placeholder="输入主题或从建议中选择..."
-              className="w-full px-3 py-2.5 rounded-lg text-sm border-none outline-none"
-              style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
-            />
-            <datalist id="batch-topic-list">
-              {COACH_TOPICS.map((t) => (
-                <option key={t} value={t} />
-              ))}
-            </datalist>
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={batchTopic}
+                onChange={(e) => setBatchTopic(e.target.value)}
+                placeholder="输入自定义主题..."
+                className="w-full px-3 py-2.5 rounded-lg text-sm border-none outline-none"
+                style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
+              />
+            </div>
+            <button
+              onClick={onGenerate}
+              disabled={isGenerating}
+              className="px-6 py-2.5 rounded-lg text-sm font-semibold border-none cursor-pointer whitespace-nowrap"
+              style={{
+                background: "rgba(255,255,255,0.95)",
+                color: "var(--brand)",
+                opacity: isGenerating ? 0.7 : 1,
+              }}
+            >
+              {isGenerating ? "🔄 生成中..." : "✨ 生成今日内容"}
+            </button>
           </div>
-          <button
-            onClick={onGenerate}
-            disabled={isGenerating}
-            className="px-6 py-2.5 rounded-lg text-sm font-semibold border-none cursor-pointer whitespace-nowrap"
-            style={{
-              background: "rgba(255,255,255,0.95)",
-              color: "var(--brand)",
-              opacity: isGenerating ? 0.7 : 1,
-            }}
-          >
-            {isGenerating ? "🔄 生成中..." : "✨ 生成今日内容"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {COACH_TOPICS.slice(0, 8).map((t) => (
+              <button
+                key={t}
+                onClick={() => setBatchTopic(t)}
+                className="text-xs px-3 py-1.5 rounded-full border-none cursor-pointer transition-all"
+                style={{
+                  background: batchTopic === t ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.1)",
+                  color: "#fff",
+                  fontWeight: batchTopic === t ? 600 : 400,
+                }}
+              >
+                {t}
+              </button>
+            ))}
+            <details className="relative" style={{ display: "inline-block" }}>
+              <summary
+                className="text-xs px-3 py-1.5 rounded-full border-none cursor-pointer list-none"
+                style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+              >
+                更多 ▾
+              </summary>
+              <div
+                className="absolute bottom-full left-0 mb-2 p-2 rounded-lg flex flex-wrap gap-2 z-50"
+                style={{ background: "var(--surface)", border: "1px solid var(--border)", minWidth: 280 }}
+              >
+                {COACH_TOPICS.slice(8).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setBatchTopic(t)}
+                    className="text-xs px-3 py-1.5 rounded-full border-none cursor-pointer"
+                    style={{
+                      background: batchTopic === t ? "var(--brand)" : "var(--surface-soft)",
+                      color: batchTopic === t ? "#fff" : "var(--ink)",
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </details>
+          </div>
         </div>
       </div>
 
@@ -400,22 +438,61 @@ function GenerateTab({
             </label>
             <input
               type="text"
-              list="generate-topic-list"
               value={form.topic}
               onChange={(e) => setForm({ ...form, topic: e.target.value })}
-              placeholder="输入主题或从建议中选择..."
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              placeholder="输入自定义主题..."
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none mb-2"
               style={{
                 background: "var(--surface-soft)",
                 border: "1px solid var(--border)",
                 color: "var(--ink)",
               }}
             />
-            <datalist id="generate-topic-list">
-              {COACH_TOPICS.map((t) => (
-                <option key={t} value={t} />
+            <div className="flex flex-wrap gap-1.5">
+              {COACH_TOPICS.slice(0, 6).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setForm({ ...form, topic: t })}
+                  className="text-xs px-2.5 py-1 rounded-full border-none cursor-pointer transition-all"
+                  style={{
+                    background: form.topic === t ? "var(--brand)" : "var(--surface-soft)",
+                    color: form.topic === t ? "#fff" : "var(--muted)",
+                    border: `1px solid ${form.topic === t ? "var(--brand)" : "var(--border)"}`,
+                    fontWeight: form.topic === t ? 600 : 400,
+                  }}
+                >
+                  {t}
+                </button>
               ))}
-            </datalist>
+              <details className="relative" style={{ display: "inline-block" }}>
+                <summary
+                  className="text-xs px-2.5 py-1 rounded-full cursor-pointer list-none"
+                  style={{ background: "var(--surface-soft)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                >
+                  更多 ▾
+                </summary>
+                <div
+                  className="absolute top-full left-0 mt-1 p-2 rounded-lg flex flex-wrap gap-1.5 z-50"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", minWidth: 260, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
+                >
+                  {COACH_TOPICS.slice(6).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setForm({ ...form, topic: t })}
+                      className="text-xs px-2.5 py-1 rounded-full border-none cursor-pointer"
+                      style={{
+                        background: form.topic === t ? "var(--brand)" : "var(--surface-soft)",
+                        color: form.topic === t ? "#fff" : "var(--ink)",
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </details>
+            </div>
           </div>
           <Select
             label="发布平台 *"
@@ -737,6 +814,7 @@ function ContentCard({
     e.stopPropagation();
     const img = generateCardImage(item.topic, item.content_type, item.output_text);
     setCardImage(img);
+    setExpanded(true);
   };
 
   return (
