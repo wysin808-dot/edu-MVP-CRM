@@ -176,16 +176,20 @@ function DailyTab({
         </p>
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <select
+            <input
+              type="text"
+              list="batch-topic-list"
               value={batchTopic}
               onChange={(e) => setBatchTopic(e.target.value)}
+              placeholder="输入主题或从建议中选择..."
               className="w-full px-3 py-2.5 rounded-lg text-sm border-none outline-none"
               style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
-            >
+            />
+            <datalist id="batch-topic-list">
               {COACH_TOPICS.map((t) => (
-                <option key={t} value={t} style={{ color: "#333" }}>{t}</option>
+                <option key={t} value={t} />
               ))}
-            </select>
+            </datalist>
           </div>
           <button
             onClick={onGenerate}
@@ -280,12 +284,29 @@ function GenerateTab({
           🎯 自定义生成
         </h3>
         <div className="flex flex-col gap-4">
-          <Select
-            label="主题 *"
-            value={form.topic}
-            onChange={(e) => setForm({ ...form, topic: e.target.value })}
-            options={COACH_TOPICS.map((t) => ({ value: t, label: t }))}
-          />
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--muted)" }}>
+              主题 *
+            </label>
+            <input
+              type="text"
+              list="generate-topic-list"
+              value={form.topic}
+              onChange={(e) => setForm({ ...form, topic: e.target.value })}
+              placeholder="输入主题或从建议中选择..."
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{
+                background: "var(--surface-soft)",
+                border: "1px solid var(--border)",
+                color: "var(--ink)",
+              }}
+            />
+            <datalist id="generate-topic-list">
+              {COACH_TOPICS.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
+          </div>
           <Select
             label="发布平台 *"
             value={form.platform}
