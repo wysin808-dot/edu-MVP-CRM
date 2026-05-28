@@ -214,6 +214,23 @@ export interface AuditLogEntry {
   created_at: string;
 }
 
+// ── Coach System Types ──
+export interface CoachGenerated {
+  id: string;
+  user_id: string | null;
+  user_name: string | null;
+  topic: string;
+  platform: string;
+  audience_tag: string | null;
+  tone: string | null;
+  content_type: string;
+  output_text: string;
+  is_daily: boolean;
+  batch_id: string | null;
+  is_saved: boolean;
+  created_at: string;
+}
+
 // ── Form Input Types ──
 export type ContentInsert = Omit<Content, "id" | "created_at" | "updated_at" | "team" | "account" | "persona" | "metrics" | "reviews" | "comments" | "knowledge_refs" | "repurpose_children" | "media">;
 export type ContentUpdate = Partial<ContentInsert>;
