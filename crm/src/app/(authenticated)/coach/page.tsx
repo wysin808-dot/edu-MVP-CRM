@@ -22,6 +22,115 @@ import {
 } from "@/lib/constants";
 import type { CoachGenerated } from "@/lib/types";
 
+// ── Canvas Image Generator ──
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const lines: string[] = [];
+  let current = "";
+  for (const char of text) {
+    const test = current + char;
+    if (ctx.measureText(test).width > maxWidth) {
+      lines.push(current);
+      current = char;
+    } else {
+      current = test;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function generateCardImage(topic: string, contentType: string, text: string): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1080;
+  const ctx = canvas.getContext("2d")!;
+
+  const schemes: Record<string, [string, string, string]> = {
+    "教育观点": ["#0f172a", "#1e293b", "#e87a2e"],
+    "家长共情": ["#1a1a2e", "#16213e", "#e87a2e"],
+    "校园氛围": ["#0d3b2e", "#1a5c3e", "#4ecdc4"],
+    "招生转化": ["#7c2d12", "#c2410c", "#fbbf24"],
+    "私聊跟进": ["#1e1b4b", "#312e81", "#818cf8"],
+    "小红书": ["#831843", "#9d174d", "#f472b6"],
+    "视频脚本": ["#0c4a6e", "#0369a1", "#38bdf8"],
+    "学生成长": ["#134e4a", "#0f766e", "#2dd4bf"],
+    "升学路径": ["#1e1b4b", "#3730a3", "#a78bfa"],
+  };
+  const [bg1, bg2, accent] = schemes[contentType] || ["#1a1a2e", "#16213e", "#e87a2e"];
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, 1080, 1080);
+  grad.addColorStop(0, bg1);
+  grad.addColorStop(1, bg2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1080, 1080);
+
+  // Decorative circles
+  ctx.globalAlpha = 0.07;
+  ctx.fillStyle = accent;
+  ctx.beginPath(); ctx.arc(920, 140, 260, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(80, 950, 200, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(700, 800, 150, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Top accent bar
+  ctx.fillStyle = accent;
+  ctx.fillRect(80, 80, 100, 6);
+
+  // Content type tag
+  ctx.font = 'bold 28px "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+  ctx.fillStyle = accent;
+  ctx.textAlign = "left";
+  ctx.fillText(contentType, 80, 140);
+
+  // Topic title
+  ctx.font = 'bold 60px "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+  ctx.fillStyle = "#ffffff";
+  const topicLines = wrapText(ctx, topic, 920);
+  topicLines.slice(0, 2).forEach((line, i) => {
+    ctx.fillText(line, 80, 260 + i * 78);
+  });
+
+  // Divider
+  const divY = 260 + Math.min(topicLines.length, 2) * 78 + 40;
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  ctx.fillRect(80, divY, 920, 2);
+
+  // Text excerpt
+  ctx.font = '30px "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  const cleanText = text.replace(/\n+/g, " ").replace(/[#【】]/g, "");
+  const excerpt = cleanText.substring(0, 120);
+  const excerptLines = wrapText(ctx, excerpt, 920);
+  excerptLines.slice(0, 5).forEach((line, i) => {
+    ctx.fillText(line, 80, divY + 60 + i * 46);
+  });
+
+  // Bottom accent line
+  ctx.fillStyle = accent;
+  ctx.fillRect(80, 980, 60, 4);
+
+  // Branding
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.font = '22px "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif';
+  ctx.textAlign = "left";
+  ctx.fillText("SEDA · 新加坡国际教育", 80, 1040);
+
+  ctx.fillStyle = accent;
+  ctx.beginPath(); ctx.arc(1000, 1020, 5, 0, Math.PI * 2); ctx.fill();
+
+  return canvas.toDataURL("image/png");
+}
+
+function downloadImage(dataUrl: string, filename: string) {
+  const a = document.createElement("a");
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 type TabId = "daily" | "generate" | "history";
 
 export default function CoachPage() {
@@ -251,6 +360,7 @@ function GenerateTab({
   onToggleSave: (id: string, saved: boolean) => void;
 }) {
   const generate = useCoachGenerate();
+  const [genImage, setGenImage] = useState<string | null>(null);
   const [form, setForm] = useState({
     topic: COACH_TOPICS[0] as string,
     platform: "朋友圈",
@@ -380,6 +490,16 @@ function GenerateTab({
                 >
                   {copiedId === result.saved?.id ? "✅ 已复制" : "📋 复制"}
                 </button>
+                <button
+                  onClick={() => {
+                    const img = generateCardImage(form.topic, form.contentType, result.content);
+                    setGenImage(img);
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-medium"
+                  style={{ background: "var(--surface-soft)", color: "var(--ink)" }}
+                >
+                  🎨 生成配图
+                </button>
                 {result.saved && (
                   <button
                     onClick={() => onToggleSave(result.saved!.id, !result.saved!.is_saved)}
@@ -401,6 +521,33 @@ function GenerateTab({
                 </button>
               </div>
             </div>
+            {/* Generated Image Preview */}
+            {genImage && (
+              <div className="px-5 pt-4">
+                <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+                  <img src={genImage} alt="配图" className="w-full" style={{ display: "block", maxHeight: 400, objectFit: "contain", background: "#111" }} />
+                  <div className="flex gap-2 p-3" style={{ background: "var(--surface-soft)" }}>
+                    <button
+                      onClick={() => downloadImage(genImage, `${form.topic}-${form.contentType}.png`)}
+                      className="text-xs px-4 py-2 rounded-lg border-none cursor-pointer font-medium"
+                      style={{ background: "var(--brand)", color: "#fff" }}
+                    >
+                      📥 下载配图
+                    </button>
+                    <button
+                      onClick={() => {
+                        const img = generateCardImage(form.topic, form.contentType, result.content);
+                        setGenImage(img);
+                      }}
+                      className="text-xs px-4 py-2 rounded-lg border-none cursor-pointer"
+                      style={{ background: "var(--surface)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                    >
+                      🔄 换一张风格
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="p-5">
               <pre
                 className="text-sm whitespace-pre-wrap m-0 leading-relaxed"
@@ -584,6 +731,13 @@ function ContentCard({
   onDelete: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [cardImage, setCardImage] = useState<string | null>(null);
+
+  const handleGenerateImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const img = generateCardImage(item.topic, item.content_type, item.output_text);
+    setCardImage(img);
+  };
 
   return (
     <>
@@ -620,22 +774,29 @@ function ContentCard({
 
         {/* Card Footer */}
         <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderTop: "1px solid var(--border)" }}>
-          <button
-            onClick={(e) => { e.stopPropagation(); onCopy(item.output_text, item.id); }}
-            className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-medium"
-            style={{ background: "var(--brand)", color: "#fff" }}
-          >
-            {copiedId === item.id ? "✅ 已复制" : "📋 一键复制"}
-          </button>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <button
-              onClick={(e) => { e.stopPropagation(); onToggleSave(item.id, !item.is_saved); }}
-              className="text-xs px-2 py-1 rounded border-none cursor-pointer"
-              style={{ background: "transparent", color: "var(--muted)" }}
+              onClick={(e) => { e.stopPropagation(); onCopy(item.output_text, item.id); }}
+              className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-medium"
+              style={{ background: "var(--brand)", color: "#fff" }}
             >
-              {item.is_saved ? "⭐" : "☆"}
+              {copiedId === item.id ? "✅ 已复制" : "📋 复制"}
+            </button>
+            <button
+              onClick={handleGenerateImage}
+              className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-medium"
+              style={{ background: "var(--surface-soft)", color: "var(--ink)" }}
+            >
+              🎨 配图
             </button>
           </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleSave(item.id, !item.is_saved); }}
+            className="text-xs px-2 py-1 rounded border-none cursor-pointer"
+            style={{ background: "transparent", color: "var(--muted)" }}
+          >
+            {item.is_saved ? "⭐" : "☆"}
+          </button>
         </div>
       </div>
 
@@ -649,6 +810,13 @@ function ContentCard({
               style={{ background: "var(--brand)", color: "#fff" }}
             >
               {copiedId === item.id ? "✅ 已复制" : "📋 复制内容"}
+            </button>
+            <button
+              onClick={handleGenerateImage}
+              className="text-xs px-4 py-2 rounded-lg border-none cursor-pointer font-medium"
+              style={{ background: "var(--surface-soft)", color: "var(--ink)" }}
+            >
+              🎨 生成配图
             </button>
             <button
               onClick={() => onToggleSave(item.id, !item.is_saved)}
@@ -677,6 +845,30 @@ function ContentCard({
             {item.audience_tag && <Badge variant="outline">{item.audience_tag}</Badge>}
             {item.tone && <Badge variant="outline">{item.tone}</Badge>}
           </div>
+
+          {/* Image Preview */}
+          {cardImage && (
+            <div className="mb-4 rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+              <img src={cardImage} alt="配图" className="w-full" style={{ display: "block" }} />
+              <div className="flex gap-2 p-3" style={{ background: "var(--surface-soft)" }}>
+                <button
+                  onClick={() => downloadImage(cardImage, `${item.topic}-${item.content_type}.png`)}
+                  className="text-xs px-4 py-2 rounded-lg border-none cursor-pointer font-medium"
+                  style={{ background: "var(--brand)", color: "#fff" }}
+                >
+                  📥 下载配图
+                </button>
+                <button
+                  onClick={handleGenerateImage}
+                  className="text-xs px-4 py-2 rounded-lg border-none cursor-pointer"
+                  style={{ background: "var(--surface)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                >
+                  🔄 换一张
+                </button>
+              </div>
+            </div>
+          )}
+
           <pre
             className="text-sm whitespace-pre-wrap m-0 leading-relaxed"
             style={{ color: "var(--ink)", fontFamily: "inherit" }}
