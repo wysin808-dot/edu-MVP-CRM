@@ -127,194 +127,167 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-function generateCardImage(topic: string, contentType: string, text: string): string {
+function generateCardImage(topic: string, contentType: string, _text: string): string {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
-  canvas.height = 1350;
+  canvas.height = 1080;
   const ctx = canvas.getContext("2d")!;
-  const W = 1080, H = 1350;
+  const W = 1080, H = 1080;
 
-  // Color schemes: [bgGrad1, bgGrad2, accent, accentSoft, cardBg]
-  const schemes: Record<string, [string, string, string, string, string]> = {
-    "教育观点": ["#0f172a", "#1e293b", "#f59e0b", "#fef3c7", "rgba(245,158,11,0.08)"],
-    "家长共情": ["#1a1a2e", "#16213e", "#ec4899", "#fce7f3", "rgba(236,72,153,0.08)"],
-    "校园氛围": ["#0d3b2e", "#1a5c3e", "#34d399", "#d1fae5", "rgba(52,211,153,0.08)"],
-    "招生转化": ["#450a0a", "#7c2d12", "#fb923c", "#ffedd5", "rgba(251,146,60,0.08)"],
-    "私聊跟进": ["#1e1b4b", "#312e81", "#818cf8", "#e0e7ff", "rgba(129,140,248,0.08)"],
-    "小红书": ["#4a0519", "#831843", "#fb7185", "#ffe4e6", "rgba(251,113,133,0.08)"],
-    "视频脚本": ["#0c4a6e", "#0369a1", "#38bdf8", "#e0f2fe", "rgba(56,189,248,0.08)"],
-    "学生成长": ["#134e4a", "#0f766e", "#2dd4bf", "#ccfbf1", "rgba(45,212,191,0.08)"],
-    "升学路径": ["#1e1b4b", "#3730a3", "#a78bfa", "#ede9fe", "rgba(167,139,250,0.08)"],
+  // Pick a random visual style each time
+  const styleIdx = Math.floor(Math.random() * 3);
+
+  // Color schemes: [bg1, bg2, accent, accentSoft]
+  const schemes: Record<string, [string, string, string, string]> = {
+    "教育观点": ["#f8fafc", "#e2e8f0", "#e87a2e", "#fed7aa"],
+    "家长共情": ["#fdf2f8", "#fce7f3", "#db2777", "#fbcfe8"],
+    "校园氛围": ["#ecfdf5", "#d1fae5", "#059669", "#a7f3d0"],
+    "招生转化": ["#fff7ed", "#ffedd5", "#ea580c", "#fed7aa"],
+    "私聊跟进": ["#eef2ff", "#e0e7ff", "#4f46e5", "#c7d2fe"],
+    "小红书": ["#fff1f2", "#ffe4e6", "#e11d48", "#fecdd3"],
+    "视频脚本": ["#f0f9ff", "#e0f2fe", "#0284c7", "#bae6fd"],
+    "学生成长": ["#f0fdfa", "#ccfbf1", "#0d9488", "#99f6e4"],
+    "升学路径": ["#f5f3ff", "#ede9fe", "#7c3aed", "#ddd6fe"],
   };
-  const [bg1, bg2, accent, , cardBg] = schemes[contentType] || schemes["教育观点"];
+  const [bg1, bg2, accent, accentSoft] = schemes[contentType] || schemes["教育观点"];
 
-  // === Background gradient ===
-  const grad = ctx.createLinearGradient(0, 0, W * 0.3, H);
-  grad.addColorStop(0, bg1);
-  grad.addColorStop(1, bg2);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  if (styleIdx === 0) {
+    // === Style 1: Clean white card with accent strip ===
+    // Soft gradient background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, bg1);
+    grad.addColorStop(1, bg2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
 
-  // === Subtle dot pattern ===
-  ctx.fillStyle = "rgba(255,255,255,0.03)";
-  for (let x = 30; x < W; x += 40) {
-    for (let y = 30; y < H; y += 40) {
-      ctx.beginPath();
-      ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Large accent circle decoration (top-right)
+    ctx.fillStyle = accentSoft;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath(); ctx.arc(W - 100, 100, 300, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 0.2;
+    ctx.beginPath(); ctx.arc(150, H - 150, 250, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Left accent strip
+    ctx.fillStyle = accent;
+    roundRect(ctx, 0, 0, 12, H, 0);
+    ctx.fill();
+
+    // Topic title — centered, large
+    ctx.font = 'bold 72px "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = "#1a1a1a";
+    ctx.textAlign = "center";
+    const topicLines = wrapText(ctx, topic, 800);
+    const totalHeight = topicLines.length * 90;
+    const startY = (H - totalHeight) / 2 + 30;
+    topicLines.slice(0, 3).forEach((line, i) => {
+      ctx.fillText(line, W / 2, startY + i * 90);
+    });
+
+    // Accent underline
+    ctx.fillStyle = accent;
+    const underY = startY + Math.min(topicLines.length, 3) * 90 + 10;
+    ctx.fillRect(W / 2 - 60, underY, 120, 5);
+
+    // Brand at bottom
+    ctx.font = '28px "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = "#999";
+    ctx.textAlign = "center";
+    ctx.fillText("SEDA \xb7 BCI 国际教育", W / 2, H - 60);
+
+  } else if (styleIdx === 1) {
+    // === Style 2: Bold colored background, white text ===
+    // Full accent background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, accent);
+    grad.addColorStop(1, accentSoft);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Geometric decorations
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.beginPath(); ctx.arc(W - 80, 80, 200, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(80, H - 80, 180, 0, Math.PI * 2); ctx.fill();
+
+    // Diagonal stripe
+    ctx.fillStyle = "rgba(255,255,255,0.05)";
+    ctx.beginPath();
+    ctx.moveTo(W * 0.6, 0);
+    ctx.lineTo(W, 0);
+    ctx.lineTo(W, H * 0.4);
+    ctx.fill();
+
+    // Topic title — big, white, centered
+    ctx.font = 'bold 76px "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    const topicLines = wrapText(ctx, topic, 800);
+    const totalHeight = topicLines.length * 96;
+    const startY = (H - totalHeight) / 2 + 20;
+    topicLines.slice(0, 3).forEach((line, i) => {
+      ctx.fillText(line, W / 2, startY + i * 96);
+    });
+
+    // Brand at bottom
+    ctx.font = '26px "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.textAlign = "center";
+    ctx.fillText("SEDA \xb7 BCI 国际教育", W / 2, H - 55);
+
+  } else {
+    // === Style 3: Split layout — color block + white ===
+    // Top half: accent color
+    const topH = H * 0.45;
+    ctx.fillStyle = accent;
+    ctx.fillRect(0, 0, W, topH);
+
+    // Bottom half: white
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, topH, W, H - topH);
+
+    // Decorative circle at boundary
+    ctx.fillStyle = accentSoft;
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath(); ctx.arc(W - 200, topH, 180, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Content type in top section
+    ctx.font = '600 30px "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.textAlign = "left";
+    ctx.fillText(contentType, 80, 80);
+
+    // Large emoji/icon in top section
+    const icons: Record<string, string> = {
+      "教育观点": "🎓", "家长共情": "💛", "校园氛围": "🏫",
+      "招生转化": "🎯", "私聊跟进": "💬", "小红书": "📕",
+      "视频脚本": "🎬", "学生成长": "🌱", "升学路径": "🛤️",
+    };
+    ctx.font = "120px serif";
+    ctx.textAlign = "center";
+    ctx.fillText(icons[contentType] || "📚", W / 2, topH - 60);
+
+    // Topic title in bottom section
+    ctx.font = 'bold 60px "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = "#1a1a1a";
+    ctx.textAlign = "center";
+    const topicLines = wrapText(ctx, topic, 860);
+    const startY = topH + 100;
+    topicLines.slice(0, 3).forEach((line, i) => {
+      ctx.fillText(line, W / 2, startY + i * 78);
+    });
+
+    // Accent line
+    const lineY = startY + Math.min(topicLines.length, 3) * 78 + 20;
+    ctx.fillStyle = accent;
+    ctx.fillRect(W / 2 - 50, lineY, 100, 4);
+
+    // Brand at bottom
+    ctx.font = '26px "PingFang SC", "Noto Sans SC", sans-serif';
+    ctx.fillStyle = "#bbb";
+    ctx.textAlign = "center";
+    ctx.fillText("SEDA \xb7 BCI 国际教育", W / 2, H - 55);
   }
-
-  // === Decorative gradient blobs ===
-  ctx.globalAlpha = 0.12;
-  const blobGrad1 = ctx.createRadialGradient(880, 120, 0, 880, 120, 280);
-  blobGrad1.addColorStop(0, accent);
-  blobGrad1.addColorStop(1, "transparent");
-  ctx.fillStyle = blobGrad1;
-  ctx.fillRect(600, 0, 480, 400);
-
-  const blobGrad2 = ctx.createRadialGradient(120, 1200, 0, 120, 1200, 250);
-  blobGrad2.addColorStop(0, accent);
-  blobGrad2.addColorStop(1, "transparent");
-  ctx.fillStyle = blobGrad2;
-  ctx.fillRect(0, 950, 370, 400);
-  ctx.globalAlpha = 1;
-
-  // === Top section: Brand bar ===
-  // Brand line
-  const brandGrad = ctx.createLinearGradient(80, 0, 500, 0);
-  brandGrad.addColorStop(0, accent);
-  brandGrad.addColorStop(1, "transparent");
-  ctx.fillStyle = brandGrad;
-  ctx.fillRect(80, 70, 420, 3);
-
-  // Brand text
-  ctx.font = '600 26px "PingFang SC", "Noto Sans SC", sans-serif';
-  ctx.fillStyle = "rgba(255,255,255,0.45)";
-  ctx.textAlign = "left";
-  ctx.fillText("SEDA · BCI 国际教育", 80, 120);
-
-  // Date tag on the right
-  const today = new Date();
-  const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, "0")}.${String(today.getDate()).padStart(2, "0")}`;
-  ctx.font = '20px "PingFang SC", "Noto Sans SC", sans-serif';
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  ctx.textAlign = "right";
-  ctx.fillText(dateStr, W - 80, 120);
-
-  // === Content type badge ===
-  ctx.font = 'bold 24px "PingFang SC", "Noto Sans SC", sans-serif';
-  const badgeText = contentType;
-  const badgeW = ctx.measureText(badgeText).width + 36;
-  ctx.fillStyle = accent;
-  roundRect(ctx, 80, 160, badgeW, 40, 20);
-  ctx.fill();
-  ctx.fillStyle = bg1;
-  ctx.textAlign = "left";
-  ctx.fillText(badgeText, 98, 188);
-
-  // === Large decorative quote ===
-  ctx.font = 'bold 180px Georgia, "Times New Roman", serif';
-  ctx.fillStyle = "rgba(255,255,255,0.04)";
-  ctx.textAlign = "left";
-  ctx.fillText("“", 50, 380);
-
-  // === Topic title ===
-  ctx.font = 'bold 54px "PingFang SC", "Noto Sans SC", sans-serif';
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "left";
-  const topicLines = wrapText(ctx, topic, 880);
-  topicLines.slice(0, 3).forEach((line, i) => {
-    ctx.fillText(line, 90, 310 + i * 70);
-  });
-
-  // Accent line under title
-  const titleEndY = 310 + Math.min(topicLines.length, 3) * 70 + 15;
-  ctx.fillStyle = accent;
-  ctx.fillRect(90, titleEndY, 80, 4);
-  ctx.fillRect(180, titleEndY, 30, 4);
-
-  // === Main content card ===
-  const cardY = titleEndY + 40;
-  const cardH = H - cardY - 160;
-  ctx.fillStyle = cardBg;
-  roundRect(ctx, 60, cardY, W - 120, cardH, 20);
-  ctx.fill();
-
-  // Card left accent bar
-  ctx.fillStyle = accent;
-  roundRect(ctx, 60, cardY, 5, cardH, 3);
-  ctx.fill();
-
-  // Content text inside card
-  ctx.font = '30px "PingFang SC", "Noto Sans SC", sans-serif';
-  ctx.fillStyle = "rgba(255,255,255,0.75)";
-  ctx.textAlign = "left";
-  const cleanText = text.replace(/\n+/g, "\n").replace(/[#【】“”„‟]/g, "").trim();
-  const contentLines: string[] = [];
-  for (const paragraph of cleanText.split("\n")) {
-    if (!paragraph.trim()) { contentLines.push(""); continue; }
-    contentLines.push(...wrapText(ctx, paragraph.trim(), 840));
-  }
-  const maxLines = Math.floor((cardH - 60) / 44);
-  let lineY = cardY + 50;
-  contentLines.slice(0, maxLines).forEach((line) => {
-    if (line === "") { lineY += 20; return; }
-    ctx.fillText(line, 100, lineY);
-    lineY += 44;
-  });
-  if (contentLines.length > maxLines) {
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.fillText("......", 100, lineY);
-  }
-
-  // === Bottom section ===
-  const bottomY = H - 110;
-
-  // Bottom separator
-  const sepGrad = ctx.createLinearGradient(80, 0, W - 80, 0);
-  sepGrad.addColorStop(0, "rgba(255,255,255,0.15)");
-  sepGrad.addColorStop(0.5, "rgba(255,255,255,0.08)");
-  sepGrad.addColorStop(1, "transparent");
-  ctx.fillStyle = sepGrad;
-  ctx.fillRect(80, bottomY, W - 160, 1);
-
-  // CTA text
-  ctx.font = '24px "PingFang SC", "Noto Sans SC", sans-serif';
-  ctx.fillStyle = accent;
-  ctx.textAlign = "left";
-  ctx.fillText("\u{1F4AC} 了解更多，欢迎私信咨询", 80, bottomY + 45);
-
-  // Logo dot
-  ctx.fillStyle = accent;
-  ctx.beginPath();
-  ctx.arc(W - 90, bottomY + 38, 8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = bg1;
-  ctx.beginPath();
-  ctx.arc(W - 90, bottomY + 38, 4, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Bottom brand
-  ctx.font = '18px "PingFang SC", "Noto Sans SC", sans-serif';
-  ctx.fillStyle = "rgba(255,255,255,0.25)";
-  ctx.textAlign = "left";
-  ctx.fillText("新加坡国际教育 \xb7 O-Level / WACE / AEIS", 80, bottomY + 85);
-
-  // Corner triangle decoration
-  ctx.fillStyle = accent;
-  ctx.globalAlpha = 0.1;
-  ctx.beginPath();
-  ctx.moveTo(W, 0);
-  ctx.lineTo(W, 150);
-  ctx.lineTo(W - 150, 0);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(0, H);
-  ctx.lineTo(0, H - 100);
-  ctx.lineTo(100, H);
-  ctx.fill();
-  ctx.globalAlpha = 1;
 
   return canvas.toDataURL("image/png");
 }
@@ -871,7 +844,7 @@ function GenerateTab({
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.color = "var(--brand)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--ink)"; }}
                 >
-                  🎨 点击生成朋友圈配图（1080×1350）
+                  🎨 生成配图（随机风格，可多次点击换样式）
                 </button>
               ) : (
                 <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
@@ -899,7 +872,7 @@ function GenerateTab({
             {/* Editable content */}
             <div className="p-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs" style={{ color: "var(--muted)" }}>✏️ 内容可编辑，修改后再复制</span>
+                <span className="text-xs" style={{ color: "var(--muted)" }}>✏️ 文字内容（可编辑，复制后粘贴到朋友圈）</span>
                 {editedContent !== result.content && (
                   <button
                     onClick={() => setEditedContent(result.content)}
@@ -1212,7 +1185,7 @@ function ContentCard({
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--brand)"; e.currentTarget.style.color = "var(--brand)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--ink)"; }}
             >
-              🎨 点击生成配图
+              🎨 生成配图（随机风格）
             </button>
           ) : (
             <div className="mb-4 rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
