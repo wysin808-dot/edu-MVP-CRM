@@ -106,7 +106,7 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className="w-full py-2.5 rounded-lg text-white font-medium text-sm transition-opacity disabled:opacity-60"
-            style={{ background: "#1a3a5c" }}
+            style={{ background: "#2563eb" }}
           >
             {loading ? "登录中..." : "登 录"}
           </button>
