@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_AI_MODEL } from "@/lib/constants";
 
-// OpenRouter API configuration
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-
-function getOpenRouterHeaders(apiKey: string) {
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-    "HTTP-Referer": "https://edu-mvp-crm.vercel.app",
-    "X-Title": "SEDA OS",
-  };
-}
+// 火山引擎 Ark (豆包) API
+const ARK_API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions";
 
 export async function POST(request: NextRequest) {
   // Auth check — prevent unauthenticated access
@@ -22,10 +12,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
+  const apiKey = process.env.ARK_API_KEY;
+  const endpointId = process.env.ARK_TEXT_ENDPOINT;
+  if (!apiKey || !endpointId) {
     return NextResponse.json(
-      { error: "OPENROUTER_API_KEY not configured" },
+      { error: "ARK_API_KEY or ARK_TEXT_ENDPOINT not configured" },
       { status: 500 }
     );
   }
@@ -54,10 +45,7 @@ export async function POST(request: NextRequest) {
     topicCluster,
     notes,
     repurposeStatus,
-    model,
   } = body;
-
-  const selectedModel = model || DEFAULT_AI_MODEL;
 
   if (!title) {
     return NextResponse.json({ error: "Missing title" }, { status: 400 });
@@ -109,11 +97,14 @@ RESULT:reject
 注意：只有所有维度都合格才给 approve；有 1-3 个问题给 revise；4 个以上问题给 reject。`;
 
   try {
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(ARK_API_URL, {
       method: "POST",
-      headers: getOpenRouterHeaders(apiKey),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        model: selectedModel,
+        model: endpointId,
         messages: [
           {
             role: "system",
@@ -130,7 +121,7 @@ RESULT:reject
     if (!response.ok) {
       const errBody = await response.text();
       return NextResponse.json(
-        { error: `OpenRouter API error: ${response.status}`, detail: errBody },
+        { error: `Ark API error: ${response.status}`, detail: errBody },
         { status: 502 }
       );
     }
@@ -150,18 +141,16 @@ RESULT:reject
       .trim();
 
     // Extract readable model name for display
-    const modelLabel = (data.model || selectedModel).split("/").pop() || selectedModel;
-
     return NextResponse.json({
       suggestion,
-      comment: `【AI 审核报告 · ${modelLabel}】\n${comment}`,
-      model: data.model || selectedModel,
+      comment: `【AI 审核报告 · 豆包】\n${comment}`,
+      model: data.model || "doubao",
       tokens: data.usage?.total_tokens || 0,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to call OpenRouter API", detail: message },
+      { error: "Failed to call Ark API", detail: message },
       { status: 500 }
     );
   }
