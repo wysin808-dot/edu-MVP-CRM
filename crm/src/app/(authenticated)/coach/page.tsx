@@ -110,7 +110,7 @@ export default function CoachPage() {
       const res = await fetch("/api/coach/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: item.topic, contentType: item.content_type }),
+        body: JSON.stringify({ topic: item.topic, contentType: item.content_type, contentText: item.output_text }),
       });
       if (!res.ok) {
         const err = await res.json();
