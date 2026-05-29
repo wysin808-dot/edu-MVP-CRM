@@ -19,6 +19,8 @@ import {
   COACH_TOPICS,
   COACH_AUDIENCE_TAGS,
   COACH_TONES,
+  AI_MODELS,
+  DEFAULT_AI_MODEL,
 } from "@/lib/constants";
 import type { CoachGenerated } from "@/lib/types";
 
@@ -332,6 +334,7 @@ export default function CoachPage() {
   const [activeTab, setActiveTab] = useState<TabId>("daily");
   const [batchTopic, setBatchTopic] = useState<string>("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_AI_MODEL);
 
   const { data: dailyItems, isLoading: dailyLoading } = useCoachDaily();
   const { data: history, isLoading: historyLoading } = useCoachHistory();
@@ -358,7 +361,7 @@ export default function CoachPage() {
 
   const handleBatchGenerate = () => {
     if (batchGenerate.isPending || !batchTopic.trim()) return;
-    batchGenerate.mutate(batchTopic);
+    batchGenerate.mutate({ topic: batchTopic, model: selectedModel });
   };
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
@@ -369,7 +372,7 @@ export default function CoachPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>
             🎓 朋友圈教练
@@ -377,6 +380,25 @@ export default function CoachPage() {
           <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
             每天为招生老师提供可直接使用的内容半成品
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: "var(--muted)" }}>🤖 AI 模型：</span>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            className="text-xs px-3 py-1.5 rounded-lg outline-none cursor-pointer"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              color: "var(--ink)",
+            }}
+          >
+            {AI_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label} — {m.description}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -417,6 +439,7 @@ export default function CoachPage() {
           onCopy={handleCopy}
           copiedId={copiedId}
           onToggleSave={(id, saved) => toggleSave.mutate({ id, is_saved: saved })}
+          selectedModel={selectedModel}
         />
       )}
 
@@ -598,11 +621,12 @@ function DailyTab({
 
 // ── Generate Tab ──
 function GenerateTab({
-  onCopy, copiedId, onToggleSave,
+  onCopy, copiedId, onToggleSave, selectedModel,
 }: {
   onCopy: (text: string, id: string) => void;
   copiedId: string | null;
   onToggleSave: (id: string, saved: boolean) => void;
+  selectedModel: string;
 }) {
   const generate = useCoachGenerate();
   const [genImage, setGenImage] = useState<string | null>(null);
@@ -627,6 +651,7 @@ function GenerateTab({
         audienceTag: form.audienceTag || undefined,
         tone: form.tone || undefined,
         contentType: form.contentType,
+        model: selectedModel,
       });
       setResult(res);
       setEditedContent(res.content);

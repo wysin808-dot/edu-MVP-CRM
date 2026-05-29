@@ -50,6 +50,7 @@ export function useCoachGenerate() {
       audienceTag?: string;
       tone?: string;
       contentType?: string;
+      model?: string;
     }) => {
       const res = await fetch("/api/coach/generate", {
         method: "POST",
@@ -72,11 +73,11 @@ export function useCoachGenerate() {
 export function useCoachBatchGenerate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (topic: string) => {
+    mutationFn: async (params: { topic: string; model?: string }) => {
       const res = await fetch("/api/coach/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, batchMode: true }),
+        body: JSON.stringify({ topic: params.topic, batchMode: true, model: params.model }),
       });
       if (!res.ok) {
         const err = await res.json();

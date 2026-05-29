@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { DEFAULT_AI_MODEL } from "@/lib/constants";
 
 const MASTER_PROMPT = `你是 BCI/SEDA 国际教育的招生内容教练。你的任务是帮助招生老师生成适合微信朋友圈、小红书、视频号和家长私聊的内容。
 
@@ -27,6 +28,18 @@ const MASTER_PROMPT = `你是 BCI/SEDA 国际教育的招生内容教练。你�
 - 20% 真人感："今天和一位家长聊到……"、"最近很多家长问我……"
 - 10% 轻转化："如果孩子也在这个阶段，可以先做一次路径评估。"`;
 
+// OpenRouter API configuration
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+
+function getOpenRouterHeaders(apiKey: string) {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+    "HTTP-Referer": "https://edu-mvp-crm.vercel.app",
+    "X-Title": "SEDA OS",
+  };
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -34,9 +47,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "DEEPSEEK_API_KEY not configured" }, { status: 500 });
+    return NextResponse.json({ error: "OPENROUTER_API_KEY not configured" }, { status: 500 });
   }
 
   let body;
@@ -46,28 +59,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { topic, platform, audienceTag, tone, contentType, batchMode } = body;
+  const { topic, platform, audienceTag, tone, contentType, batchMode, model } = body;
+  const selectedModel = model || DEFAULT_AI_MODEL;
 
   if (!topic) {
     return NextResponse.json({ error: "Missing topic" }, { status: 400 });
   }
 
   if (batchMode) {
-    return handleBatchGenerate(supabase, user, apiKey, topic);
+    return handleBatchGenerate(supabase, user, apiKey, selectedModel, topic);
   }
 
   // Single content generation
   const userPrompt = buildSinglePrompt(topic, platform, audienceTag, tone, contentType);
 
   try {
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
+    const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: getOpenRouterHeaders(apiKey),
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: selectedModel,
         messages: [
           { role: "system", content: MASTER_PROMPT },
           { role: "user", content: userPrompt },
@@ -80,7 +91,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errBody = await response.text();
       return NextResponse.json(
-        { error: `DeepSeek API error: ${response.status}`, detail: errBody },
+        { error: `OpenRouter API error: ${response.status}`, detail: errBody },
         { status: 502 }
       );
     }
@@ -113,13 +124,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       content: outputText,
       saved: saved || null,
-      model: data.model || "deepseek-chat",
+      model: data.model || selectedModel,
       tokens: data.usage?.total_tokens || 0,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to call DeepSeek API", detail: message },
+      { error: "Failed to call OpenRouter API", detail: message },
       { status: 500 }
     );
   }
@@ -164,6 +175,7 @@ async function handleBatchGenerate(
   supabase: ReturnType<typeof createClient> extends Promise<infer T> ? T : never,
   user: { id: string; email?: string | null },
   apiKey: string,
+  selectedModel: string,
   topic: string
 ) {
   const batchId = `daily_${new Date().toISOString().split("T")[0]}_${Date.now()}`;
@@ -197,14 +209,11 @@ async function handleBatchGenerate(
 请直接输出可使用的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
 
   try {
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
+    const response = await fetch(OPENROUTER_API_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: getOpenRouterHeaders(apiKey),
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: selectedModel,
         messages: [
           { role: "system", content: MASTER_PROMPT },
           { role: "user", content: batchPrompt },
@@ -217,7 +226,7 @@ async function handleBatchGenerate(
     if (!response.ok) {
       const errBody = await response.text();
       return NextResponse.json(
-        { error: `DeepSeek API error: ${response.status}`, detail: errBody },
+        { error: `OpenRouter API error: ${response.status}`, detail: errBody },
         { status: 502 }
       );
     }
@@ -254,7 +263,7 @@ async function handleBatchGenerate(
     return NextResponse.json({
       batchId,
       items: savedItems,
-      model: data.model || "deepseek-chat",
+      model: data.model || selectedModel,
       tokens: data.usage?.total_tokens || 0,
     });
   } catch (err) {

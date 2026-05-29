@@ -177,6 +177,19 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "settings", label: "系统设置", icon: "⚙️", href: "/settings" },
 ];
 
+// ── AI Model Configuration (OpenRouter) ──
+export const AI_MODELS = [
+  { id: "deepseek/deepseek-chat-v3-0324", label: "DeepSeek V3", description: "性价比最高，中文最优" },
+  { id: "google/gemini-2.5-flash-preview", label: "Gemini 2.5 Flash", description: "谷歌最新，快速准确" },
+  { id: "anthropic/claude-sonnet-4", label: "Claude Sonnet 4", description: "Anthropic 旗舰，逻辑最强" },
+  { id: "openai/gpt-4o", label: "GPT-4o", description: "OpenAI 旗舰，全能型" },
+  { id: "openai/gpt-4o-mini", label: "GPT-4o Mini", description: "轻量快速，性价比高" },
+  { id: "google/gemini-2.0-flash-001", label: "Gemini 2.0 Flash", description: "谷歌上代快速模型" },
+  { id: "deepseek/deepseek-r1", label: "DeepSeek R1", description: "推理增强，适合复杂分析" },
+] as const;
+
+export const DEFAULT_AI_MODEL = AI_MODELS[0].id;
+
 // ── Coach System Constants ──
 export const COACH_PLATFORMS = [
   { id: "朋友圈", label: "微信朋友圈", icon: "💬" },
