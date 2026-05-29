@@ -73,7 +73,7 @@ export default function CoachPage() {
   const [items, setItems] = useState<CoachGenerated[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<string | null>(null);
-  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  const [imageData, setImageData] = useState<Record<string, { cover: string | null; pages: string[] }>>({});
   const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
 
   const batchGenerate = useCoachBatchGenerate();
@@ -85,7 +85,7 @@ export default function CoachPage() {
     if (batchGenerate.isPending || !topic.trim()) return;
     // Clear old content
     setItems([]);
-    setImageUrls({});
+    setImageData({});
     setEditedTexts({});
     setCopiedId(null);
     try {
@@ -111,21 +111,37 @@ export default function CoachPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleGenerateImage = async (item: CoachGenerated) => {
+  // mode: "moments"(朋友圈多图) | "cover"(小红书封面) | "page"(小红书内页)
+  const handleGenerateImage = async (item: CoachGenerated, mode: string, count: number) => {
     if (imageLoading) return;
     setImageLoading(item.id);
     try {
       const res = await fetch("/api/coach/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: item.topic, contentType: item.content_type, contentText: editedTexts[item.id] || item.output_text, platform: item.platform }),
+        body: JSON.stringify({
+          topic: item.topic,
+          contentType: item.content_type,
+          contentText: editedTexts[item.id] || item.output_text,
+          platform: item.platform,
+          mode,
+          count,
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || "配图生成失败");
       }
       const data = await res.json();
-      setImageUrls((prev) => ({ ...prev, [item.id]: data.url }));
+      const urls: string[] = data.urls || [];
+      setImageData((prev) => {
+        const cur = prev[item.id] || { cover: null, pages: [] };
+        if (mode === "cover") {
+          return { ...prev, [item.id]: { ...cur, cover: urls[0] || null } };
+        }
+        // moments 或 page：替换 pages
+        return { ...prev, [item.id]: { ...cur, pages: urls } };
+      });
     } catch (e) {
       alert(e instanceof Error ? e.message : "配图生成失败，请重试");
     } finally {
@@ -133,10 +149,10 @@ export default function CoachPage() {
     }
   };
 
-  const handleDownloadImage = (url: string, topic: string) => {
+  const handleDownloadImage = (url: string, name: string) => {
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${topic}-配图.png`;
+    a.download = `${name}.png`;
     a.target = "_blank";
     document.body.appendChild(a);
     a.click();
@@ -308,7 +324,9 @@ export default function CoachPage() {
         <div className="flex flex-col gap-4">
           {items.map((item, idx) => {
             const pd = PLATFORM_DISPLAY[item.platform] || PLATFORM_DISPLAY["朋友圈"];
-            const imgUrl = imageUrls[item.id];
+            const imgs = imageData[item.id];
+            const isLoadingThis = imageLoading === item.id;
+            const isXhs = item.platform === "小红书";
             return (
               <div
                 key={item.id}
@@ -330,51 +348,102 @@ export default function CoachPage() {
                     <Badge variant="outline">{item.content_type}</Badge>
                     <span className="text-xs" style={{ color: "var(--muted)" }}>#{idx + 1}</span>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleCopy(editedTexts[item.id] || item.output_text, item.id)}
-                      className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-semibold"
-                      style={{ background: "var(--brand)", color: "#fff" }}
-                    >
-                      {copiedId === item.id ? "✅ 已复制" : "📋 复制"}
-                    </button>
-                    <button
-                      onClick={() => imgUrl ? setImageUrls((prev) => { const n = { ...prev }; delete n[item.id]; return n; }) : handleGenerateImage(item)}
-                      disabled={imageLoading === item.id}
-                      className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer"
-                      style={{
-                        background: imgUrl ? "var(--brand-light, #dbeafe)" : "var(--surface-soft)",
-                        color: imgUrl ? "var(--brand)" : "var(--muted)",
-                        opacity: imageLoading === item.id ? 0.6 : 1,
-                      }}
-                    >
-                      {imageLoading === item.id ? "🔄 生成中..." : imgUrl ? "🖼 隐藏配图" : "🎨 AI 配图"}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleCopy(editedTexts[item.id] || item.output_text, item.id)}
+                    className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-semibold"
+                    style={{ background: "var(--brand)", color: "#fff" }}
+                  >
+                    {copiedId === item.id ? "✅ 已复制" : "📋 复制"}
+                  </button>
                 </div>
 
-                {/* AI generated image */}
-                {imgUrl && (
-                  <div className="px-4 pt-3">
-                    <div className="rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
-                      <img src={imgUrl} alt="AI 配图" className="w-full" style={{ display: "block", maxHeight: 400, objectFit: "cover" }} />
-                      <div className="flex gap-2 p-2" style={{ background: "var(--surface-soft)" }}>
+                {/* Image controls */}
+                <div className="px-4 pt-3 flex items-center gap-2 flex-wrap">
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>🎨 配图：</span>
+                  {isXhs ? (
+                    <>
+                      <button
+                        onClick={() => handleGenerateImage(item, "cover", 1)}
+                        disabled={isLoadingThis}
+                        className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-medium"
+                        style={{ background: "var(--brand)", color: "#fff", opacity: isLoadingThis ? 0.6 : 1 }}
+                      >
+                        {isLoadingThis ? "🔄 生成中..." : "✨ 封面"}
+                      </button>
+                      <span className="text-xs ml-1" style={{ color: "var(--muted)" }}>内页：</span>
+                      {[1, 2, 3, 4].map((c) => (
                         <button
-                          onClick={() => handleDownloadImage(imgUrl, item.topic)}
+                          key={c}
+                          onClick={() => handleGenerateImage(item, "page", c)}
+                          disabled={isLoadingThis}
+                          className="text-xs px-2.5 py-1.5 rounded-lg border cursor-pointer"
+                          style={{ background: "var(--surface-soft)", color: "var(--ink)", borderColor: "var(--border)", opacity: isLoadingThis ? 0.6 : 1 }}
+                        >
+                          {c}张
+                        </button>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      {[4, 9].map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => handleGenerateImage(item, "moments", c)}
+                          disabled={isLoadingThis}
                           className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-medium"
-                          style={{ background: "var(--brand)", color: "#fff" }}
+                          style={{ background: "var(--brand)", color: "#fff", opacity: isLoadingThis ? 0.6 : 1 }}
                         >
-                          📥 下载
+                          {isLoadingThis ? "🔄 生成中..." : `${c}张图`}
                         </button>
-                        <button
-                          onClick={() => handleGenerateImage(item)}
-                          disabled={imageLoading === item.id}
-                          className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer"
-                          style={{ background: "var(--surface)", color: "var(--muted)", border: "1px solid var(--border)" }}
-                        >
-                          🔄 换一张
-                        </button>
-                      </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+
+                {/* Loading hint */}
+                {isLoadingThis && (
+                  <div className="px-4 pt-2">
+                    <p className="text-xs" style={{ color: "var(--muted)" }}>🤖 配图生成中，多张约需 10-30 秒...</p>
+                  </div>
+                )}
+
+                {/* Cover (小红书) */}
+                {imgs?.cover && (
+                  <div className="px-4 pt-3">
+                    <p className="text-xs mb-1 font-medium" style={{ color: "var(--brand)" }}>📌 封面</p>
+                    <div className="rounded-lg overflow-hidden inline-block relative" style={{ border: "2px solid var(--brand)", maxWidth: 240 }}>
+                      <img src={imgs.cover} alt="封面" className="w-full" style={{ display: "block" }} />
+                      <button
+                        onClick={() => handleDownloadImage(imgs.cover!, `${item.topic}-封面`)}
+                        className="absolute bottom-1 right-1 text-xs px-2 py-1 rounded border-none cursor-pointer"
+                        style={{ background: "rgba(0,0,0,0.6)", color: "#fff" }}
+                      >
+                        📥
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Image grid */}
+                {imgs?.pages && imgs.pages.length > 0 && (
+                  <div className="px-4 pt-3">
+                    {isXhs && <p className="text-xs mb-1 font-medium" style={{ color: "var(--muted)" }}>🖼 内页</p>}
+                    <div
+                      className="grid gap-1.5"
+                      style={{ gridTemplateColumns: `repeat(${imgs.pages.length >= 9 ? 3 : imgs.pages.length >= 4 ? 2 : imgs.pages.length}, 1fr)`, maxWidth: imgs.pages.length >= 4 ? 480 : 600 }}
+                    >
+                      {imgs.pages.map((url, i) => (
+                        <div key={i} className="rounded-lg overflow-hidden relative" style={{ border: "1px solid var(--border)", aspectRatio: isXhs ? "3/4" : "1/1" }}>
+                          <img src={url} alt={`配图${i + 1}`} className="w-full h-full" style={{ display: "block", objectFit: "cover" }} />
+                          <button
+                            onClick={() => handleDownloadImage(url, `${item.topic}-${i + 1}`)}
+                            className="absolute bottom-1 right-1 text-xs px-1.5 py-0.5 rounded border-none cursor-pointer"
+                            style={{ background: "rgba(0,0,0,0.6)", color: "#fff" }}
+                          >
+                            📥
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
