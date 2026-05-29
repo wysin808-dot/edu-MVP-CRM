@@ -183,28 +183,20 @@ async function handleBatchGenerate(
   const batchItems = [
     { platform: "朋友圈", contentType: "教育观点" },
     { platform: "朋友圈", contentType: "家长共情" },
-    { platform: "朋友圈", contentType: "校园氛围" },
     { platform: "朋友圈", contentType: "招生转化" },
     { platform: "小红书", contentType: "小红书" },
-    { platform: "视频脚本", contentType: "视频脚本" },
-    { platform: "家长私聊", contentType: "私聊跟进" },
-    { platform: "家长私聊", contentType: "私聊跟进" },
     { platform: "家长私聊", contentType: "私聊跟进" },
   ];
 
-  const batchPrompt = `请围绕主题「${topic}」，一次性生成以下9条招生老师可以直接使用的内容。
+  const batchPrompt = `请围绕主题「${topic}」，一次性生成以下5条招生老师可以直接使用的内容。
 
 每条内容之间用 ===SPLIT=== 分隔。
 
 1. 【教育观点朋友圈】200字以内，展示专业教育判断
 2. 【家长共情朋友圈】200字以内，"最近和一位家长聊到..."风格
-3. 【校园氛围朋友圈】200字以内，展示学校环境和学生状态
-4. 【招生轻转化朋友圈】200字以内，结尾引导咨询但不强推
-5. 【小红书笔记】标题 + 800字正文 + 话题标签
-6. 【60秒视频脚本】开头钩子 + 中间内容 + 结尾CTA + 画面建议
-7. 【家长私聊话术1】初次咨询的破冰回复
-8. 【家长私聊话术2】犹豫中家长的跟进话术
-9. 【家长私聊话术3】沉默家长的激活话术
+3. 【招生轻转化朋友圈】200字以内，结尾引导咨询但不强推
+4. 【小红书笔记】标题 + 500字正文 + 话题标签
+5. 【家长私聊话术】犹豫中家长的跟进话术
 
 请直接输出可使用的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
 
