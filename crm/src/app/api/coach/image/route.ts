@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "Kwai-Kolors/Kolors",
+        model: "Tongyi-MAI/Z-Image-Turbo",
         prompt: imagePrompt,
         negative_prompt: negativePrompt,
         image_size: "1024x1024",
