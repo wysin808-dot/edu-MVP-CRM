@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import {
   useCoachBatchGenerate,
+  useCoachHistory,
+  useCoachDelete,
 } from "@/hooks/useCoach";
 import {
   COACH_TOPICS,
@@ -65,6 +67,7 @@ const PLATFORM_DISPLAY: Record<string, { icon: string; label: string; color: str
 };
 
 export default function CoachPage() {
+  const [view, setView] = useState<"generate" | "history">("generate");
   const [topic, setTopic] = useState("");
   const [platform, setPlatform] = useState<"朋友圈" | "小红书">("朋友圈");
   const [items, setItems] = useState<CoachGenerated[]>([]);
@@ -74,6 +77,8 @@ export default function CoachPage() {
   const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
 
   const batchGenerate = useCoachBatchGenerate();
+  const { data: history, isLoading: historyLoading } = useCoachHistory();
+  const deleteContent = useCoachDelete();
   const dateTopics = getDateTopics();
 
   const handleGenerate = async () => {
@@ -141,15 +146,44 @@ export default function CoachPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>
-          🎓 朋友圈教练
-        </h2>
-        <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
-          选平台 → 选主题 → 一键生成 5 条内容 → 复制粘贴
-        </p>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>
+            🎓 朋友圈教练
+          </h2>
+          <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
+            选平台 → 选主题 → 一键生成 5 条内容 → 复制粘贴
+          </p>
+        </div>
+        {/* View tabs */}
+        <div className="flex gap-1 p-1 rounded-lg" style={{ background: "var(--surface-soft)" }}>
+          {([["generate", "✨ 生成"], ["history", "📋 历史记录"]] as const).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className="px-4 py-1.5 rounded-md text-sm font-medium border-none cursor-pointer transition-all"
+              style={{
+                background: view === v ? "var(--surface)" : "transparent",
+                color: view === v ? "var(--brand)" : "var(--muted)",
+                boxShadow: view === v ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {view === "history" ? (
+        <HistoryView
+          items={history || []}
+          isLoading={historyLoading}
+          onCopy={handleCopy}
+          copiedId={copiedId}
+          onDelete={(id) => deleteContent.mutate(id)}
+        />
+      ) : (
+      <>
       {/* Topic + Generate */}
       <div
         className="rounded-xl p-5 mb-6"
@@ -390,6 +424,142 @@ export default function CoachPage() {
           </p>
         </div>
       )}
+      </>
+      )}
     </div>
   );
+}
+
+// ── History View ──
+function HistoryView({
+  items, isLoading, onCopy, copiedId, onDelete,
+}: {
+  items: CoachGenerated[];
+  isLoading: boolean;
+  onCopy: (text: string, id: string) => void;
+  copiedId: string | null;
+  onDelete: (id: string) => void;
+}) {
+  const [filter, setFilter] = useState<string>("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const filtered = filter
+    ? items.filter((it) => it.platform === filter)
+    : items;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-3 animate-pulse">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-14 rounded-xl" style={{ background: "var(--surface-soft)" }} />
+        ))}
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div
+        className="rounded-xl p-12 text-center"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+      >
+        <div className="text-4xl mb-3">📋</div>
+        <p className="text-sm" style={{ color: "var(--muted)" }}>还没有生成记录</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Filter */}
+      <div className="flex gap-2 mb-4 items-center">
+        {["", "朋友圈", "小红书"].map((p) => (
+          <button
+            key={p || "all"}
+            onClick={() => setFilter(p)}
+            className="text-xs px-3 py-1.5 rounded-full border-none cursor-pointer"
+            style={{
+              background: filter === p ? "var(--brand)" : "var(--surface-soft)",
+              color: filter === p ? "#fff" : "var(--muted)",
+            }}
+          >
+            {p === "" ? "全部" : p === "朋友圈" ? "💬 朋友圈" : "📕 小红书"}
+          </button>
+        ))}
+        <span className="text-xs ml-auto" style={{ color: "var(--muted)" }}>共 {filtered.length} 条</span>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {filtered.map((item) => {
+          const pd = PLATFORM_DISPLAY[item.platform] || PLATFORM_DISPLAY["朋友圈"];
+          const expanded = expandedId === item.id;
+          return (
+            <div
+              key={item.id}
+              className="rounded-xl overflow-hidden"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <div
+                className="flex items-center justify-between px-4 py-3 cursor-pointer gap-2"
+                onClick={() => setExpandedId(expanded ? null : item.id)}
+                style={{ borderBottom: expanded ? "1px solid var(--border)" : "none" }}
+              >
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded whitespace-nowrap"
+                    style={{ background: pd.color, color: "#fff" }}
+                  >
+                    {pd.icon} {pd.label}
+                  </span>
+                  <Badge variant="outline">{item.content_type}</Badge>
+                  <span className="text-sm truncate" style={{ color: "var(--ink)" }}>{item.topic}</span>
+                </div>
+                <span className="text-xs whitespace-nowrap" style={{ color: "var(--muted)" }}>
+                  {formatTime(item.created_at)}
+                </span>
+                <span className="text-xs" style={{ color: "var(--muted)" }}>{expanded ? "▲" : "▼"}</span>
+              </div>
+
+              {expanded && (
+                <div className="p-4">
+                  <pre
+                    className="text-sm whitespace-pre-wrap m-0 mb-3 leading-relaxed"
+                    style={{ color: "var(--ink)", fontFamily: "inherit" }}
+                  >
+                    {item.output_text}
+                  </pre>
+                  <div className="flex gap-2 pt-3" style={{ borderTop: "1px solid var(--border)" }}>
+                    <button
+                      onClick={() => onCopy(item.output_text, item.id)}
+                      className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-semibold"
+                      style={{ background: "var(--brand)", color: "#fff" }}
+                    >
+                      {copiedId === item.id ? "✅ 已复制" : "📋 复制"}
+                    </button>
+                    <button
+                      onClick={() => { if (confirm("确定删除这条记录？")) onDelete(item.id); }}
+                      className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer"
+                      style={{ background: "var(--surface-soft)", color: "var(--red, #dc2626)" }}
+                    >
+                      🗑 删除
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function formatTime(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  if (diff < 60 * 1000) return "刚刚";
+  if (diff < 3600 * 1000) return `${Math.floor(diff / 60000)} 分钟前`;
+  if (diff < 86400 * 1000) return `${Math.floor(diff / 3600000)} 小时前`;
+  return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
 }
