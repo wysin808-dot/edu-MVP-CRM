@@ -107,23 +107,20 @@ export default function CoachPage() {
     if (imageLoading) return;
     setImageLoading(item.id);
     try {
-      // Use Pollinations AI (free Flux image generation, no API key needed)
-      const imagePrompt = `A modern, clean, professional social media cover image for an education consulting company in Singapore. Topic: ${item.topic}. Style: minimalist, warm colors, professional photography feel. No text overlay. Suitable for WeChat Moments or Xiaohongshu post.`;
-      const encodedPrompt = encodeURIComponent(imagePrompt);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1080&model=flux&seed=${Date.now()}`;
-
-      // Preload the image
-      const img = new Image();
-      img.onload = () => {
-        setImageUrls((prev) => ({ ...prev, [item.id]: imageUrl }));
-        setImageLoading(null);
-      };
-      img.onerror = () => {
-        setImageLoading(null);
-        alert("配图生成失败，请重试");
-      };
-      img.src = imageUrl;
-    } catch {
+      const res = await fetch("/api/coach/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: item.topic, contentType: item.content_type }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "配图生成失败");
+      }
+      const data = await res.json();
+      setImageUrls((prev) => ({ ...prev, [item.id]: data.url }));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "配图生成失败，请重试");
+    } finally {
       setImageLoading(null);
     }
   };
