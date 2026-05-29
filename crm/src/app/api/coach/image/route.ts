@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-const SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/images/generations";
+// 火山引擎 SeedDream 3.0 (豆包文生图)
+const ARK_API_URL = "https://ark.cn-beijing.volces.com/api/v3/images/generations";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -10,9 +11,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiKey = process.env.SILICONFLOW_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: "SILICONFLOW_API_KEY not configured" }, { status: 500 });
+  const apiKey = process.env.ARK_API_KEY;
+  const endpointId = process.env.ARK_IMAGE_ENDPOINT;
+  if (!apiKey || !endpointId) {
+    return NextResponse.json({ error: "ARK_API_KEY or ARK_IMAGE_ENDPOINT not configured" }, { status: 500 });
   }
 
   let body;
@@ -27,25 +29,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing topic" }, { status: 400 });
   }
 
-  // 从内容文字中提取关键场景，生成英文 prompt（Kolors 英文效果更好）
-  const sceneKeywords = extractScene(topic, contentType, contentText);
-
-  const imagePrompt = `${sceneKeywords}, professional photography, sharp focus, warm natural lighting, modern minimalist style, high quality, 4k, no text, no watermark, no people, no faces`;
-  const negativePrompt = "person, people, human, face, portrait, eyes, hands, fingers, ugly, deformed, blurry, low quality, text, watermark, logo, cartoon, anime";
+  // 根据内容文字智能生成配图 prompt
+  let imagePrompt: string;
+  if (contentText) {
+    // 从内容文字提取核心场景
+    const summary = contentText.slice(0, 200).replace(/[\n\r]/g, " ");
+    imagePrompt = `根据以下内容生成一张适合微信朋友圈的高质量配图：${summary}。要求：真实感强、光线温暖、构图精美、画面清晰、现代简约风格`;
+  } else {
+    const sceneMap: Record<string, string> = {
+      "教育观点": "现代化国际学校教室，阳光洒进窗户，整洁的书桌上摆着课本和笔记本，窗外是绿色校园",
+      "家长共情": "温馨的家庭书房，一杯咖啡旁放着教育资料，窗边有绿植，柔和暖光",
+      "招生转化": "美丽的新加坡国际学校校园全景，现代化教学楼和热带花园，蓝天白云",
+      "小红书": "精致平铺摄影，笔记本、彩色便签、文具和一杯奶茶整齐排列在白色桌面上",
+      "私聊跟进": "专业的办公桌面特写，笔记本电脑旁放着升学规划手册和茶杯，温暖灯光",
+    };
+    imagePrompt = (sceneMap[contentType] || sceneMap["教育观点"]) + `，与${topic}相关，高品质专业摄影`;
+  }
 
   try {
-    const response = await fetch(SILICONFLOW_API_URL, {
+    const response = await fetch(ARK_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "Tongyi-MAI/Z-Image-Turbo",
+        model: endpointId,
         prompt: imagePrompt,
-        negative_prompt: negativePrompt,
-        image_size: "1024x1024",
-        num_inference_steps: 25,
+        size: "1920x1920",
+        response_format: "url",
       }),
     });
 
@@ -58,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const imageUrl = data.images?.[0]?.url || data.data?.[0]?.url || "";
+    const imageUrl = data.data?.[0]?.url || "";
 
     if (!imageUrl) {
       return NextResponse.json({ error: "No image returned" }, { status: 502 });
@@ -72,41 +84,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// 根据内容文字智能提取场景关键词，生成英文 prompt
-function extractScene(topic: string, contentType: string, contentText?: string): string {
-  // 关键词 → 场景映射
-  const sceneMap: [RegExp, string][] = [
-    [/O-Level|考试|备考|成绩/, "exam preparation scene, study desk with textbooks and notes, calculator, pencils neatly arranged"],
-    [/WACE|国际高中|课程/, "international school hallway, modern architecture, tropical plants, glass windows"],
-    [/AEIS|转轨|转学/, "airport departure hall with suitcase, passport and school brochure on a table"],
-    [/英文|英语|语言/, "English learning materials, dictionary, notebook with handwriting, coffee cup on wooden desk"],
-    [/校园|学校|教室/, "beautiful school campus aerial view, modern buildings, green field, blue sky, Singapore"],
-    [/暑假|假期|游学/, "summer travel scene, airplane window view of tropical island, sunlight"],
-    [/升学|规划|路径/, "career planning board with colorful sticky notes and arrows, organized desk"],
-    [/家长|妈妈|爸爸|父母/, "cozy home study room, warm lamp light, bookshelf, family photo frames on wall"],
-    [/毕业|毕业季/, "graduation cap and diploma on a wooden table with flowers, celebration"],
-    [/开学|新学期/, "brand new school supplies, backpack, notebooks and colorful pens on clean desk"],
-    [/小红书/, "aesthetic flat lay, pink notebook, dried flowers, polaroid photos, pastel tones, Instagram style"],
-    [/招生|咨询|报名/, "modern consultation office, glass table, brochures, laptop showing campus, natural light"],
-    [/NTU|NUS|大学/, "university campus panoramic view, grand architecture, students walking paths, autumn trees"],
-  ];
-
-  // 优先匹配内容文字
-  const text = contentText || topic;
-  for (const [pattern, scene] of sceneMap) {
-    if (pattern.test(text)) return scene;
-  }
-
-  // 按内容类型 fallback
-  const typeMap: Record<string, string> = {
-    "教育观点": "modern classroom interior, sunlight through large windows, neat desks with books",
-    "家长共情": "warm cozy reading nook, coffee cup, educational magazine, soft afternoon light",
-    "招生转化": "Singapore international school campus, modern architecture, tropical garden, inviting entrance",
-    "小红书": "aesthetic desk flat lay, notebook, stationery, plant, coffee, clean minimalist style",
-    "私聊跟进": "professional desk setup, laptop, planner, pen, warm desk lamp, organized workspace",
-  };
-
-  return typeMap[contentType] || typeMap["教育观点"];
 }
