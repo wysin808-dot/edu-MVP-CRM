@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: endpointId,
         prompt: imagePrompt,
-        size: "1920x1920",
+        size: "1920x2560",
         response_format: "url",
       }),
     });
