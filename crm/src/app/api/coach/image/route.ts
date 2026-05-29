@@ -24,10 +24,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { topic, contentType, contentText } = body;
+  const { topic, contentType, contentText, platform } = body;
   if (!topic) {
     return NextResponse.json({ error: "Missing topic" }, { status: 400 });
   }
+
+  // 朋友圈用 1:1 方图，小红书用 3:4 竖图
+  const imageSize = platform === "小红书" ? "1920x2560" : "1920x1920";
 
   // 根据内容文字智能生成配图 prompt
   let imagePrompt: string;
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: endpointId,
         prompt: imagePrompt,
-        size: "1920x2560",
+        size: imageSize,
         response_format: "url",
       }),
     });

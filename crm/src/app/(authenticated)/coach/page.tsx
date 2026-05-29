@@ -66,6 +66,7 @@ const PLATFORM_DISPLAY: Record<string, { icon: string; label: string; color: str
 
 export default function CoachPage() {
   const [topic, setTopic] = useState("");
+  const [platform, setPlatform] = useState<"朋友圈" | "小红书">("朋友圈");
   const [items, setItems] = useState<CoachGenerated[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<string | null>(null);
@@ -83,7 +84,7 @@ export default function CoachPage() {
     setEditedTexts({});
     setCopiedId(null);
     try {
-      const res = await batchGenerate.mutateAsync({ topic });
+      const res = await batchGenerate.mutateAsync({ topic, platform });
       setItems(res.items || []);
     } catch {
       // error handled by mutation
@@ -112,7 +113,7 @@ export default function CoachPage() {
       const res = await fetch("/api/coach/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: item.topic, contentType: item.content_type, contentText: editedTexts[item.id] || item.output_text }),
+        body: JSON.stringify({ topic: item.topic, contentType: item.content_type, contentText: editedTexts[item.id] || item.output_text, platform: item.platform }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -145,7 +146,7 @@ export default function CoachPage() {
           🎓 朋友圈教练
         </h2>
         <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
-          选主题 → 一键生成 5 条内容 → 复制粘贴
+          选平台 → 选主题 → 一键生成 5 条内容 → 复制粘贴
         </p>
       </div>
 
@@ -157,6 +158,27 @@ export default function CoachPage() {
           color: "#fff",
         }}
       >
+        {/* Platform toggle */}
+        <div className="flex gap-2 mb-3">
+          {(["朋友圈", "小红书"] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPlatform(p)}
+              className="px-4 py-1.5 rounded-lg text-sm font-medium border-none cursor-pointer transition-all"
+              style={{
+                background: platform === p ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.15)",
+                color: platform === p ? "var(--brand)" : "#fff",
+                fontWeight: platform === p ? 700 : 400,
+              }}
+            >
+              {p === "朋友圈" ? "💬 微信朋友圈" : "📕 小红书"}
+            </button>
+          ))}
+          <span className="text-xs opacity-70 self-center ml-1">
+            {platform === "朋友圈" ? "（200字短文 · 方形配图）" : "（图文笔记 · 竖版配图）"}
+          </span>
+        </div>
+
         <div className="flex gap-3 items-end mb-3">
           <div className="flex-1">
             <input
@@ -364,7 +386,7 @@ export default function CoachPage() {
             选一个主题，点击"生成 5 条内容"
           </p>
           <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-            生成 2 条朋友圈 + 1 条招生转化 + 1 条小红书 + 1 条私聊话术
+            先选平台（朋友圈/小红书），生成 5 条不同角度的内容，配图也自动匹配平台尺寸
           </p>
         </div>
       )}

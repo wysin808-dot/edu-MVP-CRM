@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (batchMode) {
-    return handleBatchGenerate(supabase, user, apiKey, endpointId, topic);
+    return handleBatchGenerate(supabase, user, apiKey, endpointId, topic, platform || "朋友圈");
   }
 
   // Single content generation
@@ -169,29 +169,57 @@ async function handleBatchGenerate(
   user: { id: string; email?: string | null },
   apiKey: string,
   endpointId: string,
-  topic: string
+  topic: string,
+  platform: string
 ) {
   const batchId = `daily_${new Date().toISOString().split("T")[0]}_${Date.now()}`;
 
-  const batchItems = [
-    { platform: "朋友圈", contentType: "教育观点" },
-    { platform: "朋友圈", contentType: "家长共情" },
-    { platform: "朋友圈", contentType: "招生转化" },
-    { platform: "小红书", contentType: "小红书" },
-    { platform: "家长私聊", contentType: "私聊跟进" },
-  ];
+  let batchItems: { platform: string; contentType: string }[];
+  let batchPrompt: string;
 
-  const batchPrompt = `请围绕主题「${topic}」，一次性生成以下5条招生老师可以直接使用的内容。
+  if (platform === "小红书") {
+    batchItems = [
+      { platform: "小红书", contentType: "干货笔记" },
+      { platform: "小红书", contentType: "经验分享" },
+      { platform: "小红书", contentType: "避坑指南" },
+      { platform: "小红书", contentType: "对比测评" },
+      { platform: "小红书", contentType: "故事种草" },
+    ];
+    batchPrompt = `请围绕主题「${topic}」，一次性生成以下5条小红书笔记，招生老师可以直接发布。
+
+每条都要符合小红书风格：吸引人的标题（带emoji）+ 正文（300-500字，分点清晰，多用emoji）+ 结尾话题标签（#xxx）。
 
 每条内容之间用 ===SPLIT=== 分隔。
 
-1. 【教育观点朋友圈】200字以内，展示专业教育判断
-2. 【家长共情朋友圈】200字以内，"最近和一位家长聊到..."风格
-3. 【招生轻转化朋友圈】200字以内，结尾引导咨询但不强推
-4. 【小红书笔记】标题 + 500字正文 + 话题标签
-5. 【家长私聊话术】犹豫中家长的跟进话术
+1. 【干货笔记】实用信息、清单、攻略类，标题要有"收藏""必看""整理"等词
+2. 【经验分享】"作为从业X年的老师，我的真实建议"，第一人称真诚分享
+3. 【避坑指南】"千万别踩这些坑！"，列出家长常见误区
+4. 【对比测评】对比不同选择/路径的优劣，客观分析
+5. 【故事种草】通过一个真实学生/家长故事引出，结尾自然种草
 
-请直接输出可使用的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
+请直接输出可发布的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
+  } else {
+    batchItems = [
+      { platform: "朋友圈", contentType: "教育观点" },
+      { platform: "朋友圈", contentType: "家长共情" },
+      { platform: "朋友圈", contentType: "校园氛围" },
+      { platform: "朋友圈", contentType: "招生转化" },
+      { platform: "朋友圈", contentType: "干货分享" },
+    ];
+    batchPrompt = `请围绕主题「${topic}」，一次性生成以下5条微信朋友圈文案，招生老师可以直接发布。
+
+每条都要符合朋友圈风格：200字以内，口语化、真人感强、分段清晰，结尾有轻CTA。
+
+每条内容之间用 ===SPLIT=== 分隔。
+
+1. 【教育观点】展示专业教育判断，有观点有态度
+2. 【家长共情】"最近和一位家长聊到..."风格，引发共鸣
+3. 【校园氛围】描述学校/学生的真实状态，有画面感
+4. 【招生轻转化】结尾自然引导咨询，但不强推
+5. 【干货分享】实用小知识或建议，体现专业度
+
+请直接输出可发布的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
+  }
 
   try {
     const response = await fetch(ARK_API_URL, {

@@ -73,11 +73,11 @@ export function useCoachGenerate() {
 export function useCoachBatchGenerate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { topic: string; model?: string }) => {
+    mutationFn: async (params: { topic: string; platform?: string }) => {
       const res = await fetch("/api/coach/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: params.topic, batchMode: true, model: params.model }),
+        body: JSON.stringify({ topic: params.topic, batchMode: true, platform: params.platform }),
       });
       if (!res.ok) {
         const err = await res.json();
