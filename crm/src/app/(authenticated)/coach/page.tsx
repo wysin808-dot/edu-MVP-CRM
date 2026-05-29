@@ -72,7 +72,8 @@ const PLATFORM_DISPLAY: Record<string, { icon: string; label: string; color: str
 export default function CoachPage() {
   const [view, setView] = useState<"generate" | "history">("generate");
   const [topic, setTopic] = useState("");
-  const [platform, setPlatform] = useState<"朋友圈" | "小红书" | "微信群" | "FAQ">("朋友圈");
+  const [platform, setPlatform] = useState<"朋友圈" | "小红书" | "微信群" | "FAQ" | "家长私聊" | "视频脚本">("朋友圈");
+  const [style, setStyle] = useState<string>("");
   const [items, setItems] = useState<CoachGenerated[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<string | null>(null);
@@ -93,7 +94,7 @@ export default function CoachPage() {
     setEditedTexts({});
     setCopiedId(null);
     try {
-      const res = await batchGenerate.mutateAsync({ topic, platform });
+      const res = await batchGenerate.mutateAsync({ topic, platform, style: style || undefined });
       setItems(res.items || []);
     } catch {
       // error handled by mutation
@@ -242,6 +243,8 @@ export default function CoachPage() {
             ["朋友圈", "💬 微信朋友圈"],
             ["小红书", "📕 小红书"],
             ["微信群", "👥 微信群"],
+            ["家长私聊", "👨‍👩‍👧 家长私聊"],
+            ["视频脚本", "🎬 视频脚本"],
             ["FAQ", "❓ FAQ"],
           ] as const).map(([p, label]) => (
             <button
@@ -264,8 +267,31 @@ export default function CoachPage() {
               ? "（5条图文笔记 · 竖版配图）"
               : platform === "微信群"
               ? "（5条群发文案：通知/介绍/邀请/引导/答疑）"
+              : platform === "家长私聊"
+              ? "（5种话术：标准/招生版/跟进/破冰/激活）"
+              : platform === "视频脚本"
+              ? "（3个脚本：30秒/60秒/90秒，含镜头/旁白/字幕）"
               : "（5组家长FAQ：学费/学制/升学/住宿/签证）"}
           </span>
+        </div>
+
+        {/* Style selector */}
+        <div className="flex gap-2 mb-3 flex-wrap items-center">
+          <span className="text-xs opacity-70">🎨 风格：</span>
+          {["", "焦虑型", "数据型", "故事型", "高端型", "专家型", "转化型"].map((s) => (
+            <button
+              key={s || "default"}
+              onClick={() => setStyle(s)}
+              className="text-xs px-3 py-1 rounded-full border-none cursor-pointer transition-all"
+              style={{
+                background: style === s ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.12)",
+                color: style === s ? "var(--brand)" : "#fff",
+                fontWeight: style === s ? 600 : 400,
+              }}
+            >
+              {s === "" ? "默认" : s}
+            </button>
+          ))}
         </div>
 
         <div className="flex gap-3 items-end mb-3">
@@ -291,7 +317,7 @@ export default function CoachPage() {
               cursor: !topic.trim() ? "not-allowed" : "pointer",
             }}
           >
-            {batchGenerate.isPending ? "🔄 生成中..." : "✨ 生成 5 条内容"}
+            {batchGenerate.isPending ? "🔄 生成中..." : platform === "视频脚本" ? "✨ 生成 3 个脚本" : "✨ 生成 5 条内容"}
           </button>
         </div>
 
