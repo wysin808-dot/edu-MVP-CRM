@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// OpenRouter DALL-E 3 image generation
-const OPENROUTER_IMAGE_URL = "https://openrouter.ai/api/v1/images/generations";
+const SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/images/generations";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -11,9 +10,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.SILICONFLOW_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "OPENROUTER_API_KEY not configured" }, { status: 500 });
+    return NextResponse.json({ error: "SILICONFLOW_API_KEY not configured" }, { status: 500 });
   }
 
   let body;
@@ -28,39 +27,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing topic" }, { status: 400 });
   }
 
-  // 直接用内容文字生成配图，让 DALL-E 理解上下文
-  let imagePrompt: string;
-  if (contentText) {
-    imagePrompt = `根据以下朋友圈内容，生成一张适合配图的高质量照片。要求：真实感强、光线温暖、构图精美、适合微信朋友圈或小红书发布。不要包含任何文字。
+  // 从内容文字中提取关键场景，生成英文 prompt（Kolors 英文效果更好）
+  const sceneKeywords = extractScene(topic, contentType, contentText);
 
-内容：${contentText.slice(0, 500)}`;
-  } else {
-    const styleMap: Record<string, string> = {
-      "教育观点": "A warm, sunlit modern classroom with neat desks, notebooks and a green campus view outside the window",
-      "家长共情": "A cozy reading corner with a cup of coffee, family photos and education brochures in warm soft light",
-      "招生转化": "A beautiful Singapore school campus with modern buildings, tropical gardens, blue sky",
-      "小红书": "Aesthetic flat lay of notebooks, colorful sticky notes, stationery and milk tea on white desk, clean style",
-      "私聊跟进": "Professional desk close-up with laptop, education planning handbook and tea cup, warm lighting",
-    };
-    imagePrompt = styleMap[contentType] || styleMap["教育观点"];
-    imagePrompt += `. Related to: ${topic}. High quality professional photography, sharp, well-lit, modern minimalist style.`;
-  }
+  const imagePrompt = `${sceneKeywords}, professional photography, sharp focus, warm natural lighting, modern minimalist style, high quality, 4k, no text, no watermark, no people, no faces`;
+  const negativePrompt = "person, people, human, face, portrait, eyes, hands, fingers, ugly, deformed, blurry, low quality, text, watermark, logo, cartoon, anime";
 
   try {
-    const response = await fetch(OPENROUTER_IMAGE_URL, {
+    const response = await fetch(SILICONFLOW_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://edu-mvp-crm.vercel.app",
-        "X-Title": "SEDA OS",
       },
       body: JSON.stringify({
-        model: "openai/dall-e-3",
+        model: "Kwai-Kolors/Kolors",
         prompt: imagePrompt,
-        n: 1,
-        size: "1024x1024",
-        quality: "standard",
+        negative_prompt: negativePrompt,
+        image_size: "1024x1024",
+        num_inference_steps: 25,
       }),
     });
 
@@ -73,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const imageUrl = data.data?.[0]?.url || "";
+    const imageUrl = data.images?.[0]?.url || data.data?.[0]?.url || "";
 
     if (!imageUrl) {
       return NextResponse.json({ error: "No image returned" }, { status: 502 });
@@ -87,4 +72,41 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// 根据内容文字智能提取场景关键词，生成英文 prompt
+function extractScene(topic: string, contentType: string, contentText?: string): string {
+  // 关键词 → 场景映射
+  const sceneMap: [RegExp, string][] = [
+    [/O-Level|考试|备考|成绩/, "exam preparation scene, study desk with textbooks and notes, calculator, pencils neatly arranged"],
+    [/WACE|国际高中|课程/, "international school hallway, modern architecture, tropical plants, glass windows"],
+    [/AEIS|转轨|转学/, "airport departure hall with suitcase, passport and school brochure on a table"],
+    [/英文|英语|语言/, "English learning materials, dictionary, notebook with handwriting, coffee cup on wooden desk"],
+    [/校园|学校|教室/, "beautiful school campus aerial view, modern buildings, green field, blue sky, Singapore"],
+    [/暑假|假期|游学/, "summer travel scene, airplane window view of tropical island, sunlight"],
+    [/升学|规划|路径/, "career planning board with colorful sticky notes and arrows, organized desk"],
+    [/家长|妈妈|爸爸|父母/, "cozy home study room, warm lamp light, bookshelf, family photo frames on wall"],
+    [/毕业|毕业季/, "graduation cap and diploma on a wooden table with flowers, celebration"],
+    [/开学|新学期/, "brand new school supplies, backpack, notebooks and colorful pens on clean desk"],
+    [/小红书/, "aesthetic flat lay, pink notebook, dried flowers, polaroid photos, pastel tones, Instagram style"],
+    [/招生|咨询|报名/, "modern consultation office, glass table, brochures, laptop showing campus, natural light"],
+    [/NTU|NUS|大学/, "university campus panoramic view, grand architecture, students walking paths, autumn trees"],
+  ];
+
+  // 优先匹配内容文字
+  const text = contentText || topic;
+  for (const [pattern, scene] of sceneMap) {
+    if (pattern.test(text)) return scene;
+  }
+
+  // 按内容类型 fallback
+  const typeMap: Record<string, string> = {
+    "教育观点": "modern classroom interior, sunlight through large windows, neat desks with books",
+    "家长共情": "warm cozy reading nook, coffee cup, educational magazine, soft afternoon light",
+    "招生转化": "Singapore international school campus, modern architecture, tropical garden, inviting entrance",
+    "小红书": "aesthetic desk flat lay, notebook, stationery, plant, coffee, clean minimalist style",
+    "私聊跟进": "professional desk setup, laptop, planner, pen, warm desk lamp, organized workspace",
+  };
+
+  return typeMap[contentType] || typeMap["教育观点"];
 }
