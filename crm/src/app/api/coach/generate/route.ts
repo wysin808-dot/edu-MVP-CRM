@@ -111,6 +111,21 @@ function buildKnowledgeContext(items: KnowledgeRow[]): string {
 ${blocks}`;
 }
 
+// 保存生成记录（带 token 统计）；若数据库尚未添加这些列，则自动回退为不带 token 的插入，保证生成不会失败
+async function saveGenerated(
+  supabase: SupabaseServer,
+  base: Record<string, unknown>,
+  tokenExtra: Record<string, unknown>
+) {
+  const first = await supabase
+    .from("coach_generated")
+    .insert({ ...base, ...tokenExtra })
+    .select()
+    .single();
+  if (!first.error) return first;
+  return await supabase.from("coach_generated").insert(base).select().single();
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -175,10 +190,11 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     const outputText = data.choices?.[0]?.message?.content || "";
+    const usage = data.usage || {};
 
-    const { data: saved, error: saveError } = await supabase
-      .from("coach_generated")
-      .insert({
+    const { data: saved, error: saveError } = await saveGenerated(
+      supabase,
+      {
         user_id: user.id,
         user_name: user.email?.split("@")[0] || "unknown",
         topic,
@@ -190,9 +206,14 @@ export async function POST(request: NextRequest) {
         is_daily: false,
         batch_id: null,
         is_saved: false,
-      })
-      .select()
-      .single();
+      },
+      {
+        model: data.model || "doubao",
+        prompt_tokens: usage.prompt_tokens || 0,
+        completion_tokens: usage.completion_tokens || 0,
+        total_tokens: usage.total_tokens || 0,
+      }
+    );
 
     if (saveError) {
       console.error("Save error:", saveError);
@@ -286,6 +307,55 @@ async function handleBatchGenerate(
 5. 【故事种草】通过一个真实学生/家长故事引出，结尾自然种草
 
 请直接输出可发布的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
+  } else if (platform === "微信群") {
+    batchItems = [
+      { platform: "微信群", contentType: "简短通知" },
+      { platform: "微信群", contentType: "详细介绍" },
+      { platform: "微信群", contentType: "活动邀请" },
+      { platform: "微信群", contentType: "限时引导" },
+      { platform: "微信群", contentType: "互动答疑" },
+    ];
+    batchPrompt = `请围绕主题「${topic}」，一次性生成以下5条微信群推广文案，招生老师可以直接发到家长群。
+
+排版与风格要求：
+- 口语化、亲切，适合群里发，避免硬广感
+- 适当用 emoji，但克制
+- 每条结尾自然引导（私信/咨询/接龙等），不强推
+
+每条内容之间用 ===SPLIT=== 分隔。
+
+1. 【简短通知】100字以内，群发开场/信息同步
+2. 【详细介绍】300字左右，完整介绍项目或政策
+3. 【活动邀请】邀请家长参加讲座/咨询会/开放日
+4. 【限时引导】结合时间节点（名额/截止）温和促进咨询
+5. 【互动答疑】抛出一个家长关心的问题，引导群内互动
+
+请直接输出可发布的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
+  } else if (platform === "FAQ") {
+    batchItems = [
+      { platform: "FAQ", contentType: "学费" },
+      { platform: "FAQ", contentType: "学制课程" },
+      { platform: "FAQ", contentType: "升学路径" },
+      { platform: "FAQ", contentType: "住宿监护" },
+      { platform: "FAQ", contentType: "签证入学" },
+    ];
+    batchPrompt = `请围绕主题「${topic}」，一次性生成以下5组家长常见问题解答（FAQ），招生老师可直接用于答疑。
+
+格式要求：
+- 每组用「问：...」换行「答：...」格式
+- 答案专业、易懂、口径统一
+- 涉及具体数字（学费/学制/分数线等）必须基于知识库资料；资料没有的用"以官方为准 / 可咨询了解"，不要编造
+- 不夸大、不承诺录取结果
+
+每条内容之间用 ===SPLIT=== 分隔。
+
+1. 【学费相关】费用、缴费方式、性价比
+2. 【学制课程】课程设置、学制、上课安排
+3. 【升学路径】毕业去向、大学申请、文凭认可度
+4. 【住宿监护】住宿安排、监护服务、生活照顾
+5. 【签证入学】签证、入学条件、报名流程
+
+请直接输出可使用的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
   } else {
     batchItems = [
       { platform: "朋友圈", contentType: "教育观点" },
@@ -349,12 +419,19 @@ async function handleBatchGenerate(
 
     const pieces = splitBatchOutput(fullOutput);
 
+    const usage = data.usage || {};
+    const count = Math.max(1, Math.min(pieces.length, batchItems.length));
+    const modelName = data.model || "doubao";
+    const perTotal = Math.round((usage.total_tokens || 0) / count);
+    const perPrompt = Math.round((usage.prompt_tokens || 0) / count);
+    const perCompletion = Math.round((usage.completion_tokens || 0) / count);
+
     const savedItems = [];
     for (let i = 0; i < Math.min(pieces.length, batchItems.length); i++) {
       const item = batchItems[i];
-      const { data: saved } = await supabase
-        .from("coach_generated")
-        .insert({
+      const { data: saved } = await saveGenerated(
+        supabase,
+        {
           user_id: user.id,
           user_name: user.email?.split("@")[0] || "unknown",
           topic,
@@ -366,9 +443,14 @@ async function handleBatchGenerate(
           is_daily: true,
           batch_id: batchId,
           is_saved: false,
-        })
-        .select()
-        .single();
+        },
+        {
+          model: modelName,
+          prompt_tokens: perPrompt,
+          completion_tokens: perCompletion,
+          total_tokens: perTotal,
+        }
+      );
 
       if (saved) savedItems.push(saved);
     }

@@ -6,6 +6,7 @@ import {
   useCoachBatchGenerate,
   useCoachHistory,
   useCoachDelete,
+  useCoachStats,
 } from "@/hooks/useCoach";
 import {
   COACH_TOPICS,
@@ -62,6 +63,8 @@ function getDateTopics(): { label: string; icon: string }[] {
 const PLATFORM_DISPLAY: Record<string, { icon: string; label: string; color: string }> = {
   "朋友圈": { icon: "💬", label: "朋友圈", color: "#2563eb" },
   "小红书": { icon: "📕", label: "小红书", color: "#e11d48" },
+  "微信群": { icon: "👥", label: "微信群", color: "#16a34a" },
+  "FAQ": { icon: "❓", label: "FAQ", color: "#d97706" },
   "家长私聊": { icon: "👨‍👩‍👧", label: "家长私聊", color: "#7c3aed" },
   "视频脚本": { icon: "🎬", label: "视频脚本", color: "#0284c7" },
 };
@@ -69,7 +72,7 @@ const PLATFORM_DISPLAY: Record<string, { icon: string; label: string; color: str
 export default function CoachPage() {
   const [view, setView] = useState<"generate" | "history">("generate");
   const [topic, setTopic] = useState("");
-  const [platform, setPlatform] = useState<"朋友圈" | "小红书">("朋友圈");
+  const [platform, setPlatform] = useState<"朋友圈" | "小红书" | "微信群" | "FAQ">("朋友圈");
   const [items, setItems] = useState<CoachGenerated[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<string | null>(null);
@@ -78,6 +81,7 @@ export default function CoachPage() {
 
   const batchGenerate = useCoachBatchGenerate();
   const { data: history, isLoading: historyLoading } = useCoachHistory();
+  const { data: stats } = useCoachStats();
   const deleteContent = useCoachDelete();
   const dateTopics = getDateTopics();
 
@@ -190,6 +194,30 @@ export default function CoachPage() {
         </div>
       </div>
 
+      {/* Stats bar */}
+      {stats && (
+        <div className="flex gap-3 mb-5 flex-wrap">
+          {[
+            { label: "今日生成", value: stats.todayCount, icon: "📅" },
+            { label: "本月生成", value: stats.monthCount, icon: "📊" },
+            { label: "本月 Token", value: stats.monthTokens.toLocaleString(), icon: "🎯" },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="flex-1 min-w-[120px] rounded-xl px-4 py-3"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <div className="text-xs mb-1" style={{ color: "var(--muted)" }}>
+                {s.icon} {s.label}
+              </div>
+              <div className="text-lg font-bold" style={{ color: "var(--ink)" }}>
+                {s.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {view === "history" ? (
         <HistoryView
           items={history || []}
@@ -209,8 +237,13 @@ export default function CoachPage() {
         }}
       >
         {/* Platform toggle */}
-        <div className="flex gap-2 mb-3">
-          {(["朋友圈", "小红书"] as const).map((p) => (
+        <div className="flex gap-2 mb-3 flex-wrap">
+          {([
+            ["朋友圈", "💬 微信朋友圈"],
+            ["小红书", "📕 小红书"],
+            ["微信群", "👥 微信群"],
+            ["FAQ", "❓ FAQ"],
+          ] as const).map(([p, label]) => (
             <button
               key={p}
               onClick={() => setPlatform(p)}
@@ -221,11 +254,17 @@ export default function CoachPage() {
                 fontWeight: platform === p ? 700 : 400,
               }}
             >
-              {p === "朋友圈" ? "💬 微信朋友圈" : "📕 小红书"}
+              {label}
             </button>
           ))}
           <span className="text-xs opacity-70 self-center ml-1">
-            {platform === "朋友圈" ? "（200字短文 · 方形配图）" : "（图文笔记 · 竖版配图）"}
+            {platform === "朋友圈"
+              ? "（5条200字短文 · 方形配图）"
+              : platform === "小红书"
+              ? "（5条图文笔记 · 竖版配图）"
+              : platform === "微信群"
+              ? "（5条群发文案：通知/介绍/邀请/引导/答疑）"
+              : "（5组家长FAQ：学费/学制/升学/住宿/签证）"}
           </span>
         </div>
 
@@ -542,7 +581,7 @@ function HistoryView({
     <div>
       {/* Filter */}
       <div className="flex gap-2 mb-4 items-center">
-        {["", "朋友圈", "小红书"].map((p) => (
+        {["", "朋友圈", "小红书", "微信群", "FAQ"].map((p) => (
           <button
             key={p || "all"}
             onClick={() => setFilter(p)}
@@ -552,7 +591,7 @@ function HistoryView({
               color: filter === p ? "#fff" : "var(--muted)",
             }}
           >
-            {p === "" ? "全部" : p === "朋友圈" ? "💬 朋友圈" : "📕 小红书"}
+            {p === "" ? "全部" : `${PLATFORM_DISPLAY[p]?.icon || ""} ${PLATFORM_DISPLAY[p]?.label || p}`}
           </button>
         ))}
         <span className="text-xs ml-auto" style={{ color: "var(--muted)" }}>共 {filtered.length} 条</span>

@@ -229,6 +229,11 @@ export interface CoachGenerated {
   batch_id: string | null;
   is_saved: boolean;
   created_at: string;
+  // Token 统计（migration 006，可选）
+  model?: string | null;
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  total_tokens?: number | null;
 }
 
 // ── Form Input Types ──
