@@ -70,6 +70,7 @@ export default function CoachPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
 
   const batchGenerate = useCoachBatchGenerate();
   const dateTopics = getDateTopics();
@@ -79,6 +80,7 @@ export default function CoachPage() {
     // Clear old content
     setItems([]);
     setImageUrls({});
+    setEditedTexts({});
     setCopiedId(null);
     try {
       const res = await batchGenerate.mutateAsync({ topic });
@@ -110,7 +112,7 @@ export default function CoachPage() {
       const res = await fetch("/api/coach/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: item.topic, contentType: item.content_type, contentText: item.output_text }),
+        body: JSON.stringify({ topic: item.topic, contentType: item.content_type, contentText: editedTexts[item.id] || item.output_text }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -274,7 +276,7 @@ export default function CoachPage() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleCopy(item.output_text, item.id)}
+                      onClick={() => handleCopy(editedTexts[item.id] || item.output_text, item.id)}
                       className="text-xs px-3 py-1.5 rounded-lg border-none cursor-pointer font-semibold"
                       style={{ background: "var(--brand)", color: "#fff" }}
                     >
@@ -321,14 +323,29 @@ export default function CoachPage() {
                   </div>
                 )}
 
-                {/* Content */}
+                {/* Content - editable */}
                 <div className="p-4">
-                  <pre
-                    className="text-sm whitespace-pre-wrap m-0 leading-relaxed"
-                    style={{ color: "var(--ink)", fontFamily: "inherit" }}
-                  >
-                    {item.output_text}
-                  </pre>
+                  <textarea
+                    value={editedTexts[item.id] ?? item.output_text}
+                    onChange={(e) => setEditedTexts((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                    className="w-full text-sm whitespace-pre-wrap leading-relaxed border-none outline-none resize-none p-0 m-0"
+                    style={{
+                      color: "var(--ink)",
+                      fontFamily: "inherit",
+                      background: "transparent",
+                      minHeight: 120,
+                      fieldSizing: "content" as never,
+                    }}
+                  />
+                  {editedTexts[item.id] && editedTexts[item.id] !== item.output_text && (
+                    <button
+                      onClick={() => setEditedTexts((prev) => { const n = { ...prev }; delete n[item.id]; return n; })}
+                      className="text-xs px-2 py-1 rounded border-none cursor-pointer mt-1"
+                      style={{ color: "var(--muted)", background: "var(--surface-soft)" }}
+                    >
+                      ↩ 恢复原文
+                    </button>
+                  )}
                 </div>
               </div>
             );
