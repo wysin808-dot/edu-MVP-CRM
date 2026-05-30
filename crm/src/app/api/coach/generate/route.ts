@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { topic, platform, audienceTag, tone, contentType, batchMode, style } = body;
+  const { topic, platform, audienceTag, tone, contentType, batchMode, style, audience, keywords, extra } = body;
 
   if (!topic) {
     return NextResponse.json({ error: "Missing topic" }, { status: 400 });
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (batchMode) {
-    return handleBatchGenerate(supabase, user, apiKey, endpointId, topic, platform || "朋友圈", style);
+    return handleBatchGenerate(supabase, user, apiKey, endpointId, topic, platform || "朋友圈", style, { audience, keywords, extra });
   }
 
   // Single content generation — 注入知识库相关资料
@@ -308,7 +308,8 @@ async function handleBatchGenerate(
   endpointId: string,
   topic: string,
   platform: string,
-  style?: string
+  style?: string,
+  ctx?: { audience?: string; keywords?: string; extra?: string }
 ) {
   const batchId = `daily_${new Date().toISOString().split("T")[0]}_${Date.now()}`;
 
@@ -462,7 +463,12 @@ async function handleBatchGenerate(
 请直接输出可发布的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
   }
 
-  // 注入风格基调 + 知识库相关资料
+  // 注入目标人群/关键词/补充说明 + 风格基调 + 知识库相关资料
+  const ctxLines: string[] = [];
+  if (ctx?.audience) ctxLines.push(`- 目标人群：${ctx.audience}（按这类人群的关注点和痛点调整角度）`);
+  if (ctx?.keywords) ctxLines.push(`- 关键词/产品：${ctx.keywords}（自然融入内容，可作为卖点）`);
+  if (ctx?.extra) ctxLines.push(`- 补充要求：${ctx.extra}`);
+  if (ctxLines.length) batchPrompt += `\n\n## 本次额外要求\n${ctxLines.join("\n")}`;
   batchPrompt += buildStyleDirective(style);
   const knowledge = await fetchRelevantKnowledge(supabase, topic);
   batchPrompt += buildKnowledgeContext(knowledge);

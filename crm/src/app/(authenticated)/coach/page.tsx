@@ -6,7 +6,7 @@ import {
   useCoachBatchGenerate,
   useCoachHistory,
   useCoachDelete,
-  useCoachStats,
+  useCoachQuota,
 } from "@/hooks/useCoach";
 import {
   COACH_TOPICS,
@@ -74,6 +74,9 @@ export default function CoachPage() {
   const [topic, setTopic] = useState("");
   const [platform, setPlatform] = useState<"朋友圈" | "小红书" | "微信群" | "FAQ" | "家长私聊" | "视频脚本">("朋友圈");
   const [style, setStyle] = useState<string>("");
+  const [audience, setAudience] = useState<string>("");
+  const [keywords, setKeywords] = useState<string>("");
+  const [extra, setExtra] = useState<string>("");
   const [items, setItems] = useState<CoachGenerated[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<string | null>(null);
@@ -82,7 +85,7 @@ export default function CoachPage() {
 
   const batchGenerate = useCoachBatchGenerate();
   const { data: history, isLoading: historyLoading } = useCoachHistory();
-  const { data: stats } = useCoachStats();
+  const { data: quota } = useCoachQuota();
   const deleteContent = useCoachDelete();
   const dateTopics = getDateTopics();
 
@@ -94,7 +97,14 @@ export default function CoachPage() {
     setEditedTexts({});
     setCopiedId(null);
     try {
-      const res = await batchGenerate.mutateAsync({ topic, platform, style: style || undefined });
+      const res = await batchGenerate.mutateAsync({
+        topic,
+        platform,
+        style: style || undefined,
+        audience: audience || undefined,
+        keywords: keywords || undefined,
+        extra: extra || undefined,
+      });
       setItems(res.items || []);
     } catch {
       // error handled by mutation
@@ -195,27 +205,40 @@ export default function CoachPage() {
         </div>
       </div>
 
-      {/* Stats bar */}
-      {stats && (
+      {/* 额度状态栏 */}
+      {quota && (
         <div className="flex gap-3 mb-5 flex-wrap">
           {[
-            { label: "今日生成", value: stats.todayCount, icon: "📅" },
-            { label: "本月生成", value: stats.monthCount, icon: "📊" },
-            { label: "本月 Token", value: stats.monthTokens.toLocaleString(), icon: "🎯" },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="flex-1 min-w-[120px] rounded-xl px-4 py-3"
-              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-            >
-              <div className="text-xs mb-1" style={{ color: "var(--muted)" }}>
-                {s.icon} {s.label}
+            { key: "text", label: "今日文案", icon: "📝" },
+            { key: "image", label: "今日配图", icon: "🎨" },
+            { key: "video", label: "今日视频", icon: "🎬" },
+          ].map((q) => {
+            const limit = quota.limits[q.key as "text" | "image" | "video"];
+            const used = quota.used[q.key as "text" | "image" | "video"];
+            const unlimited = limit < 0;
+            const pct = unlimited ? 0 : Math.min(100, Math.round((used / Math.max(1, limit)) * 100));
+            const danger = !unlimited && pct >= 80;
+            const full = !unlimited && used >= limit;
+            const barColor = full ? "#dc2626" : danger ? "#f59e0b" : "var(--brand)";
+            return (
+              <div
+                key={q.key}
+                className="flex-1 min-w-[150px] rounded-xl px-4 py-3"
+                style={{ background: "var(--surface)", border: `1px solid ${full ? "#dc2626" : "var(--border)"}` }}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>{q.icon} {q.label}</span>
+                  <span className="text-xs font-semibold" style={{ color: full ? "#dc2626" : "var(--ink)" }}>
+                    {unlimited ? "不限" : `${used} / ${limit}`}
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--surface-soft)" }}>
+                  <div className="h-full rounded-full transition-all" style={{ width: `${unlimited ? 0 : pct}%`, background: barColor }} />
+                </div>
+                {full && <div className="text-xs mt-1" style={{ color: "#dc2626" }}>额度已用完</div>}
               </div>
-              <div className="text-lg font-bold" style={{ color: "var(--ink)" }}>
-                {s.value}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -320,6 +343,34 @@ export default function CoachPage() {
             {batchGenerate.isPending ? "🔄 生成中..." : platform === "视频脚本" ? "✨ 生成 3 个脚本" : "✨ 生成 5 条内容"}
           </button>
         </div>
+
+        {/* 结构化字段：目标人群 / 关键词 / 补充说明 */}
+        <div className="flex gap-3 mb-3 flex-wrap">
+          <input
+            type="text"
+            value={audience}
+            onChange={(e) => setAudience(e.target.value)}
+            placeholder="🎯 目标人群（如：18-25岁女生 / 初三家长）"
+            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm border-none outline-none"
+            style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
+          />
+          <input
+            type="text"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            placeholder="🔑 关键词/产品（如：防晒霜、敏感肌）"
+            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm border-none outline-none"
+            style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
+          />
+        </div>
+        <input
+          type="text"
+          value={extra}
+          onChange={(e) => setExtra(e.target.value)}
+          placeholder="📝 补充说明（可选，如：突出真实使用感受，结尾引导评论互动）"
+          className="w-full px-3 py-2 rounded-lg text-sm border-none outline-none mb-3"
+          style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
+        />
 
         {/* Date topics */}
         {dateTopics.length > 0 && (

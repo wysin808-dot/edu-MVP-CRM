@@ -21,6 +21,23 @@ export function useCoachHistory(limit = 50) {
   });
 }
 
+// ── 每日额度状态（次数）──
+export interface QuotaStatus {
+  limits: { text: number; image: number; video: number };
+  used: { text: number; image: number; video: number };
+}
+export function useCoachQuota() {
+  return useQuery<QuotaStatus>({
+    queryKey: ["coach-quota"],
+    queryFn: async () => {
+      const res = await fetch("/api/coach/quota");
+      if (!res.ok) throw new Error("额度查询失败");
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
+}
+
 // ── Token / 生成量统计 ──
 export function useCoachStats() {
   return useQuery({
@@ -109,11 +126,26 @@ export function useCoachGenerate() {
 export function useCoachBatchGenerate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { topic: string; platform?: string; style?: string }) => {
+    mutationFn: async (params: {
+      topic: string;
+      platform?: string;
+      style?: string;
+      audience?: string;
+      keywords?: string;
+      extra?: string;
+    }) => {
       const res = await fetch("/api/coach/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: params.topic, batchMode: true, platform: params.platform, style: params.style }),
+        body: JSON.stringify({
+          topic: params.topic,
+          batchMode: true,
+          platform: params.platform,
+          style: params.style,
+          audience: params.audience,
+          keywords: params.keywords,
+          extra: params.extra,
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -124,6 +156,8 @@ export function useCoachBatchGenerate() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["coach-daily"] });
       queryClient.invalidateQueries({ queryKey: ["coach-history"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-quota"] });
+      queryClient.invalidateQueries({ queryKey: ["coach-stats"] });
     },
   });
 }

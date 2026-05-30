@@ -93,6 +93,18 @@ export async function checkQuota(
   return { ok: true, limit, used };
 }
 
+// 取额度状态（额度 + 今日已用），给前端状态栏用
+export async function getQuotaStatus(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<{ limits: Limits; used: Limits }> {
+  const [limits, used] = await Promise.all([
+    getDailyLimits(supabase, userId),
+    getTodayUsage(supabase, userId),
+  ]);
+  return { limits, used };
+}
+
 // 记一条用量流水（容错，失败不影响主流程）
 export async function logUsage(
   supabase: SupabaseClient,
