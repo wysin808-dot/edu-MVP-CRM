@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkQuota, logUsage } from "@/lib/quota";
 
 const MASTER_PROMPT = `你是 BCI/SEDA 国际教育的招生内容教练。你的任务是帮助招生老师生成适合微信朋友圈、小红书、视频号和家长私聊的内容。
 
@@ -167,6 +168,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing topic" }, { status: 400 });
   }
 
+  // 额度检查：文案生成每次请求计 1 次
+  const quota = await checkQuota(supabase, user.id, "text", 1);
+  if (!quota.ok) {
+    return NextResponse.json({ error: quota.message, quotaExceeded: true }, { status: 429 });
+  }
+
   if (batchMode) {
     return handleBatchGenerate(supabase, user, apiKey, endpointId, topic, platform || "朋友圈", style);
   }
@@ -234,6 +241,15 @@ export async function POST(request: NextRequest) {
     if (saveError) {
       console.error("Save error:", saveError);
     }
+
+    await logUsage(supabase, {
+      userId: user.id,
+      userName: user.email?.split("@")[0] || null,
+      kind: "text",
+      count: 1,
+      tokens: usage.total_tokens || 0,
+      detail: `${platform || "朋友圈"} · ${topic}`,
+    });
 
     return NextResponse.json({
       content: outputText,
@@ -517,6 +533,15 @@ async function handleBatchGenerate(
 
       if (saved) savedItems.push(saved);
     }
+
+    await logUsage(supabase, {
+      userId: user.id,
+      userName: user.email?.split("@")[0] || null,
+      kind: "text",
+      count: 1,
+      tokens: usage.total_tokens || 0,
+      detail: `${platform} · ${topic}（批量${savedItems.length}条）`,
+    });
 
     return NextResponse.json({
       batchId,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkQuota, logUsage } from "@/lib/quota";
 
 // 火山引擎 SeedDream 3.0 (豆包文生图)
 const ARK_API_URL = "https://ark.cn-beijing.volces.com/api/v3/images/generations";
@@ -71,6 +72,12 @@ export async function POST(request: NextRequest) {
   const imageSize = platform === "小红书" ? "1920x2560" : "1920x1920";
   const n = Math.min(Math.max(parseInt(count) || 1, 1), 9);
 
+  // 额度检查：配图按张数计
+  const quota = await checkQuota(supabase, user.id, "image", n);
+  if (!quota.ok) {
+    return NextResponse.json({ error: quota.message, quotaExceeded: true }, { status: 429 });
+  }
+
   const summary = (contentText || "").slice(0, 180).replace(/[\n\r#]/g, " ").trim();
   const scene = SCENE_MAP[contentType] || SCENE_MAP["教育观点"];
 
@@ -114,6 +121,15 @@ export async function POST(request: NextRequest) {
     if (validUrls.length === 0) {
       return NextResponse.json({ error: "No image returned" }, { status: 502 });
     }
+
+    // 记账：实际成功生成的张数
+    await logUsage(supabase, {
+      userId: user.id,
+      userName: user.email?.split("@")[0] || null,
+      kind: "image",
+      count: validUrls.length,
+      detail: `${platform || ""} ${mode || ""} · ${topic}`.trim(),
+    });
 
     return NextResponse.json({ urls: validUrls });
   } catch (err) {
