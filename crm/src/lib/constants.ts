@@ -172,7 +172,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "accounts", label: "账号矩阵", icon: "📱", href: "/accounts" },
   { id: "calendar", label: "内容日历", icon: "📅", href: "/calendar" },
   { id: "crm", label: "招生 CRM", icon: "🎯", href: "/crm" },
-  { id: "coach", label: "朋友圈教练", icon: "🎓", href: "/coach" },
+  { id: "coach", label: "内容生成", icon: "✍️", href: "/coach" },
   { id: "monitor", label: "运营监控", icon: "🖥️", href: "/monitor" },
   { id: "ai-assistant", label: "AI升学助手", icon: "🤖", href: "/ai-assistant" },
   { id: "analytics", label: "数据复盘", icon: "📈", href: "/analytics" },

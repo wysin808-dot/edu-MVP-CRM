@@ -180,10 +180,10 @@ export default function CoachPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>
-            🎓 朋友圈教练
+            ✍️ 内容生成
           </h2>
           <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
-            选平台 → 选主题 → 一键生成 5 条内容 → 复制粘贴
+            选渠道 → 填主题/人群/关键词 → 一键生成图文，每条可一键配图
           </p>
         </div>
         {/* View tabs */}
