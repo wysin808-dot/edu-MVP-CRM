@@ -38,23 +38,26 @@ export async function GET(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // 1. 用量流水
-  const { data: usageRows } = await admin
-    .from("usage_log")
-    .select("user_id,user_name,kind,count,tokens,created_at")
-    .gte("created_at", sinceISO)
-    .order("created_at", { ascending: false })
-    .limit(10000);
-
-  // 2. 用户档案（名字/角色）
-  const { data: profiles } = await admin
-    .from("user_profiles")
-    .select("id,display_name,role,team");
-
-  // 3. 角色额度
-  const { data: quotaCfg } = await admin
-    .from("quota_config")
-    .select("scope,scope_key,daily_text,daily_image,daily_video");
+  // 并行拉取：用量流水 / 用户档案 / 额度配置 / 团队动态（避免串行往返）
+  const [usageRes, profilesRes, quotaRes, recentRes] = await Promise.all([
+    admin
+      .from("usage_log")
+      .select("user_id,user_name,kind,count,tokens")
+      .gte("created_at", sinceISO)
+      .limit(10000),
+    admin.from("user_profiles").select("id,display_name,role"),
+    admin.from("quota_config").select("scope,scope_key,daily_text,daily_image,daily_video"),
+    admin
+      .from("coach_generated")
+      .select("id,user_name,topic,platform,content_type,output_text,created_at")
+      .gte("created_at", sinceISO)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
+  const usageRows = usageRes.data;
+  const profiles = profilesRes.data;
+  const quotaCfg = quotaRes.data;
+  const recent = recentRes.data;
 
   type Cfg = { scope: string; scope_key: string; daily_text: number; daily_image: number; daily_video: number };
   const roleLimits: Record<string, { text: number; image: number; video: number }> = {};
@@ -103,14 +106,6 @@ export async function GET(request: NextRequest) {
       return { ...u, limits };
     })
     .sort((a, b) => b.text + b.image + b.video - (a.text + a.image + a.video));
-
-  // 团队动态：最近生成的内容（含主题/平台/谁/何时）
-  const { data: recent } = await admin
-    .from("coach_generated")
-    .select("id,user_name,topic,platform,content_type,output_text,created_at")
-    .gte("created_at", sinceISO)
-    .order("created_at", { ascending: false })
-    .limit(50);
 
   const totals = users.reduce(
     (t, u) => ({ text: t.text + u.text, image: t.image + u.image, video: t.video + u.video, tokens: t.tokens + u.tokens }),

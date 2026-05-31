@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 interface UserUsage {
   userId: string;
@@ -50,6 +50,8 @@ export default function MonitorPage() {
       return res.json();
     },
     refetchInterval: 30000,
+    staleTime: 20000,
+    placeholderData: keepPreviousData,
   });
 
   return (
