@@ -350,7 +350,7 @@ export default function CoachPage() {
             type="text"
             value={audience}
             onChange={(e) => setAudience(e.target.value)}
-            placeholder="🎯 目标人群（如：18-25岁女生 / 初三家长）"
+            placeholder="🎯 目标人群（如：初三家长 / 高一学生 / 陪读妈妈）"
             className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm border-none outline-none"
             style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
           />
@@ -358,7 +358,7 @@ export default function CoachPage() {
             type="text"
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
-            placeholder="🔑 关键词/产品（如：防晒霜、敏感肌）"
+            placeholder="🔑 关键词/项目（如：O-Level、AEIS、政府中学）"
             className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm border-none outline-none"
             style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
           />
@@ -367,7 +367,7 @@ export default function CoachPage() {
           type="text"
           value={extra}
           onChange={(e) => setExtra(e.target.value)}
-          placeholder="📝 补充说明（可选，如：突出真实使用感受，结尾引导评论互动）"
+          placeholder="📝 补充说明（可选，如：强调升学路径，结尾引导家长私信咨询）"
           className="w-full px-3 py-2 rounded-lg text-sm border-none outline-none mb-3"
           style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
         />
