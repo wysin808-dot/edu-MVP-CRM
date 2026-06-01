@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import { useContentMedia, useUploadMedia, useDeleteMedia } from "@/hooks/useContentMedia";
-import { Button } from "./Button";
 import type { ContentMedia } from "@/lib/types";
 
 interface MediaUploaderProps {

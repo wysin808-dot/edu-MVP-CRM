@@ -1,0 +1,393 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(185, 28, 28, 0.14), transparent 34%),
+    linear-gradient(135deg, #eef2f7 0%, #f8fafc 100%);
+  color: #111827;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 28px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shell {
+  width: min(860px, 100%);
+  height: min(780px, calc(100vh - 56px));
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.16);
+  animation: shellIn 420ms ease-out both;
+}
+
+.hero {
+  min-height: 92px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #b91c1c;
+  color: #ffffff;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.hero p {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 14px;
+}
+
+.status {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  position: relative;
+  padding-left: 24px;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.status::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #86efac;
+  box-shadow: 0 0 0 4px rgba(134, 239, 172, 0.18);
+  transform: translateY(-50%);
+}
+
+.status.thinking::before {
+  background: #fde68a;
+  box-shadow: 0 0 0 4px rgba(253, 230, 138, 0.2);
+  animation: pulse 900ms ease-in-out infinite;
+}
+
+.quick {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.quick button {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #991b1b;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.quick button:hover {
+  background: #fef2f2;
+  box-shadow: 0 8px 20px rgba(185, 28, 28, 0.12);
+  transform: translateY(-1px);
+}
+
+.quick button.selected {
+  background: #fee2e2;
+  transform: scale(0.96);
+}
+
+.quick button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.messages {
+  flex: 1;
+  padding: 18px;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+.message-row {
+  display: flex;
+  margin-bottom: 12px;
+  animation: messageIn 220ms ease-out both;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: min(620px, 88%);
+  padding: 11px 13px;
+  border-radius: 9px;
+  white-space: pre-wrap;
+  line-height: 1.65;
+  font-size: 14px;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.bubble:hover {
+  transform: translateY(-1px);
+}
+
+.assistant .bubble {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.user .bubble {
+  background: #b91c1c;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(185, 28, 28, 0.18);
+}
+
+.typing-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 3px;
+  border-radius: 999px;
+  background: #94a3b8;
+  animation: typing 900ms ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 240ms;
+}
+
+.wechat-card {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid #fee2e2;
+  border-radius: 9px;
+  background: #ffffff;
+  text-align: center;
+  color: #111827;
+  animation: cardIn 260ms ease-out both;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.wechat-card:hover {
+  box-shadow: 0 12px 28px rgba(185, 28, 28, 0.1);
+  transform: translateY(-1px);
+}
+
+.wechat-card strong,
+.wechat-card span {
+  display: block;
+}
+
+.wechat-card span {
+  margin-top: 5px;
+  color: #64748b;
+}
+
+.divider {
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.qr-box {
+  width: 124px;
+  height: 124px;
+  margin: 12px auto 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.qr-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wechat-id {
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.wechat-card button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #b91c1c;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.wechat-card button:hover {
+  background: #991b1b;
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.18);
+  transform: translateY(-1px);
+}
+
+.wechat-card button.clicked {
+  background: #166534;
+}
+
+.composer {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.composer input {
+  min-width: 0;
+  flex: 1;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.composer input:focus {
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+}
+
+.composer button {
+  width: 88px;
+  border: 0;
+  border-radius: 7px;
+  background: #b91c1c;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.composer button:hover:not(:disabled) {
+  background: #991b1b;
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.18);
+  transform: translateY(-1px);
+}
+
+.composer button:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+@keyframes shellIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 0;
+  }
+
+  .shell {
+    width: 100%;
+    height: 100vh;
+    min-height: 100vh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .hero {
+    padding: 18px;
+  }
+
+  .hero h1 {
+    font-size: 21px;
+  }
+}

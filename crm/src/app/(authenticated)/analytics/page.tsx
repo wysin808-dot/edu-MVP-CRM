@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useContentList } from "@/hooks/useContents";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
 import { PLATFORMS, CRM_STAGES, FUNNEL_STAGES, CONTENT_TYPES, CONTENT_STATUSES } from "@/lib/constants";
-import { getWeekStart, localDateStr } from "@/lib/utils";
+import { getWeekStart } from "@/lib/utils";
 
 // Fetch aggregated metrics from content_metrics table
 function useAggregatedMetrics() {

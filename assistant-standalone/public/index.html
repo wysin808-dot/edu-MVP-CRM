@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI升学助手</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="shell" aria-label="AI升学助手">
+        <header class="hero">
+          <div>
+            <h1>AI升学助手</h1>
+            <p>输入升学问题，获取简明参考建议。</p>
+          </div>
+          <div id="status" class="status">在线</div>
+        </header>
+
+        <div class="quick" aria-label="快捷问题">
+          <button type="button" data-question="AEIS是什么">AEIS是什么</button>
+          <button type="button" data-question="O-Level是什么">O-Level是什么</button>
+          <button type="button" data-question="WACE申请大学">WACE申请大学</button>
+          <button type="button" data-question="新加坡国际学校">新加坡国际学校</button>
+          <button type="button" data-question="香港大学申请">香港大学申请</button>
+        </div>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <form id="chatForm" class="composer">
+          <input
+            id="questionInput"
+            maxlength="500"
+            autocomplete="off"
+            placeholder="请输入您的升学问题"
+          />
+          <button id="sendButton" type="submit" disabled>发送</button>
+        </form>
+      </section>
+    </main>
+
+    <template id="wechatTemplate">
+      <div class="wechat-card">
+        <div class="divider">━━━━━━━━━━</div>
+        <strong>🎓 免费升学规划</strong>
+        <span>添加顾问微信</span>
+        <div id="qrBox" class="qr-box">微信二维码</div>
+        <div id="wechatId" class="wechat-id"></div>
+        <button id="wechatButton" type="button">立即咨询</button>
+        <div class="divider">━━━━━━━━━━</div>
+      </div>
+    </template>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -602,7 +602,7 @@ export default function CoachPage() {
         >
           <div className="text-4xl mb-3">💡</div>
           <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>
-            选一个主题，点击"生成 5 条内容"
+            选一个主题，点击「生成内容」
           </p>
           <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
             先选平台（朋友圈/小红书），生成 5 条不同角度的内容，配图也自动匹配平台尺寸
