@@ -13,6 +13,7 @@ import {
 } from "@/lib/constants";
 import type { CoachGenerated } from "@/lib/types";
 import TopicFinder from "@/components/coach/TopicFinder";
+import VideoGenButton from "@/components/coach/VideoGenButton";
 import type { Topic } from "@/hooks/useTopics";
 
 // ── Date-aware topic suggestions ──
@@ -582,6 +583,16 @@ export default function CoachPage() {
                   </div>
                 )}
 
+                {/* 视频：文生视频（即梦 AI） */}
+                <div className="px-4 pt-3 flex items-start gap-2 flex-wrap">
+                  <span className="text-xs mt-2" style={{ color: "var(--muted)" }}>🎬 视频：</span>
+                  <VideoGenButton
+                    defaultPrompt={item.topic || ""}
+                    ratio={item.platform === "小红书" || item.platform === "视频脚本" ? "9:16" : "16:9"}
+                    label="🎬 生成视频"
+                  />
+                </div>
+
                 {/* Cover (小红书) */}
                 {imgs?.cover && (
                   <div className="px-4 pt-3">
@@ -595,6 +606,9 @@ export default function CoachPage() {
                       >
                         📥
                       </button>
+                    </div>
+                    <div className="mt-2 max-w-md">
+                      <VideoGenButton defaultPrompt={item.topic || ""} imageUrl={imgs.cover} ratio="9:16" label="🎬 封面转动态视频" />
                     </div>
                   </div>
                 )}
