@@ -12,6 +12,8 @@ import {
   COACH_TOPICS,
 } from "@/lib/constants";
 import type { CoachGenerated } from "@/lib/types";
+import TopicFinder from "@/components/coach/TopicFinder";
+import type { Topic } from "@/hooks/useTopics";
 
 // ── Date-aware topic suggestions ──
 function getDateTopics(): { label: string; icon: string }[] {
@@ -110,6 +112,17 @@ export default function CoachPage() {
   const deleteContent = useCoachDelete();
   const dateTopics = getDateTopics();
 
+  // 从选题卡片选中 → 填充内容生成控制区
+  function handlePickTopic(t: Topic) {
+    setTopic(t.title);
+    setPlatform(t.content_form === "视频" ? "视频脚本" : "小红书");
+    if (t.needs_presenter) setPresenter(t.needs_presenter);
+    if (t.suggest_platform) setChannelHint(t.suggest_platform);
+    setTimeout(() => {
+      document.getElementById("content-gen-controls")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  }
+
   const handleGenerate = async () => {
     if (batchGenerate.isPending || !topic.trim()) return;
     // Clear old content
@@ -203,10 +216,10 @@ export default function CoachPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>
-            ✍️ 内容生成
+            💡 内容生产
           </h2>
           <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
-            选渠道 → 填主题/人群/关键词 → 一键生成图文，每条可一键配图
+            选题 → 选渠道/形式 → 一键生成图文或视频脚本，每条可一键配图
           </p>
         </div>
         {/* View tabs */}
@@ -275,16 +288,18 @@ export default function CoachPage() {
         />
       ) : (
       <>
-      {/* Topic + Generate */}
-      <div
-        className="rounded-xl p-5 mb-6"
-        style={{
-          background: "linear-gradient(135deg, var(--brand), color-mix(in srgb, var(--brand) 80%, #000))",
-          color: "#fff",
-        }}
-      >
+      {/* 第一步：选题（合并选题中心） */}
+      <TopicFinder onPick={handlePickTopic} />
+
+      {/* 第二步：生成内容（浅色调） */}
+      <div id="content-gen-controls" className="rounded-xl p-5 mb-6 bg-white border border-[var(--border,#e5e7eb)]">
+        <h3 className="text-sm font-bold flex items-center gap-2 mb-3">
+          ✍️ 第二步 · 生成内容
+          <span className="text-xs font-normal text-[var(--muted,#9ca3af)]">选好主题与形式，一键出 5 条可发布内容</span>
+        </h3>
+
         {/* Platform toggle */}
-        <div className="flex gap-2 mb-3 flex-wrap">
+        <div className="flex gap-2 mb-3 flex-wrap items-center">
           {([
             ["朋友圈", "💬 微信朋友圈"],
             ["小红书", "📕 小红书"],
@@ -296,17 +311,17 @@ export default function CoachPage() {
             <button
               key={p}
               onClick={() => setPlatform(p)}
-              className="px-4 py-1.5 rounded-lg text-sm font-medium border-none cursor-pointer transition-all"
-              style={{
-                background: platform === p ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.15)",
-                color: platform === p ? "var(--brand)" : "#fff",
-                fontWeight: platform === p ? 700 : 400,
-              }}
+              className="px-3.5 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-all border"
+              style={
+                platform === p
+                  ? { background: "#2563eb", color: "#fff", borderColor: "#2563eb", fontWeight: 600 }
+                  : { background: "#fff", color: "#4b5563", borderColor: "var(--border,#e5e7eb)" }
+              }
             >
               {label}
             </button>
           ))}
-          <span className="text-xs opacity-70 self-center ml-1">
+          <span className="text-xs self-center ml-1 text-[var(--muted,#9ca3af)]">
             {platform === "朋友圈"
               ? "（5条200字短文 · 方形配图）"
               : platform === "小红书"
@@ -323,17 +338,17 @@ export default function CoachPage() {
 
         {/* Style selector */}
         <div className="flex gap-2 mb-3 flex-wrap items-center">
-          <span className="text-xs opacity-70">🎨 风格：</span>
+          <span className="text-xs text-[var(--muted,#6b7280)]">🎨 风格：</span>
           {["", "焦虑型", "数据型", "故事型", "高端型", "专家型", "转化型"].map((s) => (
             <button
               key={s || "default"}
               onClick={() => setStyle(s)}
-              className="text-xs px-3 py-1 rounded-full border-none cursor-pointer transition-all"
-              style={{
-                background: style === s ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.12)",
-                color: style === s ? "var(--brand)" : "#fff",
-                fontWeight: style === s ? 600 : 400,
-              }}
+              className="text-xs px-3 py-1 rounded-full cursor-pointer transition-all border"
+              style={
+                style === s
+                  ? { background: "#2563eb", color: "#fff", borderColor: "#2563eb", fontWeight: 600 }
+                  : { background: "#fff", color: "#4b5563", borderColor: "var(--border,#e5e7eb)" }
+              }
             >
               {s === "" ? "默认" : s}
             </button>
@@ -343,17 +358,17 @@ export default function CoachPage() {
         {/* 真人出镜（仅视频脚本） */}
         {platform === "视频脚本" && (
           <div className="flex gap-2 mb-3 flex-wrap items-center">
-            <span className="text-xs opacity-70">🎥 真人出镜：</span>
+            <span className="text-xs text-[var(--muted,#6b7280)]">🎥 真人出镜：</span>
             {["需要真人", "口播不出镜", "不需要"].map((p) => (
               <button
                 key={p}
                 onClick={() => setPresenter(presenter === p ? "" : p)}
-                className="text-xs px-3 py-1 rounded-full border-none cursor-pointer transition-all"
-                style={{
-                  background: presenter === p ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.12)",
-                  color: presenter === p ? "var(--brand)" : "#fff",
-                  fontWeight: presenter === p ? 600 : 400,
-                }}
+                className="text-xs px-3 py-1 rounded-full cursor-pointer transition-all border"
+                style={
+                  presenter === p
+                    ? { background: "#d97706", color: "#fff", borderColor: "#d97706", fontWeight: 600 }
+                    : { background: "#fff", color: "#4b5563", borderColor: "var(--border,#e5e7eb)" }
+                }
               >
                 {p === "需要真人" ? "🧑 需要真人" : p === "口播不出镜" ? "🎙 口播不出镜" : "🤖 不需要"}
               </button>
@@ -361,13 +376,13 @@ export default function CoachPage() {
           </div>
         )}
 
-        {/* 来自选题中心的建议平台 */}
+        {/* 来自选题的建议平台 */}
         {channelHint && (
-          <div className="mb-3 text-xs flex items-center gap-2" style={{ color: "rgba(255,255,255,0.85)" }}>
-            <span className="px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }}>
+          <div className="mb-3 text-xs flex items-center gap-2">
+            <span className="px-2 py-0.5 rounded-full" style={{ background: "#eff6ff", color: "#2563eb" }}>
               📍 来自选题 · 建议平台：{channelHint}
             </span>
-            <button onClick={() => setChannelHint("")} className="opacity-60 hover:opacity-100" style={{ background: "none", border: "none", color: "#fff", cursor: "pointer" }}>✕</button>
+            <button onClick={() => setChannelHint("")} className="text-[var(--muted,#9ca3af)] hover:text-gray-700" style={{ background: "none", border: "none", cursor: "pointer" }}>✕</button>
           </div>
         )}
 
@@ -377,22 +392,15 @@ export default function CoachPage() {
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="输入主题，如：AEIS考试准备、暑假规划..."
-              className="w-full px-3 py-2.5 rounded-lg text-sm border-none outline-none"
-              style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
+              placeholder="主题（可手写，或从上方选题点「用它写内容」自动填入）"
+              className="w-full px-3 py-2.5 rounded-lg text-sm outline-none border border-[var(--border,#e5e7eb)] focus:border-blue-500"
               onKeyDown={(e) => { if (e.key === "Enter") handleGenerate(); }}
             />
           </div>
           <button
             onClick={handleGenerate}
             disabled={batchGenerate.isPending || !topic.trim()}
-            className="px-6 py-2.5 rounded-lg text-sm font-semibold border-none cursor-pointer whitespace-nowrap"
-            style={{
-              background: !topic.trim() ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.95)",
-              color: !topic.trim() ? "rgba(255,255,255,0.6)" : "var(--brand)",
-              opacity: batchGenerate.isPending ? 0.7 : 1,
-              cursor: !topic.trim() ? "not-allowed" : "pointer",
-            }}
+            className="px-6 py-2.5 rounded-lg text-sm font-semibold cursor-pointer whitespace-nowrap bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {batchGenerate.isPending ? "🔄 生成中..." : platform === "视频脚本" ? "✨ 生成 3 个脚本" : "✨ 生成 5 条内容"}
           </button>
@@ -405,16 +413,14 @@ export default function CoachPage() {
             value={audience}
             onChange={(e) => setAudience(e.target.value)}
             placeholder="🎯 目标人群（如：初三家长 / 高一学生 / 陪读妈妈）"
-            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm border-none outline-none"
-            style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
+            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm outline-none border border-[var(--border,#e5e7eb)] focus:border-blue-500"
           />
           <input
             type="text"
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
             placeholder="🔑 关键词/项目（如：O-Level、AEIS、政府中学）"
-            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm border-none outline-none"
-            style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
+            className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm outline-none border border-[var(--border,#e5e7eb)] focus:border-blue-500"
           />
         </div>
         <input
@@ -422,24 +428,23 @@ export default function CoachPage() {
           value={extra}
           onChange={(e) => setExtra(e.target.value)}
           placeholder="📝 补充说明（可选，如：强调升学路径，结尾引导家长私信咨询）"
-          className="w-full px-3 py-2 rounded-lg text-sm border-none outline-none mb-3"
-          style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
+          className="w-full px-3 py-2 rounded-lg text-sm outline-none mb-3 border border-[var(--border,#e5e7eb)] focus:border-blue-500"
         />
 
         {/* Date topics */}
         {dateTopics.length > 0 && (
           <div className="mb-2">
-            <span className="text-xs opacity-60 mr-2">📅 今日推荐：</span>
+            <span className="text-xs mr-2 text-[var(--muted,#9ca3af)]">📅 今日推荐：</span>
             {dateTopics.map((t) => (
               <button
                 key={t.label}
                 onClick={() => setTopic(topic === t.label ? "" : t.label)}
-                className="text-xs px-3 py-1.5 rounded-full border-none cursor-pointer transition-all mr-2 mb-1"
-                style={{
-                  background: topic === t.label ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.12)",
-                  color: "#fff",
-                  fontWeight: topic === t.label ? 600 : 400,
-                }}
+                className="text-xs px-3 py-1.5 rounded-full cursor-pointer transition-all mr-2 mb-1 border"
+                style={
+                  topic === t.label
+                    ? { background: "#eff6ff", color: "#2563eb", borderColor: "#bfdbfe", fontWeight: 600 }
+                    : { background: "#fff", color: "#4b5563", borderColor: "var(--border,#e5e7eb)" }
+                }
               >
                 {t.icon} {t.label}
               </button>
@@ -449,17 +454,17 @@ export default function CoachPage() {
 
         {/* Common topics */}
         <div>
-          <span className="text-xs opacity-60 mr-2">🔖 常用：</span>
+          <span className="text-xs mr-2 text-[var(--muted,#9ca3af)]">🔖 常用：</span>
           {COACH_TOPICS.slice(0, 8).map((t) => (
             <button
               key={t}
               onClick={() => setTopic(topic === t ? "" : t)}
-              className="text-xs px-3 py-1.5 rounded-full border-none cursor-pointer transition-all mr-2 mb-1"
-              style={{
-                background: topic === t ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.12)",
-                color: "#fff",
-                fontWeight: topic === t ? 600 : 400,
-              }}
+              className="text-xs px-3 py-1.5 rounded-full cursor-pointer transition-all mr-2 mb-1 border"
+              style={
+                topic === t
+                  ? { background: "#eff6ff", color: "#2563eb", borderColor: "#bfdbfe", fontWeight: 600 }
+                  : { background: "#fff", color: "#4b5563", borderColor: "var(--border,#e5e7eb)" }
+              }
             >
               {t}
             </button>
