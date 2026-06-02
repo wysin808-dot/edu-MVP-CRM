@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
 import {
   useCoachBatchGenerate,
@@ -82,6 +82,18 @@ export default function CoachPage() {
   const [imageLoading, setImageLoading] = useState<string | null>(null);
   const [imageData, setImageData] = useState<Record<string, { cover: string | null; pages: string[] }>>({});
   const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
+
+  // 从选题中心跳转过来时，用 ?topic= 预填主题
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("topic");
+    if (t) {
+      setTopic(t);
+      setView("generate");
+      // 清掉 query，避免刷新后又预填
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
 
   const batchGenerate = useCoachBatchGenerate();
   const { data: history, isLoading: historyLoading } = useCoachHistory();
