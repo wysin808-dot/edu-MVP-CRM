@@ -22,6 +22,10 @@ const CATEGORY_META: Record<string, { color: string; bg: string; icon: string }>
 
 const HOT_KEYWORDS = ["WACE", "O-Level", "AEIS", "新加坡国际学校", "陪读妈妈", "高考后留学", "NUS 申请", "国际高中择校"];
 
+const PLATFORM_OPTIONS = ["小红书", "知乎", "抖音", "视频号", "百家号", "公众号"];
+const FORM_OPTIONS = ["图文", "视频"];
+const PRESENTER_OPTIONS = ["需要真人", "口播不出镜", "不需要"];
+
 export default function TopicsPage() {
   const router = useRouter();
   const { data: topics = [], isLoading } = useTopicList();
@@ -33,6 +37,12 @@ export default function TopicsPage() {
   const [perCategory, setPerCategory] = useState(5);
   const [activeBatch, setActiveBatch] = useState<string | null>(null);
   const [filterCat, setFilterCat] = useState<string>("全部");
+  const [selPlatforms, setSelPlatforms] = useState<string[]>([]); // 目标平台（空=AI自由判断）
+  const [selForm, setSelForm] = useState<string>(""); // 内容形式（""=不限）
+
+  function togglePlatform(p: string) {
+    setSelPlatforms((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
+  }
 
   // 按批次分组历史
   const batches = useMemo(() => {
@@ -64,7 +74,12 @@ export default function TopicsPage() {
     const k = (kw ?? keyword).trim();
     if (!k) return;
     setKeyword(k);
-    const res = await generate.mutateAsync({ keyword: k, perCategory });
+    const res = await generate.mutateAsync({
+      keyword: k,
+      perCategory,
+      platforms: selPlatforms,
+      form: selForm || undefined,
+    });
     setActiveBatch(res.batchId);
     setFilterCat("全部");
   }
@@ -115,6 +130,53 @@ export default function TopicsPage() {
           >
             {generate.isPending ? "AI 策划中…" : "🚀 生成选题"}
           </button>
+        </div>
+
+        {/* 目标平台 + 内容形式 选择器 */}
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-[var(--muted,#6b7280)] mr-1">目标平台：</span>
+            {PLATFORM_OPTIONS.map((p) => {
+              const on = selPlatforms.includes(p);
+              return (
+                <button
+                  key={p}
+                  onClick={() => togglePlatform(p)}
+                  className="rounded-full px-2.5 py-0.5 text-xs border transition"
+                  style={
+                    on
+                      ? { background: "#2563eb", color: "#fff", borderColor: "#2563eb" }
+                      : { background: "#fff", color: "#4b5563", borderColor: "var(--border,#e5e7eb)" }
+                  }
+                >
+                  {p}
+                </button>
+              );
+            })}
+            <span className="text-[11px] text-[var(--muted,#9ca3af)] ml-1">
+              {selPlatforms.length === 0 ? "(不选=AI自动判断)" : `已选 ${selPlatforms.length}`}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-[var(--muted,#6b7280)] mr-1">内容形式：</span>
+            {["", ...FORM_OPTIONS].map((f) => {
+              const on = selForm === f;
+              return (
+                <button
+                  key={f || "any"}
+                  onClick={() => setSelForm(f)}
+                  className="rounded-full px-2.5 py-0.5 text-xs border transition"
+                  style={
+                    on
+                      ? { background: "#7c3aed", color: "#fff", borderColor: "#7c3aed" }
+                      : { background: "#fff", color: "#4b5563", borderColor: "var(--border,#e5e7eb)" }
+                  }
+                >
+                  {f === "" ? "不限" : f === "视频" ? "🎬 视频" : "🖼 图文"}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* 热门关键词 */}
@@ -235,31 +297,54 @@ export default function TopicsPage() {
                 </div>
                 <p className="text-sm font-semibold leading-snug">{t.title}</p>
                 {t.angle && <p className="text-xs text-[var(--muted,#6b7280)] leading-relaxed">{t.angle}</p>}
-                {/* 生产属性徽章 */}
-                {(t.suggest_platform || t.content_form || t.needs_presenter) && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {t.suggest_platform && (
-                      <span className="rounded-md bg-gray-100 text-gray-600 px-1.5 py-0.5 text-[11px]">📍 {t.suggest_platform}</span>
-                    )}
-                    {t.content_form && (
-                      <span
-                        className="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
-                        style={
-                          t.content_form === "视频"
-                            ? { background: "#fdf2f8", color: "#db2777" }
-                            : { background: "#eff6ff", color: "#2563eb" }
-                        }
-                      >
-                        {t.content_form === "视频" ? "🎬 视频" : "🖼 图文"}
-                      </span>
-                    )}
-                    {t.content_form === "视频" && t.needs_presenter && (
-                      <span className="rounded-md bg-amber-50 text-amber-700 px-1.5 py-0.5 text-[11px]">
-                        {t.needs_presenter === "需要真人" ? "🧑 真人出镜" : t.needs_presenter === "口播不出镜" ? "🎙 口播" : "🤖 无需出镜"}
-                      </span>
-                    )}
-                  </div>
-                )}
+                {/* 生产属性：可编辑下拉 */}
+                <div className="flex flex-wrap gap-1.5">
+                  <select
+                    value={t.suggest_platform || ""}
+                    onChange={(e) => update.mutate({ id: t.id, suggest_platform: e.target.value })}
+                    className="rounded-md border border-[var(--border,#e5e7eb)] bg-gray-50 px-1.5 py-0.5 text-[11px] text-gray-700 outline-none"
+                    title="建议平台"
+                  >
+                    <option value="">📍 平台?</option>
+                    {PLATFORM_OPTIONS.map((p) => (
+                      <option key={p} value={p}>📍 {p}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={t.content_form || ""}
+                    onChange={(e) => {
+                      const form = e.target.value;
+                      update.mutate({
+                        id: t.id,
+                        content_form: form,
+                        ...(form === "图文" ? { needs_presenter: "不需要" } : {}),
+                      });
+                    }}
+                    className="rounded-md border border-[var(--border,#e5e7eb)] px-1.5 py-0.5 text-[11px] outline-none"
+                    style={t.content_form === "视频" ? { background: "#fdf2f8", color: "#db2777" } : { background: "#eff6ff", color: "#2563eb" }}
+                    title="内容形式"
+                  >
+                    <option value="">形式?</option>
+                    {FORM_OPTIONS.map((f) => (
+                      <option key={f} value={f}>{f === "视频" ? "🎬 视频" : "🖼 图文"}</option>
+                    ))}
+                  </select>
+                  {t.content_form === "视频" && (
+                    <select
+                      value={t.needs_presenter || ""}
+                      onChange={(e) => update.mutate({ id: t.id, needs_presenter: e.target.value })}
+                      className="rounded-md border border-[var(--border,#e5e7eb)] bg-amber-50 px-1.5 py-0.5 text-[11px] text-amber-700 outline-none"
+                      title="真人出镜"
+                    >
+                      <option value="">出镜?</option>
+                      {PRESENTER_OPTIONS.map((p) => (
+                        <option key={p} value={p}>
+                          {p === "需要真人" ? "🧑 真人出镜" : p === "口播不出镜" ? "🎙 口播" : "🤖 无需出镜"}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 mt-auto pt-1">
                   <button
                     onClick={() => useTopicForContent(t)}

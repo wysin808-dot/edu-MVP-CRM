@@ -13,8 +13,14 @@ const SYSTEM_PROMPT = `你是国际教育行业的爆款选题策划专家，精
 // 六大选题类型
 const CATEGORIES = ["流量型", "焦虑型", "对比型", "申请型", "干货型", "热点型"] as const;
 
-function buildPrompt(keyword: string, perCategory: number): string {
-  return `请围绕关键词「${keyword}」，为招生团队策划 ${CATEGORIES.length * perCategory} 个高流量选题，分为 6 类，每类 ${perCategory} 个：
+function buildPrompt(keyword: string, perCategory: number, platforms: string[] = [], forcedForm = ""): string {
+  const platformConstraint = platforms.length
+    ? `\n\n【平台限制】本次只针对这些平台：${platforms.join("、")}。每条选题的「建议平台」必须从中选 1 个，不要用其它平台。`
+    : "";
+  const formConstraint = forcedForm
+    ? `\n【形式限制】本次所有选题的「内容形式」统一为：${forcedForm}。`
+    : "";
+  return `请围绕关键词「${keyword}」，为招生团队策划 ${CATEGORIES.length * perCategory} 个高流量选题，分为 6 类，每类 ${perCategory} 个：${platformConstraint}${formConstraint}
 
 - 流量型：科普/搜索词型，家长会主动搜索的问题（如"XX是什么""XX难吗""XX适合中国学生吗"）
 - 焦虑型：戳中家长升学焦虑与信息差的痛点选题（不可贩卖恐慌）
@@ -119,6 +125,8 @@ export async function POST(request: NextRequest) {
 
   const keyword = (body?.keyword || "").trim();
   const perCategory = Math.min(8, Math.max(3, Number(body?.perCategory) || 5));
+  const platforms: string[] = Array.isArray(body?.platforms) ? body.platforms.filter(Boolean) : [];
+  const forcedForm = ["图文", "视频"].includes((body?.form || "").trim()) ? (body.form as string).trim() : "";
   if (!keyword) {
     return NextResponse.json({ error: "Missing keyword" }, { status: 400 });
   }
@@ -147,7 +155,7 @@ export async function POST(request: NextRequest) {
         model: endpointId,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: buildPrompt(keyword, perCategory) },
+          { role: "user", content: buildPrompt(keyword, perCategory, platforms, forcedForm) },
         ],
         temperature: 0.9,
         max_tokens: 3000,
@@ -172,6 +180,15 @@ export async function POST(request: NextRequest) {
         { error: "未能解析出选题，请重试", raw: outputText.slice(0, 500) },
         { status: 502 }
       );
+    }
+
+    // 强制兜底用户选择的平台 / 形式（防止 AI 跑偏）
+    for (const p of parsed) {
+      if (platforms.length && !platforms.includes(p.platform)) p.platform = platforms[0];
+      if (forcedForm) {
+        p.form = forcedForm;
+        if (forcedForm === "图文") p.presenter = "不需要";
+      }
     }
 
     const batchId = `topic_${new Date().toISOString().split("T")[0]}_${Date.now()}`;

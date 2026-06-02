@@ -41,6 +41,8 @@ export function useTopicList() {
 interface GenerateParams {
   keyword: string;
   perCategory?: number;
+  platforms?: string[]; // 目标平台（空=AI自由判断）
+  form?: string;        // 内容形式：图文/视频/不限
 }
 
 export function useTopicGenerate() {
@@ -76,14 +78,23 @@ export function useTopicUpdate() {
       id,
       status,
       bumpUsed,
+      suggest_platform,
+      content_form,
+      needs_presenter,
     }: {
       id: string;
       status?: string;
       bumpUsed?: boolean;
+      suggest_platform?: string;
+      content_form?: string;
+      needs_presenter?: string;
     }) => {
       const supabase = createClient();
       const patch: Record<string, unknown> = {};
       if (status) patch.status = status;
+      if (suggest_platform !== undefined) patch.suggest_platform = suggest_platform;
+      if (content_form !== undefined) patch.content_form = content_form;
+      if (needs_presenter !== undefined) patch.needs_presenter = needs_presenter;
       if (bumpUsed) {
         const { data: cur } = await supabase
           .from("topics")
