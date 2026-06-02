@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { topic, platform, audienceTag, tone, contentType, batchMode, style, audience, keywords, extra } = body;
+  const { topic, platform, audienceTag, tone, contentType, batchMode, style, audience, keywords, extra, presenter, channelHint } = body;
 
   if (!topic) {
     return NextResponse.json({ error: "Missing topic" }, { status: 400 });
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (batchMode) {
-    return handleBatchGenerate(supabase, user, apiKey, endpointId, topic, platform || "朋友圈", style, { audience, keywords, extra });
+    return handleBatchGenerate(supabase, user, apiKey, endpointId, topic, platform || "朋友圈", style, { audience, keywords, extra, presenter, channelHint });
   }
 
   // Single content generation — 注入知识库相关资料
@@ -309,7 +309,7 @@ async function handleBatchGenerate(
   topic: string,
   platform: string,
   style?: string,
-  ctx?: { audience?: string; keywords?: string; extra?: string }
+  ctx?: { audience?: string; keywords?: string; extra?: string; presenter?: string; channelHint?: string }
 ) {
   const batchId = `daily_${new Date().toISOString().split("T")[0]}_${Date.now()}`;
 
@@ -463,11 +463,22 @@ async function handleBatchGenerate(
 请直接输出可发布的内容，不要加说明。每条之间用 ===SPLIT=== 分隔。`;
   }
 
-  // 注入目标人群/关键词/补充说明 + 风格基调 + 知识库相关资料
+  // 注入目标人群/关键词/补充说明 + 平台 + 出镜方式 + 风格基调 + 知识库相关资料
   const ctxLines: string[] = [];
+  if (ctx?.channelHint) ctxLines.push(`- 建议发布平台：${ctx.channelHint}（请贴合该平台的风格、长度与排版习惯）`);
   if (ctx?.audience) ctxLines.push(`- 目标人群：${ctx.audience}（按这类人群的关注点和痛点调整角度）`);
   if (ctx?.keywords) ctxLines.push(`- 关键词/产品：${ctx.keywords}（自然融入内容，可作为卖点）`);
   if (ctx?.extra) ctxLines.push(`- 补充要求：${ctx.extra}`);
+  // 仅视频脚本注入「真人出镜」方式，决定脚本写法
+  if (platform === "视频脚本" && ctx?.presenter) {
+    const presenterGuide: Record<string, string> = {
+      "需要真人": "本视频需要真人出镜（IP 本人或扮演者对镜口播）。请写成「出镜口播脚本」：标注出镜人的台词、表情/动作提示、镜头景别，台词要口语、有亲和力。",
+      "口播不出镜": "本视频不出镜、仅口播配音。请写成「配音 + 画面」脚本：左侧配音稿，右侧对应画面/字幕/素材提示，无需出镜表演。",
+      "不需要": "本视频不需要真人，走「图片/素材 + 字幕 + 配音」的无人剪辑形式。请给出逐段画面（图片/素材建议）+ 字幕文案 + 配音文案。",
+    };
+    const g = presenterGuide[ctx.presenter];
+    if (g) ctxLines.push(`- 出镜方式：${ctx.presenter}。${g}`);
+  }
   if (ctxLines.length) batchPrompt += `\n\n## 本次额外要求\n${ctxLines.join("\n")}`;
   batchPrompt += buildStyleDirective(style);
   const knowledge = await fetchRelevantKnowledge(supabase, topic);

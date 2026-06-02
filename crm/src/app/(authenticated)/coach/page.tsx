@@ -77,6 +77,8 @@ export default function CoachPage() {
   const [audience, setAudience] = useState<string>("");
   const [keywords, setKeywords] = useState<string>("");
   const [extra, setExtra] = useState<string>("");
+  const [presenter, setPresenter] = useState<string>(""); // 真人出镜方式（仅视频脚本）
+  const [channelHint, setChannelHint] = useState<string>(""); // 来自选题的建议平台
   const [items, setItems] = useState<CoachGenerated[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState<string | null>(null);
@@ -90,6 +92,13 @@ export default function CoachPage() {
     if (t) {
       setTopic(t);
       setView("generate");
+      // 从选题中心带来的生产属性
+      const form = params.get("form");
+      const pres = params.get("presenter");
+      const channel = params.get("channel");
+      if (form === "视频") setPlatform("视频脚本");
+      if (pres) setPresenter(pres);
+      if (channel) setChannelHint(channel);
       // 清掉 query，避免刷新后又预填
       window.history.replaceState(null, "", window.location.pathname);
     }
@@ -116,6 +125,8 @@ export default function CoachPage() {
         audience: audience || undefined,
         keywords: keywords || undefined,
         extra: extra || undefined,
+        presenter: platform === "视频脚本" ? presenter || undefined : undefined,
+        channelHint: channelHint || undefined,
       });
       setItems(res.items || []);
     } catch {
@@ -328,6 +339,37 @@ export default function CoachPage() {
             </button>
           ))}
         </div>
+
+        {/* 真人出镜（仅视频脚本） */}
+        {platform === "视频脚本" && (
+          <div className="flex gap-2 mb-3 flex-wrap items-center">
+            <span className="text-xs opacity-70">🎥 真人出镜：</span>
+            {["需要真人", "口播不出镜", "不需要"].map((p) => (
+              <button
+                key={p}
+                onClick={() => setPresenter(presenter === p ? "" : p)}
+                className="text-xs px-3 py-1 rounded-full border-none cursor-pointer transition-all"
+                style={{
+                  background: presenter === p ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.12)",
+                  color: presenter === p ? "var(--brand)" : "#fff",
+                  fontWeight: presenter === p ? 600 : 400,
+                }}
+              >
+                {p === "需要真人" ? "🧑 需要真人" : p === "口播不出镜" ? "🎙 口播不出镜" : "🤖 不需要"}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 来自选题中心的建议平台 */}
+        {channelHint && (
+          <div className="mb-3 text-xs flex items-center gap-2" style={{ color: "rgba(255,255,255,0.85)" }}>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.18)" }}>
+              📍 来自选题 · 建议平台：{channelHint}
+            </span>
+            <button onClick={() => setChannelHint("")} className="opacity-60 hover:opacity-100" style={{ background: "none", border: "none", color: "#fff", cursor: "pointer" }}>✕</button>
+          </div>
+        )}
 
         <div className="flex gap-3 items-end mb-3">
           <div className="flex-1">

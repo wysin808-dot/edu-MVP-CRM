@@ -13,6 +13,9 @@ export interface Topic {
   category: string | null;
   title: string;
   angle: string | null;
+  suggest_platform: string | null;
+  content_form: string | null;
+  needs_presenter: string | null;
   status: string;
   used_count: number;
   created_at: string;

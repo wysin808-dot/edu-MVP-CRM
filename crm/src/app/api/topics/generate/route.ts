@@ -23,16 +23,49 @@ function buildPrompt(keyword: string, perCategory: number): string {
 - 干货型：清单/攻略/避坑/时间表等实用型选题
 - 热点型：结合时间节点/政策/时事的选题
 
-输出格式（必须严格遵守，不要任何多余文字、不要解释、不要编号）：
+每条选题还要判断它最适合的「生产方式」，给出三个标注：
+1. 建议平台：从【小红书 / 知乎 / 抖音 / 视频号 / 百家号 / 公众号】里选 1 个最合适的
+2. 内容形式：从【图文 / 视频】里选 1 个（信息密度高、需要深度讲解→图文；情绪/冲突/演示/口播→视频）
+3. 真人出镜：从【需要真人 / 口播不出镜 / 不需要】里选 1 个（强信任/人设类→需要真人；纯讲解可口播；图文或纯素材→不需要）
+
+输出格式（必须严格遵守，不要任何多余文字、不要解释、不要编号，每条一行，5 个字段用英文竖线 | 分隔）：
 [流量型]
-选题标题|一句话角度说明
-选题标题|一句话角度说明
+选题标题|一句话角度说明|建议平台|内容形式|真人出镜
+选题标题|一句话角度说明|建议平台|内容形式|真人出镜
 [焦虑型]
-选题标题|一句话角度说明
-...以此类推，6 类都要输出，每类 ${perCategory} 条，每条一行，用英文竖线 | 分隔标题和角度。`;
+...以此类推，6 类都要输出，每类 ${perCategory} 条。`;
 }
 
-type ParsedTopic = { category: string; title: string; angle: string };
+type ParsedTopic = {
+  category: string;
+  title: string;
+  angle: string;
+  platform: string;
+  form: string;
+  presenter: string;
+};
+
+const FORM_VALUES = ["图文", "视频"];
+const PRESENTER_VALUES = ["需要真人", "口播不出镜", "不需要"];
+
+function normForm(v: string): string {
+  const s = (v || "").trim();
+  if (s.includes("视频")) return "视频";
+  if (s.includes("图文") || s.includes("图")) return "图文";
+  return FORM_VALUES.includes(s) ? s : "图文";
+}
+
+function normPresenter(v: string): string {
+  const s = (v || "").trim();
+  if (s.includes("需要真人") || s === "真人" || s.includes("出镜")) {
+    if (s.includes("不出镜") || s.includes("口播")) return "口播不出镜";
+    if (s.includes("不需要")) return "不需要";
+    return "需要真人";
+  }
+  if (s.includes("口播")) return "口播不出镜";
+  if (s.includes("不需要") || s.includes("无")) return "不需要";
+  return PRESENTER_VALUES.includes(s) ? s : "不需要";
+}
 
 function parseTopics(text: string): ParsedTopic[] {
   const out: ParsedTopic[] = [];
@@ -51,8 +84,11 @@ function parseTopics(text: string): ParsedTopic[] {
     const parts = cleaned.split(/\s*[|｜]\s*/);
     const title = (parts[0] || "").trim();
     const angle = (parts[1] || "").trim();
+    const platform = (parts[2] || "").trim();
+    const form = normForm(parts[3] || "");
+    const presenter = form === "图文" ? "不需要" : normPresenter(parts[4] || "");
     if (title && title.length >= 2) {
-      out.push({ category: current || "其他", title, angle });
+      out.push({ category: current || "其他", title, angle, platform: platform || "小红书", form, presenter });
     }
   }
   return out;
@@ -150,14 +186,37 @@ export async function POST(request: NextRequest) {
       category: p.category,
       title: p.title,
       angle: p.angle || null,
+      suggest_platform: p.platform || null,
+      content_form: p.form,
+      needs_presenter: p.presenter,
       status: "待用",
       used_count: 0,
     }));
 
-    const { data: saved, error: saveError } = await supabase
-      .from("topics")
-      .insert(rows)
-      .select();
+    // 先按带属性列插入；若库里还没跑 012 迁移（缺列），自动回退为不带属性插入，保证不失败
+    let saved, saveError;
+    {
+      const r = await supabase.from("topics").insert(rows).select();
+      saved = r.data;
+      saveError = r.error;
+      if (saveError) {
+        const fallbackRows = parsed.map((p) => ({
+          user_id: user.id,
+          user_name: userName,
+          team,
+          keyword,
+          batch_id: batchId,
+          category: p.category,
+          title: p.title,
+          angle: p.angle || null,
+          status: "待用",
+          used_count: 0,
+        }));
+        const r2 = await supabase.from("topics").insert(fallbackRows).select();
+        saved = r2.data;
+        saveError = r2.error;
+      }
+    }
 
     if (saveError) {
       console.error("Topic save error:", saveError);

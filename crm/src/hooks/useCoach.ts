@@ -49,6 +49,8 @@ export function useCoachBatchGenerate() {
       audience?: string;
       keywords?: string;
       extra?: string;
+      presenter?: string;
+      channelHint?: string;
     }) => {
       const res = await fetch("/api/coach/generate", {
         method: "POST",
@@ -61,6 +63,8 @@ export function useCoachBatchGenerate() {
           audience: params.audience,
           keywords: params.keywords,
           extra: params.extra,
+          presenter: params.presenter,
+          channelHint: params.channelHint,
         }),
       });
       if (!res.ok) {

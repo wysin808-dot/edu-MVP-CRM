@@ -71,7 +71,11 @@ export default function TopicsPage() {
 
   function useTopicForContent(t: Topic) {
     update.mutate({ id: t.id, status: "已生成", bumpUsed: true });
-    router.push(`/coach?topic=${encodeURIComponent(t.title)}`);
+    const params = new URLSearchParams({ topic: t.title });
+    if (t.content_form) params.set("form", t.content_form);
+    if (t.needs_presenter) params.set("presenter", t.needs_presenter);
+    if (t.suggest_platform) params.set("channel", t.suggest_platform);
+    router.push(`/coach?${params.toString()}`);
   }
 
   return (
@@ -231,6 +235,31 @@ export default function TopicsPage() {
                 </div>
                 <p className="text-sm font-semibold leading-snug">{t.title}</p>
                 {t.angle && <p className="text-xs text-[var(--muted,#6b7280)] leading-relaxed">{t.angle}</p>}
+                {/* 生产属性徽章 */}
+                {(t.suggest_platform || t.content_form || t.needs_presenter) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {t.suggest_platform && (
+                      <span className="rounded-md bg-gray-100 text-gray-600 px-1.5 py-0.5 text-[11px]">📍 {t.suggest_platform}</span>
+                    )}
+                    {t.content_form && (
+                      <span
+                        className="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+                        style={
+                          t.content_form === "视频"
+                            ? { background: "#fdf2f8", color: "#db2777" }
+                            : { background: "#eff6ff", color: "#2563eb" }
+                        }
+                      >
+                        {t.content_form === "视频" ? "🎬 视频" : "🖼 图文"}
+                      </span>
+                    )}
+                    {t.content_form === "视频" && t.needs_presenter && (
+                      <span className="rounded-md bg-amber-50 text-amber-700 px-1.5 py-0.5 text-[11px]">
+                        {t.needs_presenter === "需要真人" ? "🧑 真人出镜" : t.needs_presenter === "口播不出镜" ? "🎙 口播" : "🤖 无需出镜"}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-center gap-2 mt-auto pt-1">
                   <button
                     onClick={() => useTopicForContent(t)}
