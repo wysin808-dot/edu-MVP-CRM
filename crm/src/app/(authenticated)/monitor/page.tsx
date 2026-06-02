@@ -36,7 +36,7 @@ const ROLE_LABEL: Record<string, string> = {
 const PERIODS: [string, string][] = [["today", "今日"], ["week", "近7天"], ["month", "本月"]];
 
 export default function MonitorPage() {
-  const [mainTab, setMainTab] = useState<"monitor" | "quota">("monitor");
+  const [mainTab, setMainTab] = useState<"monitor" | "quota" | "audit">("monitor");
   const [period, setPeriod] = useState("today");
   const [selected, setSelected] = useState<RecentItem | null>(null);
 
@@ -62,11 +62,11 @@ export default function MonitorPage() {
         <div>
           <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>🖥️ 运营监控</h2>
           <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
-            {mainTab === "monitor" ? "实时看每个员工今天生成了什么、用了多少额度" : "设置每个员工每天的生成次数额度"}
+            {mainTab === "monitor" ? "实时看每个员工今天生成了什么、用了多少额度" : mainTab === "quota" ? "设置每个员工每天的生成次数额度" : "查看全员私聊记录（合规审计）"}
           </p>
         </div>
         <div className="flex gap-1 p-1 rounded-lg" style={{ background: "var(--surface-soft)" }}>
-          {([["monitor", "📊 监控"], ["quota", "⚙️ 配额管理"]] as const).map(([t, label]) => (
+          {([["monitor", "📊 监控"], ["quota", "⚙️ 配额管理"], ["audit", "💬 聊天审计"]] as const).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setMainTab(t)}
@@ -85,6 +85,8 @@ export default function MonitorPage() {
 
       {mainTab === "quota" ? (
         <QuotaManager />
+      ) : mainTab === "audit" ? (
+        <ChatAudit />
       ) : (
       <>
       {/* 时间范围 */}
@@ -344,6 +346,73 @@ function QuotaManager() {
       })}
       {(!data?.users || data.users.length === 0) && (
         <div className="p-8 text-center text-sm" style={{ color: "var(--muted)" }}>暂无员工</div>
+      )}
+    </div>
+  );
+}
+
+// ── 聊天审计 ──
+interface AuditMsg {
+  id: string;
+  sender_name: string | null;
+  recipient_name: string | null;
+  body: string;
+  created_at: string;
+}
+function ChatAudit() {
+  const [q, setQ] = useState("");
+  const [search, setSearch] = useState("");
+  const { data, isLoading, error } = useQuery<{ messages: AuditMsg[] }>({
+    queryKey: ["admin-messages", search],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/messages?q=${encodeURIComponent(search)}`);
+      if (!res.ok) {
+        const e = await res.json();
+        throw new Error(e.error || "加载失败");
+      }
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-4">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") setSearch(q); }}
+          placeholder="搜索内容 / 姓名..."
+          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--ink)" }}
+        />
+        <button
+          onClick={() => setSearch(q)}
+          className="px-4 py-2 rounded-lg text-sm font-medium border-none cursor-pointer text-white"
+          style={{ background: "var(--brand)" }}
+        >
+          搜索
+        </button>
+      </div>
+      {error ? (
+        <div className="p-4 rounded-xl text-sm" style={{ background: "color-mix(in srgb, var(--red,#dc2626) 10%, transparent)", color: "var(--red,#dc2626)" }}>⚠️ {(error as Error).message}</div>
+      ) : isLoading ? (
+        <div className="animate-pulse flex flex-col gap-2">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-12 rounded-lg" style={{ background: "var(--surface-soft)" }} />)}</div>
+      ) : (
+        <div className="rounded-xl overflow-hidden" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          {(data?.messages || []).map((m) => (
+            <div key={m.id} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <span className="text-xs whitespace-nowrap" style={{ color: "var(--brand)" }}>{m.sender_name || "?"}</span>
+              <span className="text-xs" style={{ color: "var(--muted)" }}>→</span>
+              <span className="text-xs whitespace-nowrap" style={{ color: "var(--muted)" }}>{m.recipient_name || "?"}</span>
+              <span className="text-sm flex-1 truncate" style={{ color: "var(--ink)" }}>{m.body}</span>
+              <span className="text-xs whitespace-nowrap" style={{ color: "var(--muted)" }}>{formatTime(m.created_at)}</span>
+            </div>
+          ))}
+          {(!data?.messages || data.messages.length === 0) && (
+            <div className="p-8 text-center text-sm" style={{ color: "var(--muted)" }}>暂无聊天记录</div>
+          )}
+        </div>
       )}
     </div>
   );
