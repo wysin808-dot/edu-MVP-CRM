@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useContentList } from "@/hooks/useContents";
+import GrowthBoard from "@/components/dashboard/GrowthBoard";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
 import { useTaskList } from "@/hooks/useTasks";
 import { localDateStr, getWeekStart } from "@/lib/utils";
@@ -12,7 +12,6 @@ import { generateNotifications, type Notification } from "@/lib/notifications";
 
 export default function DashboardPage() {
   const { user, profile, loading } = useAuth();
-  const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: taskData } = useTaskList();
   const { data: pendingContents } = useContentList({ status: "待审核" });
   const { data: allContents } = useContentList();
@@ -97,37 +96,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatsCard
-          label="今日待发"
-          value={statsLoading ? "--" : String(stats?.todayPublishing ?? 0)}
-          icon="📤"
-          color="var(--brand)"
-          href="/publishing"
-        />
-        <StatsCard
-          label="待审核"
-          value={statsLoading ? "--" : String(stats?.pendingReview ?? 0)}
-          icon="📋"
-          color="var(--amber)"
-          href="/content?status=待审核"
-        />
-        <StatsCard
-          label="本周线索"
-          value={statsLoading ? "--" : String(stats?.weeklyLeads ?? 0)}
-          icon="🎯"
-          color="var(--green)"
-          href="/crm"
-        />
-        <StatsCard
-          label="内容总量"
-          value={statsLoading ? "--" : String(stats?.totalContents ?? 0)}
-          icon="📝"
-          color="var(--blue)"
-          href="/content"
-        />
-      </div>
+      {/* GrowthOS 看板（真实数据） */}
+      <GrowthBoard />
 
       {/* My Tasks（任务中心合并到工作台：员工首页直接看到自己的任务与进度） */}
       {myActiveTasks.length > 0 && (
@@ -336,57 +306,6 @@ interface PriorityItem {
 
 // ── Inline Components ──
 
-function StatsCard({
-  label,
-  value,
-  icon,
-  color,
-  href,
-}: {
-  label: string;
-  value: string;
-  icon: string;
-  color: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="rounded-xl p-4 flex items-center gap-3 transition-all cursor-pointer"
-      style={{
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        textDecoration: "none",
-        color: "inherit",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = color;
-        e.currentTarget.style.boxShadow = `0 2px 8px color-mix(in srgb, ${color} 20%, transparent)`;
-        e.currentTarget.style.transform = "translateY(-1px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "var(--border)";
-        e.currentTarget.style.boxShadow = "none";
-        e.currentTarget.style.transform = "none";
-      }}
-    >
-      <div
-        className="w-10 h-10 rounded-lg flex items-center justify-center text-lg"
-        style={{ background: `color-mix(in srgb, ${color} 15%, transparent)` }}
-      >
-        {icon}
-      </div>
-      <div>
-        <div className="text-2xl font-bold" style={{ color: "var(--ink)" }}>
-          {value}
-        </div>
-        <div className="text-xs" style={{ color: "var(--muted)" }}>
-          {label}
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 function QuickAction({
   href,
