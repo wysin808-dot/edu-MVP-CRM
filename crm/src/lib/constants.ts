@@ -115,7 +115,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
   operator: {
     title: "运营人员",
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
-    nav: ["dashboard", "publishing", "content", "knowledge", "accounts", "calendar", "crm", "topics", "coach", "tasks", "chat", "ai-assistant"],
+    nav: ["dashboard", "publishing", "content", "knowledge", "accounts", "calendar", "crm", "topics", "coach", "chat", "ai-assistant"],
     defaultUser: "运营 A",
     team: "china",
   },
@@ -142,14 +142,14 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
   ai: {
     title: "AI 内容编辑",
     summary: "基于知识库生成内容，保存 prompt、版本和采用记录。",
-    nav: ["dashboard", "content", "knowledge", "calendar", "topics", "coach", "tasks", "chat", "ai-assistant"],
+    nav: ["dashboard", "content", "knowledge", "calendar", "topics", "coach", "chat", "ai-assistant"],
     defaultUser: "AI 编辑",
     team: "china",
   },
   admission: {
     title: "招生顾问",
     summary: "跟进分配线索，查看来源内容，记录到访、报名和流失结果。",
-    nav: ["dashboard", "crm", "topics", "coach", "tasks", "chat", "ai-assistant"],
+    nav: ["dashboard", "crm", "topics", "coach", "chat", "ai-assistant"],
     defaultUser: "招生顾问",
     team: "china",
   },

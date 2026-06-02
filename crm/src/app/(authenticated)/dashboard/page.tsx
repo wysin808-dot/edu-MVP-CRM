@@ -6,12 +6,14 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useContentList } from "@/hooks/useContents";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
+import { useTaskList } from "@/hooks/useTasks";
 import { localDateStr, getWeekStart } from "@/lib/utils";
 import { generateNotifications, type Notification } from "@/lib/notifications";
 
 export default function DashboardPage() {
-  const { profile, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: taskData } = useTaskList();
   const { data: pendingContents } = useContentList({ status: "待审核" });
   const { data: allContents } = useContentList();
   const { data: allLeads } = useCrmLeadList();
@@ -72,6 +74,17 @@ export default function DashboardPage() {
     })),
   ];
 
+  // 我的任务（分配给当前用户的，工作台直接呈现）
+  const allTasks = taskData?.tasks || [];
+  const myTasks = allTasks.filter((t) => t.assignee_id === user?.id);
+  const myActiveTasks = myTasks
+    .filter((t) => t.status !== "已完成")
+    .sort((a, b) => {
+      if (a.overdue !== b.overdue) return a.overdue ? -1 : 1;
+      return (a.due_date || "9999").localeCompare(b.due_date || "9999");
+    });
+  const canManageTasks = profile?.role === "lead" || profile?.role === "admin";
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Welcome */}
@@ -115,6 +128,57 @@ export default function DashboardPage() {
           href="/content"
         />
       </div>
+
+      {/* My Tasks（任务中心合并到工作台：员工首页直接看到自己的任务与进度） */}
+      {myActiveTasks.length > 0 && (
+        <div
+          className="rounded-xl p-6 mb-6"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--ink)" }}>
+              ✅ 我的任务
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--surface-soft)", color: "var(--muted)" }}>
+                进行中 {myActiveTasks.length}
+              </span>
+            </h3>
+            {canManageTasks && (
+              <Link href="/tasks" className="text-xs" style={{ color: "var(--brand)", textDecoration: "none" }}>
+                管理任务 →
+              </Link>
+            )}
+          </div>
+          <div className="flex flex-col gap-3">
+            {myActiveTasks.slice(0, 5).map((t) => {
+              const barColor = t.overdue ? "var(--red)" : t.percent >= 100 ? "var(--green)" : t.percent >= 50 ? "var(--blue)" : "var(--amber)";
+              return (
+                <div key={t.id} className="rounded-lg px-4 py-3" style={{ background: "var(--surface-soft)" }}>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <span className="text-sm font-medium truncate" style={{ color: "var(--ink)" }}>{t.title}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {t.overdue && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(239,68,68,0.15)", color: "var(--red)" }}>逾期</span>
+                      )}
+                      <span className="text-xs font-semibold" style={{ color: "var(--ink)" }}>{t.done}/{t.target_total}</span>
+                    </div>
+                  </div>
+                  <div className="h-2 w-full rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                    <div className="h-full rounded-full transition-all" style={{ width: `${t.percent}%`, background: barColor }} />
+                  </div>
+                  {t.due_date && (
+                    <p className="text-xs mt-1.5" style={{ color: t.overdue ? "var(--red)" : "var(--muted)" }}>
+                      截止 {t.due_date} · {t.percent}% 完成
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-xs mt-3" style={{ color: "var(--muted)" }}>
+            进度按你在「内容生成」里的实际产出自动统计
+          </p>
+        </div>
+      )}
 
       {/* Notification Center */}
       {notifications.length > 0 && (
