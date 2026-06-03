@@ -47,6 +47,10 @@ export function useMe() {
 export function useColleagues() {
   return useQuery<Colleague[]>({
     queryKey: ["colleagues"],
+    // 覆盖全局 5 分钟缓存：进入聊天/打开窗口即刷新，新增成员立即可见
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchInterval: 60000,
     queryFn: async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();

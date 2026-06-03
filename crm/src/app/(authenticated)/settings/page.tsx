@@ -42,6 +42,7 @@ function useUpdateUserRole() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["colleagues"] });
     },
   });
 }
@@ -59,6 +60,7 @@ function useUpdateUserProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["colleagues"] });
     },
   });
 }
@@ -162,6 +164,7 @@ export default function SettingsPage() {
         return;
       }
       queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["colleagues"] });
     } catch {
       alert("删除失败，请重试");
     }
@@ -196,6 +199,7 @@ export default function SettingsPage() {
         setInviteResult({ success: true, email: inviteForm.email });
         setInviteForm({ email: "", password: "", display_name: "", role: "operator", team: profile?.team || "china" });
         queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
+        queryClient.invalidateQueries({ queryKey: ["colleagues"] });
       } else {
         setInviteResult({ error: data.error || "邀请失败" });
       }
