@@ -36,7 +36,7 @@ const ROLE_LABEL: Record<string, string> = {
 const PERIODS: [string, string][] = [["today", "今日"], ["week", "近7天"], ["month", "本月"]];
 
 export default function MonitorPage() {
-  const [mainTab, setMainTab] = useState<"monitor" | "quota" | "audit">("monitor");
+  const [mainTab, setMainTab] = useState<"monitor" | "content" | "quota" | "audit">("monitor");
   const [period, setPeriod] = useState("today");
   const [selected, setSelected] = useState<RecentItem | null>(null);
 
@@ -62,11 +62,11 @@ export default function MonitorPage() {
         <div>
           <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>🖥️ 运营监控</h2>
           <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>
-            {mainTab === "monitor" ? "实时看每个员工今天生成了什么、用了多少额度" : mainTab === "quota" ? "设置每个员工每天的生成次数额度" : "查看全员私聊记录（合规审计）"}
+            {mainTab === "monitor" ? "实时看每个员工今天生成了什么、用了多少额度" : mainTab === "content" ? "全员产出的所有内容（按人/平台筛选，点开看完整正文）" : mainTab === "quota" ? "设置每个员工每天的生成次数额度" : "查看全员私聊记录（合规审计）"}
           </p>
         </div>
         <div className="flex gap-1 p-1 rounded-lg" style={{ background: "var(--surface-soft)" }}>
-          {([["monitor", "📊 监控"], ["quota", "⚙️ 配额管理"], ["audit", "💬 聊天审计"]] as const).map(([t, label]) => (
+          {([["monitor", "📊 监控"], ["content", "📚 全部内容"], ["quota", "⚙️ 配额管理"], ["audit", "💬 聊天审计"]] as const).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setMainTab(t)}
@@ -83,7 +83,9 @@ export default function MonitorPage() {
         </div>
       </div>
 
-      {mainTab === "quota" ? (
+      {mainTab === "content" ? (
+        <AllContent />
+      ) : mainTab === "quota" ? (
         <QuotaManager />
       ) : mainTab === "audit" ? (
         <ChatAudit />
@@ -216,6 +218,135 @@ export default function MonitorPage() {
             style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
+              <div className="text-sm" style={{ color: "var(--ink)" }}>
+                <span className="font-semibold">{selected.user_name}</span>
+                <span className="mx-2" style={{ color: "var(--muted)" }}>·</span>
+                {selected.platform} / {selected.content_type} · {selected.topic}
+              </div>
+              <button onClick={() => setSelected(null)} className="text-sm border-none cursor-pointer px-2" style={{ background: "transparent", color: "var(--muted)" }}>✕</button>
+            </div>
+            <pre className="p-5 text-sm whitespace-pre-wrap m-0 leading-relaxed" style={{ color: "var(--ink)", fontFamily: "inherit" }}>
+              {selected.output_text}
+            </pre>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 全部内容（全员产出）──
+interface ContentItem {
+  id: string;
+  user_id: string;
+  user_name: string | null;
+  topic: string;
+  platform: string;
+  content_type: string;
+  output_text: string;
+  created_at: string;
+}
+
+const CONTENT_PLATFORMS = ["", "朋友圈", "小红书", "微信群", "家长私聊", "视频脚本", "FAQ"];
+
+function AllContent() {
+  const [filterUser, setFilterUser] = useState("");
+  const [filterPlatform, setFilterPlatform] = useState("");
+  const [search, setSearch] = useState("");
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<ContentItem | null>(null);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin-content", filterUser, filterPlatform, q],
+    queryFn: async () => {
+      const p = new URLSearchParams();
+      if (filterUser) p.set("userId", filterUser);
+      if (filterPlatform) p.set("platform", filterPlatform);
+      if (q) p.set("q", q);
+      const res = await fetch(`/api/admin/content?${p.toString()}`);
+      if (!res.ok) {
+        const e = await res.json();
+        throw new Error(e.error || "加载失败");
+      }
+      return res.json() as Promise<{ items: ContentItem[]; operators: { id: string; name: string }[] }>;
+    },
+    staleTime: 15000,
+    placeholderData: keepPreviousData,
+  });
+
+  const items = data?.items || [];
+  const operators = data?.operators || [];
+
+  return (
+    <div>
+      {/* 筛选 */}
+      <div className="rounded-xl p-3 mb-4 flex flex-wrap items-center gap-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <select
+          value={filterUser}
+          onChange={(e) => setFilterUser(e.target.value)}
+          className="rounded-lg px-2 py-1.5 text-sm"
+          style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+        >
+          <option value="">全部成员</option>
+          {operators.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+        </select>
+        {CONTENT_PLATFORMS.map((p) => (
+          <button
+            key={p || "all"}
+            onClick={() => setFilterPlatform(p)}
+            className="rounded-full px-2.5 py-1 text-xs border cursor-pointer"
+            style={filterPlatform === p
+              ? { background: "var(--brand)", color: "#fff", borderColor: "var(--brand)" }
+              : { background: "var(--surface)", color: "var(--muted)", borderColor: "var(--border)" }}
+          >
+            {p || "全部平台"}
+          </button>
+        ))}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") setQ(search.trim()); }}
+          placeholder="搜索主题/正文，回车"
+          className="flex-1 min-w-[160px] rounded-lg px-3 py-1.5 text-sm outline-none"
+          style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+        />
+        <span className="text-xs" style={{ color: "var(--muted)" }}>共 {items.length} 条</span>
+      </div>
+
+      {/* 列表 */}
+      {isLoading ? (
+        <p className="text-sm text-center py-10" style={{ color: "var(--muted)" }}>加载中…</p>
+      ) : error ? (
+        <p className="text-sm text-center py-10" style={{ color: "#dc2626" }}>{(error as Error).message}</p>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-center py-10" style={{ color: "var(--muted)" }}>暂无内容</p>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-2">
+          {items.map((it) => (
+            <button
+              key={it.id}
+              onClick={() => setSelected(it)}
+              className="text-left rounded-xl p-3 border-none cursor-pointer"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <div className="flex items-center gap-2 text-xs flex-wrap">
+                <span className="font-semibold" style={{ color: "var(--ink)" }}>👤 {it.user_name || "?"}</span>
+                <span className="px-1.5 py-0.5 rounded" style={{ background: "var(--surface-soft)", color: "var(--brand)" }}>{it.platform}</span>
+                <span style={{ color: "var(--muted)" }}>{it.content_type}</span>
+                <span className="ml-auto" style={{ color: "var(--muted)" }}>{(it.created_at || "").slice(5, 16).replace("T", " ")}</span>
+              </div>
+              <div className="text-sm font-medium mt-1" style={{ color: "var(--ink)" }}>{it.topic}</div>
+              <div className="text-xs mt-1 line-clamp-2" style={{ color: "var(--muted)" }}>{(it.output_text || "").slice(0, 90)}</div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* 完整正文弹窗 */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setSelected(null)}>
+          <div className="rounded-xl max-w-2xl w-full max-h-[80vh] overflow-auto" style={{ background: "var(--surface)", border: "1px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
             <div className="px-5 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--border)" }}>
               <div className="text-sm" style={{ color: "var(--ink)" }}>
                 <span className="font-semibold">{selected.user_name}</span>
