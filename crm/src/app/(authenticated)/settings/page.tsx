@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import type { UserProfile } from "@/lib/types";
 
+type MemberRow = UserProfile & { email: string | null };
+
 function useUserProfiles() {
   const { role, profile } = useAuth();
   const team = role === "lead" ? profile?.team : null;
@@ -18,17 +20,11 @@ function useUserProfiles() {
   return useQuery({
     queryKey: ["user_profiles", { team }],
     queryFn: async () => {
-      const supabase = createClient();
-      let query = supabase
-        .from("user_profiles")
-        .select("*")
-        .order("created_at", { ascending: true });
-
-      if (team) query = query.eq("team", team);
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data as UserProfile[]) || [];
+      // 经 /api/members 获取成员（含登录邮箱，service role 合并 auth.users）
+      const res = await fetch("/api/members");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "加载成员失败");
+      return (json.members as MemberRow[]) || [];
     },
   });
 }
@@ -78,7 +74,7 @@ export default function SettingsPage() {
   const updateRole = useUpdateUserRole();
   const updateProfile = useUpdateUserProfile();
 
-  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editingUser, setEditingUser] = useState<MemberRow | null>(null);
   const [editForm, setEditForm] = useState({ display_name: "", team: "", daily_publish_target: 0 });
   const [showInvite, setShowInvite] = useState(false);
   const [inviteForm, setInviteForm] = useState({
@@ -89,7 +85,7 @@ export default function SettingsPage() {
   const [inviteResult, setInviteResult] = useState<{ success?: boolean; error?: string; email?: string } | null>(null);
 
   // Password reset state
-  const [resetUser, setResetUser] = useState<UserProfile | null>(null);
+  const [resetUser, setResetUser] = useState<MemberRow | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{ success?: boolean; error?: string } | null>(null);
@@ -107,7 +103,7 @@ export default function SettingsPage() {
     );
   }
 
-  const openEditUser = (user: UserProfile) => {
+  const openEditUser = (user: MemberRow) => {
     setEditingUser(user);
     setEditForm({
       display_name: user.display_name || "",
@@ -302,6 +298,11 @@ export default function SettingsPage() {
                       {isCurrentUser && (
                         <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--brand)", color: "#fff" }}>当前</span>
                       )}
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-mono" style={{ color: "var(--ink)" }}>
+                        🔑 {user.email || "（邮箱未知）"}
+                      </span>
                     </div>
                     <span className="text-xs" style={{ color: "var(--muted)" }}>
                       {roleConfig?.summary || user.role}
@@ -531,6 +532,13 @@ export default function SettingsPage() {
           </div>
         }>
         <form onSubmit={handleResetPassword} className="flex flex-col gap-4">
+          <div className="p-3 rounded-lg text-sm" style={{ background: "var(--surface-soft)", border: "1px solid var(--border)" }}>
+            <div style={{ color: "var(--muted)" }} className="text-xs mb-0.5">登录账号</div>
+            <div className="font-mono font-medium" style={{ color: "var(--ink)" }}>
+              🔑 {resetUser?.email || "（邮箱未知）"}
+            </div>
+            <div className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>成员：{resetUser?.display_name || "—"}</div>
+          </div>
           {resetResult?.success && (
             <div className="p-3 rounded-lg text-sm" style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#166534" }}>
               密码已重置成功！请将新密码告知该成员。
