@@ -75,7 +75,8 @@ export default function SettingsPage() {
   const updateProfile = useUpdateUserProfile();
 
   const [editingUser, setEditingUser] = useState<MemberRow | null>(null);
-  const [editForm, setEditForm] = useState({ display_name: "", team: "", daily_publish_target: 0 });
+  const [editForm, setEditForm] = useState({ display_name: "", team: "", daily_publish_target: 0, email: "" });
+  const [savingEmail, setSavingEmail] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     email: "", password: "", display_name: "", role: "operator",
@@ -109,6 +110,7 @@ export default function SettingsPage() {
       display_name: user.display_name || "",
       team: user.team || "china",
       daily_publish_target: user.daily_publish_target || 0,
+      email: user.email || "",
     });
   };
 
@@ -124,9 +126,44 @@ export default function SettingsPage() {
         updates.team = editForm.team;
       }
       await updateProfile.mutateAsync(updates);
+
+      // 邮箱有变更则更新登录邮箱
+      const newEmail = editForm.email.trim();
+      if (newEmail && newEmail !== (editingUser.email || "")) {
+        setSavingEmail(true);
+        const res = await fetch("/api/members", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingUser.id, email: newEmail }),
+        });
+        const j = await res.json();
+        setSavingEmail(false);
+        if (!res.ok) {
+          alert(`资料已保存，但邮箱修改失败：${j.error || "请重试"}`);
+          queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
+          return;
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
       setEditingUser(null);
     } catch {
+      setSavingEmail(false);
       alert("保存失败，请重试");
+    }
+  };
+
+  const handleDeleteMember = async (member: MemberRow) => {
+    if (!confirm(`确定删除成员「${member.display_name || member.email}」？\n登录账号 ${member.email || ""} 将被永久删除，无法登录。此操作不可恢复。`)) return;
+    try {
+      const res = await fetch(`/api/members?id=${encodeURIComponent(member.id)}`, { method: "DELETE" });
+      const j = await res.json();
+      if (!res.ok) {
+        alert(`删除失败：${j.error || "请重试"}`);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["user_profiles"] });
+    } catch {
+      alert("删除失败，请重试");
     }
   };
 
@@ -344,6 +381,17 @@ export default function SettingsPage() {
                       >
                         密码
                       </button>
+                      {!isCurrentUser && (
+                        <button
+                          onClick={() => handleDeleteMember(user)}
+                          className="text-xs px-2 py-1 rounded transition-colors"
+                          style={{ color: "var(--red)", background: "transparent" }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.1)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                        >
+                          删除
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -479,6 +527,17 @@ export default function SettingsPage() {
           </div>
         }>
         <div className="flex flex-col gap-4">
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>登录邮箱（账号）</label>
+            <input type="email" value={editForm.email}
+              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none font-mono"
+              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+              placeholder="employee@seda.edu.sg" />
+            <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+              修改后成员需用新邮箱登录{savingEmail ? " · 更新中…" : ""}
+            </p>
+          </div>
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>显示名称</label>
             <input type="text" value={editForm.display_name}
