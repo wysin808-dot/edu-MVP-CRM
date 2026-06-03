@@ -2,13 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { NAV_ITEMS, ROLE_CONFIG } from "@/lib/constants";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useUnread } from "@/hooks/useMessages";
+import { createClient } from "@/lib/supabase/client";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { role, profile, signOut } = useAuth();
+  const { role, profile, signOut, user } = useAuth();
   const config = ROLE_CONFIG[role];
+  const { data: unread } = useUnread();
+  const unreadTotal = unread?.total || 0;
+  const qc = useQueryClient();
+
+  // 全局实时通知：收到发给我的新消息 → 立即刷新未读，红标即时亮起
+  useEffect(() => {
+    if (!user) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel("sidebar-unread")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `recipient_id=eq.${user.id}` },
+        () => qc.invalidateQueries({ queryKey: ["unread"] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, qc]);
 
   // Filter nav items by role permission
   const visibleItems = NAV_ITEMS.filter((item) =>
@@ -60,6 +84,15 @@ export default function Sidebar() {
             >
               <span className="text-base">{item.icon}</span>
               <span>{item.label}</span>
+              {item.id === "chat" && unreadTotal > 0 && (
+                <span
+                  className="ml-auto text-[10px] leading-none min-w-[18px] h-[18px] px-1 rounded-full text-white flex items-center justify-center font-semibold"
+                  style={{ background: "#dc2626" }}
+                  title={`${unreadTotal} 条未读消息`}
+                >
+                  {unreadTotal > 99 ? "99+" : unreadTotal}
+                </span>
+              )}
             </Link>
           );
         })}
