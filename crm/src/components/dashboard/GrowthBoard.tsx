@@ -61,6 +61,8 @@ export default function GrowthBoard() {
   });
 
   const periodLabel = PERIODS.find((p) => p.key === period)?.label || "周";
+  // 周期前缀文案：日→今日，其余→本周/本月/本年
+  const windowLabel = period === "day" ? "今日" : `本${periodLabel}`;
   const scopeLabel = data?.scope === "self" ? "我的" : "团队";
 
   const channels = data ? Object.entries(data.byChannel).sort((a, b) => b[1] - a[1]) : [];
@@ -73,7 +75,7 @@ export default function GrowthBoard() {
       {/* 标题 + 周期切换 */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-sm font-semibold" style={{ color: "var(--ink)" }}>
-          📊 {scopeLabel}数据 · 本{periodLabel}
+          📊 {scopeLabel}数据 · {windowLabel}
         </h3>
         <div className="flex gap-1 rounded-lg p-0.5" style={{ background: "var(--surface-soft)" }}>
           {PERIODS.map((p) => (
@@ -112,12 +114,12 @@ export default function GrowthBoard() {
           {/* 生产渠道分布 */}
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--ink)" }}>
-              📅 本{periodLabel}生产
+              📅 {windowLabel}生产
               <span className="text-xs font-normal" style={{ color: "var(--muted)" }}>共 {data.total} 条</span>
             </h3>
             <div className="rounded-xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
               {channels.length === 0 ? (
-                <p className="text-sm text-center py-4" style={{ color: "var(--muted)" }}>本{periodLabel}还没有内容产出</p>
+                <p className="text-sm text-center py-4" style={{ color: "var(--muted)" }}>{windowLabel}还没有内容产出</p>
               ) : (
                 <div className="space-y-2.5">
                   {channels.map(([ch, n]) => {
@@ -141,7 +143,7 @@ export default function GrowthBoard() {
           <div className={`grid gap-4 ${showLeaderboard ? "lg:grid-cols-2" : ""}`}>
             {showLeaderboard && (
               <div>
-                <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--ink)" }}>🏆 团队排行榜（本{periodLabel}产出）</h3>
+                <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--ink)" }}>🏆 团队排行榜（{windowLabel}产出）</h3>
                 <div className="rounded-xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
                   {data.leaderboard.length === 0 ? (
                     <p className="text-sm text-center py-4" style={{ color: "var(--muted)" }}>暂无数据</p>
@@ -162,7 +164,7 @@ export default function GrowthBoard() {
             )}
 
             <div>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--ink)" }}>📈 {scopeLabel}内容表现（本{periodLabel}）</h3>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--ink)" }}>📈 {scopeLabel}内容表现（{windowLabel}）</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Stat label="新增线索" value={data.performance.newLeads} icon="🎯" color="var(--green)" />
                 <Stat

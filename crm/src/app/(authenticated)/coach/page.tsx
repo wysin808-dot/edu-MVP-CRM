@@ -88,23 +88,23 @@ export default function CoachPage() {
   const [imageData, setImageData] = useState<Record<string, { cover: string | null; pages: string[] }>>({});
   const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
 
-  // 从选题中心跳转过来时，用 ?topic= 预填主题
+  // 兼容旧的 /coach?topic= 深链：挂载后一次性读取并预填（合法的外部同步）
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const t = params.get("topic");
-    if (t) {
-      setTopic(t);
-      setView("generate");
-      // 从选题中心带来的生产属性
-      const form = params.get("form");
-      const pres = params.get("presenter");
-      const channel = params.get("channel");
-      if (form === "视频") setPlatform("视频脚本");
-      if (pres) setPresenter(pres);
-      if (channel) setChannelHint(channel);
-      // 清掉 query，避免刷新后又预填
-      window.history.replaceState(null, "", window.location.pathname);
-    }
+    if (!t) return;
+    const form = params.get("form");
+    const pres = params.get("presenter");
+    const channel = params.get("channel");
+    // 清掉 query，避免刷新后又预填
+    window.history.replaceState(null, "", window.location.pathname);
+    /* eslint-disable react-hooks/set-state-in-effect -- 一次性从 URL 深链同步到表单状态 */
+    setTopic(t);
+    setView("generate");
+    if (form === "视频") setPlatform("视频脚本");
+    if (pres) setPresenter(pres);
+    if (channel) setChannelHint(channel);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const batchGenerate = useCoachBatchGenerate();

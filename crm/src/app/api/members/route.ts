@@ -51,10 +51,7 @@ export async function GET() {
     return NextResponse.json({ error: "只有管理员和负责人可以查看成员" }, { status: 403 });
   }
 
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const admin = serviceClient();
 
   // 资料
   let pq = admin.from("user_profiles").select("*").order("created_at", { ascending: true });
