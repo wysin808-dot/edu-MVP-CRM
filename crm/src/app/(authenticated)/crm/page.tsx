@@ -2,6 +2,8 @@
 
 import { useState, useRef, useMemo } from "react";
 import { useCrmLeadList, useCreateCrmLead, useUpdateCrmLead, useMoveCrmLead } from "@/hooks/useCrmLeads";
+import { usePersonaList } from "@/hooks/usePersonas";
+import { useAccountList } from "@/hooks/useAccounts";
 import { CRM_STAGES, PLATFORMS } from "@/lib/constants";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -22,9 +24,14 @@ const STAGE_CONFIG: Record<string, { color: string; icon: string }> = {
 
 export default function CrmPage() {
   const { data: leads, isLoading } = useCrmLeadList();
+  const { data: personas } = usePersonaList();
+  const { data: accounts } = useAccountList();
   const createLead = useCreateCrmLead();
   const updateLead = useUpdateCrmLead();
   const moveLead = useMoveCrmLead();
+
+  const personaMap = useMemo(() => new Map((personas || []).map((p) => [p.id, p.name])), [personas]);
+  const accountMap = useMemo(() => new Map((accounts || []).map((a) => [a.id, a.account_name])), [accounts]);
 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CrmLead | null>(null);
@@ -35,7 +42,8 @@ export default function CrmPage() {
 
   const [form, setForm] = useState({
     name: "", phone: "", child_name: "", child_grade: "",
-    source_platform: "", interest_program: "", assigned_to: "",
+    source_platform: "", source_persona_id: "", source_account_id: "",
+    interest_program: "", assigned_to: "",
     notes: "", next_followup: "", stage: "新线索",
   });
 
@@ -65,7 +73,8 @@ export default function CrmPage() {
     setEditing(null);
     setForm({
       name: "", phone: "", child_name: "", child_grade: "",
-      source_platform: "", interest_program: "", assigned_to: "",
+      source_platform: "", source_persona_id: "", source_account_id: "",
+      interest_program: "", assigned_to: "",
       notes: "", next_followup: "", stage: "新线索",
     });
     setShowModal(true);
@@ -77,6 +86,8 @@ export default function CrmPage() {
       name: lead.name, phone: lead.phone || "",
       child_name: lead.child_name || "", child_grade: lead.child_grade || "",
       source_platform: lead.source_platform || "",
+      source_persona_id: lead.source_persona_id || "",
+      source_account_id: lead.source_account_id || "",
       interest_program: lead.interest_program || "",
       assigned_to: lead.assigned_to || "", notes: lead.notes || "",
       next_followup: lead.next_followup || "", stage: lead.stage,
@@ -93,6 +104,8 @@ export default function CrmPage() {
       child_name: form.child_name || null,
       child_grade: form.child_grade || null,
       source_platform: form.source_platform || null,
+      source_persona_id: form.source_persona_id || null,
+      source_account_id: form.source_account_id || null,
       interest_program: form.interest_program || null,
       assigned_to: form.assigned_to || null,
       notes: form.notes || null,
@@ -294,6 +307,8 @@ export default function CrmPage() {
                       isToday={isToday(lead)}
                       onDragStart={() => handleDragStart(lead.id)}
                       onClick={() => openEdit(lead)}
+                      personaName={lead.source_persona_id ? personaMap.get(lead.source_persona_id) : undefined}
+                      accountName={lead.source_account_id ? accountMap.get(lead.source_account_id) : undefined}
                     />
                   )) : (
                     <div className="flex-1 flex items-center justify-center py-8">
@@ -340,7 +355,13 @@ export default function CrmPage() {
                       {[lead.child_name, lead.child_grade].filter(Boolean).join(" · ") || "–"}
                     </td>
                     <td className="px-4 py-3 text-xs" style={{ color: "var(--muted)" }}>
-                      {lead.source_platform || "–"}
+                      <div>{lead.source_platform || "–"}</div>
+                      {(lead.source_persona_id || lead.source_account_id) && (
+                        <div className="text-[11px] mt-0.5">
+                          {lead.source_persona_id && <span>👤 {personaMap.get(lead.source_persona_id) || "?"}</span>}
+                          {lead.source_account_id && <span> 📱 {accountMap.get(lead.source_account_id) || "?"}</span>}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {lead.interest_program ? <Badge variant="outline">{lead.interest_program}</Badge> : <span className="text-xs" style={{ color: "var(--muted)" }}>–</span>}
@@ -430,6 +451,19 @@ export default function CrmPage() {
               options={[{ value: "", label: "选择课程" }, ...INTEREST_PROGRAMS.map((p) => ({ value: p, label: p }))]} />
           </div>
           <div className="grid grid-cols-2 gap-3">
+            <Select label="来源 IP（人设）" value={form.source_persona_id}
+              onChange={(e) => setForm({ ...form, source_persona_id: e.target.value, source_account_id: "" })}
+              options={[{ value: "", label: "选择 IP" }, ...(personas || []).map((p) => ({ value: p.id, label: p.name }))]} />
+            <Select label="来源账号" value={form.source_account_id}
+              onChange={(e) => {
+                const acc = (accounts || []).find((a) => a.id === e.target.value);
+                setForm({ ...form, source_account_id: e.target.value, source_persona_id: form.source_persona_id || acc?.persona_id || "" });
+              }}
+              options={[{ value: "", label: "选择账号" }, ...(accounts || [])
+                .filter((a) => !form.source_persona_id || a.persona_id === form.source_persona_id)
+                .map((a) => ({ value: a.id, label: `${a.account_name}${a.platform ? ` · ${a.platform}` : ""}` }))]} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>负责人</label>
               <input type="text" value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
@@ -468,12 +502,16 @@ function LeadCard({
   isToday,
   onDragStart,
   onClick,
+  personaName,
+  accountName,
 }: {
   lead: CrmLead;
   isOverdue: boolean;
   isToday: boolean;
   onDragStart: () => void;
   onClick: () => void;
+  personaName?: string;
+  accountName?: string;
 }) {
   const borderColor = isOverdue ? "var(--red)" : isToday ? "var(--blue)" : "var(--border)";
 
@@ -510,9 +548,11 @@ function LeadCard({
       )}
 
       {/* Source */}
-      {lead.source_platform && (
+      {(lead.source_platform || personaName || accountName) && (
         <div className="text-xs mb-1" style={{ color: "var(--muted)" }}>
-          📱 {lead.source_platform}
+          {lead.source_platform && <span>📱 {lead.source_platform}</span>}
+          {personaName && <span>{lead.source_platform ? " · " : ""}👤 {personaName}</span>}
+          {accountName && <span> @{accountName}</span>}
         </div>
       )}
 

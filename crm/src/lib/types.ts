@@ -113,6 +113,8 @@ export interface CrmLead {
   child_grade: string | null;
   source_platform: string | null;
   source_content_id: string | null;
+  source_persona_id: string | null;
+  source_account_id: string | null;
   stage: string;
   assigned_to: string | null;
   interest_program: string | null;
