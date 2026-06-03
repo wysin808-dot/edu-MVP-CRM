@@ -14,6 +14,7 @@ import {
 import type { CoachGenerated } from "@/lib/types";
 import TopicFinder from "@/components/coach/TopicFinder";
 import VideoGenButton from "@/components/coach/VideoGenButton";
+import ContentReview from "@/components/coach/ContentReview";
 import type { Topic } from "@/hooks/useTopics";
 
 // ── Date-aware topic suggestions ──
@@ -73,7 +74,7 @@ const PLATFORM_DISPLAY: Record<string, { icon: string; label: string; color: str
 };
 
 export default function CoachPage() {
-  const [view, setView] = useState<"generate" | "history">("generate");
+  const [view, setView] = useState<"generate" | "history" | "review">("generate");
   const [topic, setTopic] = useState("");
   const [platform, setPlatform] = useState<"朋友圈" | "小红书" | "微信群" | "FAQ" | "家长私聊" | "视频脚本">("朋友圈");
   const [style, setStyle] = useState<string>("");
@@ -225,7 +226,7 @@ export default function CoachPage() {
         </div>
         {/* View tabs */}
         <div className="flex gap-1 p-1 rounded-lg" style={{ background: "var(--surface-soft)" }}>
-          {([["generate", "✨ 生成"], ["history", "📋 历史记录"]] as const).map(([v, label]) => (
+          {([["generate", "✨ 生成"], ["review", "🔍 AI 检查"], ["history", "📋 历史记录"]] as const).map(([v, label]) => (
             <button
               key={v}
               onClick={() => setView(v)}
@@ -279,7 +280,9 @@ export default function CoachPage() {
         </div>
       )}
 
-      {view === "history" ? (
+      {view === "review" ? (
+        <ContentReview />
+      ) : view === "history" ? (
         <HistoryView
           items={history || []}
           isLoading={historyLoading}
