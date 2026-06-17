@@ -19,11 +19,17 @@ export default function AccountsPage() {
   const isOperator = role === "operator";
   const isAdmin = role === "admin";
 
-  // 可被指派为负责人的成员
+  // 团队成员（含自己）：运营人下拉用全部成员；负责人指派只用 lead/admin
   const { data: colleagues } = useColleagues();
-  const leads = (colleagues || []).filter((c) => c.role === "lead" || c.role === "admin");
+  const allMembers = [
+    ...(user ? [{ id: user.id, display_name: profile?.display_name || "我", role: role || "operator" }] : []),
+    ...(colleagues || []),
+  ];
+  const leads = allMembers.filter((c) => c.role === "lead" || c.role === "admin");
   const ownerName = (id: string | null) =>
     id ? (leads.find((l) => l.id === id)?.display_name || (id === user?.id ? "我" : "—")) : "未分配";
+  const memberName = (id: string | null, fallback?: string | null) =>
+    id ? (allMembers.find((m) => m.id === id)?.display_name || fallback || "—") : (fallback || "-");
 
   const [platformFilter, setPlatformFilter] = useState("");
   const [stageFilter, setStageFilter] = useState("");
@@ -31,8 +37,8 @@ export default function AccountsPage() {
   const { data: accounts, isLoading } = useAccountList({
     platform: platformFilter || undefined,
     stage: stageFilter || undefined,
-    // 运营人员只看自己负责的账号
-    operatorName: isOperator ? (profile?.display_name || undefined) : undefined,
+    // 运营人员只看自己运营的账号（按成员 id，改名不丢）
+    operatorId: isOperator ? (user?.id || undefined) : undefined,
     // 部门负责人只看分配给自己的账号
     ownerId: role === "lead" ? (user?.id || undefined) : undefined,
   });
@@ -48,7 +54,7 @@ export default function AccountsPage() {
     account_name: "",
     platform: "",
     persona_id: "",
-    operator_name: "",
+    operator_id: "",
     phone_number_id: "",
     owner_id: "",
     stage: "养号",
@@ -64,7 +70,7 @@ export default function AccountsPage() {
   const openCreate = () => {
     setEditing(null);
     setForm({
-      account_name: "", platform: "", persona_id: "", operator_name: "",
+      account_name: "", platform: "", persona_id: "", operator_id: "",
       phone_number_id: "", owner_id: "",
       stage: "养号", follower_count: 0, total_posts: 0, total_leads: 0,
     });
@@ -75,7 +81,7 @@ export default function AccountsPage() {
     setEditing(a);
     setForm({
       account_name: a.account_name, platform: a.platform,
-      persona_id: a.persona_id || "", operator_name: a.operator_name || "",
+      persona_id: a.persona_id || "", operator_id: a.operator_id || "",
       phone_number_id: a.phone_number_id || "", owner_id: a.owner_id || "",
       stage: a.stage, follower_count: a.follower_count,
       total_posts: a.total_posts, total_leads: a.total_leads,
@@ -90,7 +96,9 @@ export default function AccountsPage() {
       account_name: form.account_name.trim(),
       platform: form.platform,
       persona_id: form.persona_id || null,
-      operator_name: form.operator_name || null,
+      operator_id: form.operator_id || null,
+      // 同步冗余一份显示名（便于展示/兼容）
+      operator_name: allMembers.find((m) => m.id === form.operator_id)?.display_name || null,
       phone_number_id: form.phone_number_id || null,
       owner_id: isAdmin
         ? (form.owner_id || null)
@@ -173,7 +181,7 @@ export default function AccountsPage() {
                     <td className="px-4 py-3 text-sm">{platform ? `${platform.icon} ${platform.label}` : account.platform}</td>
                     <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--ink)" }}>{account.account_name}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.persona?.name || "-"}</td>
-                    <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.operator_name || "-"}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{memberName(account.operator_id, account.operator_name)}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.phone_ref?.real_name || account.real_name || "-"}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.phone_ref?.phone || account.phone || "-"}</td>
                     {isAdmin && <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{ownerName(account.owner_id)}</td>}
@@ -223,7 +231,7 @@ export default function AccountsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>运营人</label>
-                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.operator_name || "-"}</p>
+                <p className="text-sm" style={{ color: "var(--ink)" }}>{memberName(viewing.operator_id, viewing.operator_name)}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>实名注册人</label>
@@ -282,13 +290,12 @@ export default function AccountsPage() {
           <Select label="IP 角色" value={form.persona_id}
             onChange={(e) => setForm({ ...form, persona_id: e.target.value })}
             options={[{ value: "", label: "选择 IP" }, ...(personas?.map((p) => ({ value: p.id, label: p.name })) || [])]} />
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>运营人</label>
-            <input type="text" value={form.operator_name}
-              onChange={(e) => setForm({ ...form, operator_name: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
-          </div>
+          <Select label="运营人（从团队成员选）" value={form.operator_id}
+            onChange={(e) => setForm({ ...form, operator_id: e.target.value })}
+            options={[
+              { value: "", label: "未指定" },
+              ...allMembers.map((m) => ({ value: m.id, label: m.display_name || "未命名" })),
+            ]} />
           <Select label="注册号码（从号码资产选）" value={form.phone_number_id}
             onChange={(e) => setForm({ ...form, phone_number_id: e.target.value })}
             options={[

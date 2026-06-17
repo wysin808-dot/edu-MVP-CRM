@@ -20,6 +20,7 @@ export interface Account {
   platform: string;
   persona_id: string | null;
   operator_name: string | null;
+  operator_id: string | null;
   real_name?: string | null;
   phone?: string | null;
   phone_number_id: string | null;
