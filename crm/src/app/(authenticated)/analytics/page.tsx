@@ -5,37 +5,58 @@ import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useContentList } from "@/hooks/useContents";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
+import { useAccountList } from "@/hooks/useAccounts";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { PLATFORMS, CRM_STAGES, FUNNEL_STAGES, CONTENT_TYPES, CONTENT_STATUSES } from "@/lib/constants";
 import { getWeekStart } from "@/lib/utils";
 
-// Fetch aggregated metrics from content_metrics table
-function useAggregatedMetrics() {
+interface MetricRow {
+  content_id: string;
+  reads: number; likes: number; comments: number; shares: number; private_messages: number; leads: number;
+}
+
+// Fetch raw content_metrics rows (含 content_id，便于按部门收口)
+function useMetricRows() {
   return useQuery({
-    queryKey: ["content_metrics", "aggregated"],
+    queryKey: ["content_metrics", "rows"],
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("content_metrics")
-        .select("reads, likes, comments, shares, private_messages, leads");
+        .select("content_id, reads, likes, comments, shares, private_messages, leads");
       if (error) throw error;
-      const totals = { reads: 0, likes: 0, comments: 0, shares: 0, private_messages: 0, leads: 0 };
-      (data || []).forEach((row) => {
-        totals.reads += row.reads || 0;
-        totals.likes += row.likes || 0;
-        totals.comments += row.comments || 0;
-        totals.shares += row.shares || 0;
-        totals.private_messages += row.private_messages || 0;
-        totals.leads += row.leads || 0;
-      });
-      return totals;
+      return (data as MetricRow[]) || [];
     },
   });
 }
 
 export default function AnalyticsPage() {
-  const { data: contents, isLoading: loadingContents } = useContentList();
-  const { data: leads, isLoading: loadingLeads } = useCrmLeadList();
-  const { data: metrics } = useAggregatedMetrics();
+  const { role, user } = useAuth();
+  const isLead = role === "lead";
+
+  // 部门负责人：只复盘自己名下账号的数据
+  const { data: myAccounts } = useAccountList(isLead ? { ownerId: user?.id } : undefined);
+  const accountIds = isLead ? (myAccounts ? myAccounts.map((a) => a.id) : undefined) : undefined;
+
+  const { data: contents, isLoading: loadingContents } = useContentList(isLead ? { accountIds } : undefined);
+  const { data: leads, isLoading: loadingLeads } = useCrmLeadList(isLead ? { accountIds } : undefined);
+  const { data: metricRows } = useMetricRows();
+
+  // 指标卡：超管全量；负责人只统计本部门内容的指标
+  const metrics = useMemo(() => {
+    const totals = { reads: 0, likes: 0, comments: 0, shares: 0, private_messages: 0, leads: 0 };
+    const allow = isLead ? new Set((contents || []).map((c) => c.id)) : null;
+    (metricRows || []).forEach((r) => {
+      if (allow && !allow.has(r.content_id)) return;
+      totals.reads += r.reads || 0;
+      totals.likes += r.likes || 0;
+      totals.comments += r.comments || 0;
+      totals.shares += r.shares || 0;
+      totals.private_messages += r.private_messages || 0;
+      totals.leads += r.leads || 0;
+    });
+    return totals;
+  }, [metricRows, contents, isLead]);
 
   // Platform performance
   const platformStats = useMemo(() => {
@@ -191,7 +212,14 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <h2 className="text-lg font-bold mb-6" style={{ color: "var(--ink)" }}>数据复盘</h2>
+      <div className="flex items-center gap-2 mb-6">
+        <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>数据复盘</h2>
+        {isLead && (
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--surface-soft)", color: "var(--muted)" }}>
+            仅本部门（你名下账号）
+          </span>
+        )}
+      </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">

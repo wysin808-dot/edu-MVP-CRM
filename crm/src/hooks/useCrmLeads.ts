@@ -10,7 +10,7 @@ function useTeamFilter() {
   return role === "admin" ? null : profile?.team || null;
 }
 
-export function useCrmLeadList(filters?: { stage?: string }) {
+export function useCrmLeadList(filters?: { stage?: string; accountIds?: string[] }) {
   const team = useTeamFilter();
 
   return useQuery({
@@ -23,7 +23,9 @@ export function useCrmLeadList(filters?: { stage?: string }) {
         .order("created_at", { ascending: false });
 
       if (filters?.stage) query = query.eq("stage", filters.stage);
-      if (team) query = query.eq("team", team);
+      // 按账号归属收口（"本部门"）：传了 accountIds 就按来源账号过滤，并跳过 team 过滤
+      if (filters?.accountIds) query = query.in("source_account_id", filters.accountIds);
+      else if (team) query = query.eq("team", team);
 
       const { data, error } = await query;
       if (error) throw error;

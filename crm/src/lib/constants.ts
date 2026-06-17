@@ -124,7 +124,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
     nav: [
       "dashboard", "knowledge",
-      "personas", "accounts", "phone-assets", "calendar", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings",
+      "personas", "accounts", "phone-assets", "calendar", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics",
     ],
     defaultUser: "Ocean Wang",
     team: "hq",

@@ -93,13 +93,13 @@ export default function SettingsPage() {
   const [resetting, setResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{ success?: boolean; error?: string } | null>(null);
 
-  if (role !== "admin" && role !== "lead") {
+  if (role !== "admin") {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="rounded-xl p-8 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="text-4xl mb-3">🔒</div>
           <p className="text-sm" style={{ color: "var(--muted)" }}>
-            你没有权限访问此页面。请联系管理员。
+            系统设置仅超级管理员可访问。
           </p>
         </div>
       </div>

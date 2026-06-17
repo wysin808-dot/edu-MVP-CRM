@@ -18,6 +18,7 @@ export function useContentList(filters?: {
   status?: string;
   funnelStage?: string;
   topicCluster?: string;
+  accountIds?: string[];
 }) {
   const team = useTeamFilter();
 
@@ -34,7 +35,9 @@ export function useContentList(filters?: {
       if (filters?.status) query = query.eq("status", filters.status);
       if (filters?.funnelStage) query = query.eq("funnel_stage", filters.funnelStage);
       if (filters?.topicCluster) query = query.eq("topic_cluster", filters.topicCluster);
-      if (team) query = query.eq("team", team);
+      // 按账号归属收口（数据复盘的"本部门"）：传了 accountIds 就按账号过滤，并跳过 team 过滤
+      if (filters?.accountIds) query = query.in("account_id", filters.accountIds);
+      else if (team) query = query.eq("team", team);
 
       const { data, error } = await query;
       if (error) throw error;
