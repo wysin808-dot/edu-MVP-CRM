@@ -88,10 +88,11 @@ export async function PATCH(request: NextRequest) {
 
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
-  const { id, email } = body;
+  const { id } = body;
+  const email = String(body.email || "").trim().toLowerCase();
   if (!id || !email) return NextResponse.json({ error: "缺少成员或邮箱" }, { status: 400 });
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return NextResponse.json({ error: "邮箱格式不正确" }, { status: 400 });
+  if (!/^[^@\s]+@seda\.org\.sg$/.test(email)) {
+    return NextResponse.json({ error: "团队成员登录邮箱必须是 用户名@seda.org.sg" }, { status: 400 });
   }
 
   const admin = serviceClient();

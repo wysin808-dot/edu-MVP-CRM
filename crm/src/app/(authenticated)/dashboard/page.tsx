@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useContentList } from "@/hooks/useContents";
 import GrowthBoard from "@/components/dashboard/GrowthBoard";
+import TodayPublishing from "@/components/dashboard/TodayPublishing";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
 import { useTaskList } from "@/hooks/useTasks";
 import { localDateStr, getWeekStart } from "@/lib/utils";
@@ -98,6 +99,11 @@ export default function DashboardPage() {
 
       {/* GrowthOS 看板（真实数据） */}
       <GrowthBoard />
+
+      {/* 今日发布（原独立菜单，已并入工作台） */}
+      <div className="rounded-xl p-6 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <TodayPublishing />
+      </div>
 
       {/* My Tasks（任务中心合并到工作台：员工首页直接看到自己的任务与进度） */}
       {myActiveTasks.length > 0 && (

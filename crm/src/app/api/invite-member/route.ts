@@ -45,6 +45,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // 强制团队成员登录邮箱使用 @seda.org.sg 域名
+  const REQUIRED_DOMAIN = "@seda.org.sg";
+  const normalizedEmail = String(email).trim().toLowerCase();
+  if (!normalizedEmail.endsWith(REQUIRED_DOMAIN) || normalizedEmail.indexOf("@") !== normalizedEmail.lastIndexOf("@") || normalizedEmail.length <= REQUIRED_DOMAIN.length) {
+    return NextResponse.json(
+      { error: "团队成员登录邮箱必须是 用户名@seda.org.sg" },
+      { status: 400 }
+    );
+  }
+
   const VALID_ROLES = ["admin", "lead", "operator", "ai", "admission"];
   if (!VALID_ROLES.includes(role)) {
     return NextResponse.json(
@@ -93,7 +103,7 @@ export async function POST(request: NextRequest) {
 
   const { data: newUser, error: authError } =
     await adminSupabase.auth.admin.createUser({
-      email,
+      email: normalizedEmail,
       password,
       email_confirm: true,
       user_metadata: { display_name },

@@ -473,11 +473,20 @@ export default function SettingsPage() {
           )}
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>登录邮箱 *</label>
-            <input type="email" value={inviteForm.email}
-              onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })} required
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
-              placeholder="employee@seda.edu.sg" />
+            <div className="flex items-center rounded-lg overflow-hidden" style={{ background: "var(--surface-soft)", border: "1px solid var(--border)" }}>
+              <input type="text"
+                value={inviteForm.email.replace(/@seda\.org\.sg$/i, "").replace(/@.*$/, "")}
+                onChange={(e) => {
+                  const u = e.target.value.replace(/[@\s]/g, "");
+                  setInviteForm({ ...inviteForm, email: u ? `${u}@seda.org.sg` : "" });
+                }}
+                required
+                className="flex-1 px-3 py-2 bg-transparent text-sm outline-none"
+                style={{ color: "var(--ink)" }}
+                placeholder="用户名" />
+              <span className="px-3 py-2 text-sm shrink-0" style={{ color: "var(--muted)", background: "var(--border)" }}>@seda.org.sg</span>
+            </div>
+            <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>只填用户名，系统统一使用 @seda.org.sg 域名</p>
           </div>
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>初始密码 *</label>
@@ -533,13 +542,20 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-4">
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>登录邮箱（账号）</label>
-            <input type="email" value={editForm.email}
-              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none font-mono"
-              style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
-              placeholder="employee@seda.edu.sg" />
+            <div className="flex items-center rounded-lg overflow-hidden" style={{ background: "var(--surface-soft)", border: "1px solid var(--border)" }}>
+              <input type="text"
+                value={editForm.email.replace(/@seda\.org\.sg$/i, "").replace(/@.*$/, "")}
+                onChange={(e) => {
+                  const u = e.target.value.replace(/[@\s]/g, "");
+                  setEditForm({ ...editForm, email: u ? `${u}@seda.org.sg` : "" });
+                }}
+                className="flex-1 px-3 py-2 bg-transparent text-sm outline-none font-mono"
+                style={{ color: "var(--ink)" }}
+                placeholder="用户名" />
+              <span className="px-3 py-2 text-sm shrink-0" style={{ color: "var(--muted)", background: "var(--border)" }}>@seda.org.sg</span>
+            </div>
             <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-              修改后成员需用新邮箱登录{savingEmail ? " · 更新中…" : ""}
+              只填用户名，系统统一用 @seda.org.sg · 修改后成员需用新邮箱登录{savingEmail ? " · 更新中…" : ""}
             </p>
           </div>
           <div>
