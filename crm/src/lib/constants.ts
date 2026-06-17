@@ -124,7 +124,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
     nav: [
       "dashboard", "publishing", "knowledge",
-      "personas", "accounts", "calendar", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings",
+      "personas", "accounts", "phone-assets", "calendar", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings",
     ],
     defaultUser: "Ocean Wang",
     team: "hq",
@@ -134,7 +134,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
     summary: "管理用户、角色、账号、IP、资料库和全局数据权限。",
     nav: [
       "dashboard", "publishing", "knowledge",
-      "personas", "accounts", "calendar", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings",
+      "personas", "accounts", "phone-assets", "calendar", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings",
     ],
     defaultUser: "管理员",
     team: "hq",
@@ -170,6 +170,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "knowledge", label: "知识与AI", icon: "📚", href: "/knowledge" },
   { id: "personas", label: "IP 矩阵", icon: "👤", href: "/personas" },
   { id: "accounts", label: "账号矩阵", icon: "📱", href: "/accounts" },
+  { id: "phone-assets", label: "号码资产", icon: "📞", href: "/phone-assets" },
   { id: "calendar", label: "内容日历", icon: "📅", href: "/calendar" },
   { id: "crm", label: "招生 CRM", icon: "🎯", href: "/crm" },
   { id: "coach", label: "内容生产", icon: "💡", href: "/coach" },

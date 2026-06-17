@@ -37,6 +37,8 @@ export default function AccountsPage() {
     platform: "",
     persona_id: "",
     operator_name: "",
+    real_name: "",
+    phone: "",
     stage: "养号",
     follower_count: 0,
     total_posts: 0,
@@ -51,6 +53,7 @@ export default function AccountsPage() {
     setEditing(null);
     setForm({
       account_name: "", platform: "", persona_id: "", operator_name: "",
+      real_name: "", phone: "",
       stage: "养号", follower_count: 0, total_posts: 0, total_leads: 0,
     });
     setShowModal(true);
@@ -61,6 +64,7 @@ export default function AccountsPage() {
     setForm({
       account_name: a.account_name, platform: a.platform,
       persona_id: a.persona_id || "", operator_name: a.operator_name || "",
+      real_name: a.real_name || "", phone: a.phone || "",
       stage: a.stage, follower_count: a.follower_count,
       total_posts: a.total_posts, total_leads: a.total_leads,
     });
@@ -75,6 +79,8 @@ export default function AccountsPage() {
       platform: form.platform,
       persona_id: form.persona_id || null,
       operator_name: form.operator_name || null,
+      real_name: form.real_name.trim() || null,
+      phone: form.phone.trim() || null,
       stage: form.stage,
       follower_count: form.follower_count,
       total_posts: form.total_posts,
@@ -136,7 +142,7 @@ export default function AccountsPage() {
           <table className="w-full" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                {["平台", "账号名", "IP角色", "运营人", "阶段", "粉丝", "发布", "线索"].map((h) => (
+                {["平台", "账号名", "IP角色", "运营人", "实名", "电话", "阶段", "粉丝", "发布", "线索"].map((h) => (
                   <th key={h} className="text-left text-xs font-medium px-4 py-3" style={{ color: "var(--muted)" }}>{h}</th>
                 ))}
               </tr>
@@ -154,6 +160,8 @@ export default function AccountsPage() {
                     <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--ink)" }}>{account.account_name}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.persona?.name || "-"}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.operator_name || "-"}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.real_name || "-"}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.phone || "-"}</td>
                     <td className="px-4 py-3"><Badge variant={stageColor(account.stage)}>{account.stage}</Badge></td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{formatNumber(account.follower_count)}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.total_posts}</td>
@@ -201,6 +209,14 @@ export default function AccountsPage() {
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>运营人</label>
                 <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.operator_name || "-"}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>实名注册人</label>
+                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.real_name || "-"}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>注册电话</label>
+                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.phone || "-"}</p>
               </div>
             </div>
             <div className="rounded-lg p-4" style={{ background: "var(--surface-soft)" }}>
@@ -257,6 +273,24 @@ export default function AccountsPage() {
               onChange={(e) => setForm({ ...form, operator_name: e.target.value })}
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>实名注册人</label>
+              <input type="text" value={form.real_name}
+                onChange={(e) => setForm({ ...form, real_name: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+                placeholder="账号实名是谁" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>注册电话</label>
+              <input type="tel" value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
+                placeholder="绑定手机号" />
+            </div>
           </div>
           <Select label="账号阶段" value={form.stage}
             onChange={(e) => setForm({ ...form, stage: e.target.value })}

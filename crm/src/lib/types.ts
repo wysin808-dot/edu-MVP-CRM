@@ -20,6 +20,8 @@ export interface Account {
   platform: string;
   persona_id: string | null;
   operator_name: string | null;
+  real_name: string | null;
+  phone: string | null;
   stage: string;
   follower_count: number;
   total_posts: number;
@@ -238,6 +240,37 @@ export interface CoachGenerated {
   total_tokens?: number | null;
 }
 
+// ── Phone Number Assets (号码资产) ──
+export interface PhoneRecharge {
+  id: string;
+  phone_id: string;
+  amount: number;
+  recharged_at: string;
+  channel: string | null;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface PhoneNumber {
+  id: string;
+  phone: string;
+  real_name: string | null;
+  id_card: string | null;
+  carrier: string | null;
+  region: string | null;
+  monthly_fee: number;
+  registered_accounts: string | null;
+  status: string;
+  notes: string | null;
+  team: string;
+  created_at: string;
+  updated_at: string;
+  // Joined / aggregated
+  recharges?: PhoneRecharge[];
+  total_recharged?: number;
+}
+
 // ── Form Input Types ──
 export type ContentInsert = Omit<Content, "id" | "created_at" | "updated_at" | "team" | "account" | "persona" | "metrics" | "reviews" | "comments" | "knowledge_refs" | "repurpose_children" | "media">;
 export type ContentUpdate = Partial<ContentInsert>;
@@ -246,3 +279,5 @@ export type PersonaInsert = Omit<Persona, "id" | "created_at" | "updated_at" | "
 export type AccountInsert = Omit<Account, "id" | "created_at" | "updated_at" | "team" | "persona">;
 export type CrmLeadInsert = Omit<CrmLead, "id" | "created_at" | "updated_at" | "team" | "source_content">;
 export type AiPromptInsert = Omit<AiPrompt, "id" | "created_at" | "team" | "persona">;
+export type PhoneNumberInsert = Omit<PhoneNumber, "id" | "created_at" | "updated_at" | "team" | "recharges" | "total_recharged">;
+export type PhoneRechargeInsert = Omit<PhoneRecharge, "id" | "created_at">;
