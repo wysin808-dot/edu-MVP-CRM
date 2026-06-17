@@ -18,7 +18,7 @@ function useChangePassword(onDone?: () => void) {
 
   async function submit() {
     setError(null);
-    if (pw.length < 8) { setError("密码至少 8 位"); return; }
+    if (pw.length < 6) { setError("密码至少 6 位"); return; }
     if (pw !== pw2) { setError("两次输入不一致"); return; }
     setLoading(true);
     try {
@@ -47,7 +47,7 @@ function Fields({ s }: { s: ReturnType<typeof useChangePassword> }) {
   return (
     <div className="flex flex-col gap-3">
       <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>新密码（至少 8 位）</label>
+        <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>新密码（至少 6 位）</label>
         <input type="password" value={s.pw} onChange={(e) => s.setPw(e.target.value)} className={inputCls}
           placeholder="输入新密码" autoComplete="new-password" />
       </div>

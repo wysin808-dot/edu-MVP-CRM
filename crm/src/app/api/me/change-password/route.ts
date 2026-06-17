@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
   let body;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
   const password = String(body?.password || "");
-  if (password.length < 8) {
-    return NextResponse.json({ error: "密码至少 8 位" }, { status: 400 });
+  if (password.length < 6) {
+    return NextResponse.json({ error: "密码至少 6 位" }, { status: 400 });
   }
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
