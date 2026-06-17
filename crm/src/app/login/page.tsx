@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+
+const REMEMBER_KEY = "seda_login_email";
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 读取上次记住的登录账号
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(REMEMBER_KEY);
+      if (saved) { setEmail(saved); setRemember(true); }
+    } catch { /* ignore */ }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,6 +39,12 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
+
+    // 登录成功后，按勾选决定是否记住账号（只记邮箱，不记密码）
+    try {
+      if (remember) localStorage.setItem(REMEMBER_KEY, email);
+      else localStorage.removeItem(REMEMBER_KEY);
+    } catch { /* ignore */ }
 
     window.location.href = "/dashboard";
   }
@@ -64,7 +82,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@seda.edu.sg"
+              placeholder="name@seda.org.sg"
               required
               autoComplete="email"
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
@@ -94,6 +112,16 @@ export default function LoginPage() {
                 color: "#2c2c2c",
               }}
             />
+          </label>
+
+          <label className="flex items-center gap-2 px-1 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              style={{ accentColor: "#2563eb" }}
+            />
+            <span className="text-xs" style={{ color: "#8a7d6b" }}>记住登录账号</span>
           </label>
 
           {error && (
