@@ -263,6 +263,8 @@ export interface PhoneNumber {
   region: string | null;
   monthly_fee: number;
   registered_accounts: string | null;
+  wechat_id: string | null;
+  wechat_user: string | null;
   status: string;
   notes: string | null;
   team: string;
@@ -271,7 +273,7 @@ export interface PhoneNumber {
   // Joined / aggregated
   recharges?: PhoneRecharge[];
   total_recharged?: number;
-  linked_accounts?: { id: string; account_name: string; platform: string }[];
+  linked_accounts?: { id: string; account_name: string; platform: string; operator_name: string | null }[];
 }
 
 // ── Form Input Types ──

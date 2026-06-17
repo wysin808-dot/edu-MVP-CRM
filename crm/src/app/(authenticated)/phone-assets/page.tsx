@@ -27,6 +27,8 @@ const emptyForm = {
   carrier: "",
   region: "",
   monthly_fee: 0,
+  wechat_id: "",
+  wechat_user: "",
   registered_accounts: "",
   status: "在用",
   notes: "",
@@ -97,7 +99,9 @@ export default function PhoneAssetsPage() {
     setForm({
       phone: p.phone, real_name: p.real_name || "", id_card: p.id_card || "",
       carrier: p.carrier || "", region: p.region || "",
-      monthly_fee: p.monthly_fee || 0, registered_accounts: p.registered_accounts || "",
+      monthly_fee: p.monthly_fee || 0,
+      wechat_id: p.wechat_id || "", wechat_user: p.wechat_user || "",
+      registered_accounts: p.registered_accounts || "",
       status: p.status, notes: p.notes || "",
     });
     resetRecharge();
@@ -117,6 +121,8 @@ export default function PhoneAssetsPage() {
       carrier: form.carrier || null,
       region: form.region.trim() || null,
       monthly_fee: Number(form.monthly_fee) || 0,
+      wechat_id: form.wechat_id.trim() || null,
+      wechat_user: form.wechat_user.trim() || null,
       registered_accounts: form.registered_accounts.trim() || null,
       status: form.status,
       notes: form.notes.trim() || null,
@@ -227,9 +233,14 @@ export default function PhoneAssetsPage() {
                   <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: "var(--muted)" }}>{p.region || "-"}</td>
                   <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: "var(--ink)" }}>¥{Number(p.monthly_fee || 0)}</td>
                   <td className="px-4 py-3 text-sm max-w-[240px]" style={{ color: "var(--muted)" }}>
-                    {p.linked_accounts && p.linked_accounts.length > 0 ? (
-                      <span className="truncate inline-block max-w-[240px] align-bottom" title={p.linked_accounts.map((a) => `${a.platform}·${a.account_name}`).join("，")}>
-                        <span style={{ color: "var(--brand)" }}>{p.linked_accounts.length}</span> 个：{p.linked_accounts.map((a) => a.account_name).join("，")}
+                    {(p.linked_accounts && p.linked_accounts.length > 0) || p.wechat_id || p.wechat_user ? (
+                      <span className="truncate inline-block max-w-[240px] align-bottom"
+                        title={[
+                          ...(p.linked_accounts || []).map((a) => `${a.platform}·${a.account_name}${a.operator_name ? "(运营 " + a.operator_name + ")" : ""}`),
+                          (p.wechat_id || p.wechat_user) ? `微信 ${p.wechat_id || ""}${p.wechat_user ? "(用:" + p.wechat_user + ")" : ""}` : "",
+                        ].filter(Boolean).join("，")}>
+                        <span style={{ color: "var(--brand)" }}>{p.linked_accounts?.length || 0}</span> 平台
+                        {(p.wechat_id || p.wechat_user) ? " ＋ 微信" : ""}
                       </span>
                     ) : p.registered_accounts ? (
                       <span className="truncate inline-block max-w-[240px] align-bottom" title={p.registered_accounts}>{p.registered_accounts}</span>
@@ -295,24 +306,58 @@ export default function PhoneAssetsPage() {
                 onChange={(e) => setForm({ ...form, monthly_fee: parseFloat(e.target.value) || 0 })} className={inputCls} />
             </Field>
           </div>
-          {/* 用此号码注册的账号（来自账号矩阵的关联，自动） */}
+          {/* 微信（手机号绑定的，1 个号码 1 个微信） */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="微信号">
+              <input type="text" value={form.wechat_id} onChange={(e) => setForm({ ...form, wechat_id: e.target.value })}
+                className={inputCls} placeholder="此号码绑定的微信号" />
+            </Field>
+            <Field label="微信谁在用">
+              <input type="text" value={form.wechat_user} onChange={(e) => setForm({ ...form, wechat_user: e.target.value })}
+                className={inputCls} placeholder="微信使用人" />
+            </Field>
+          </div>
+
+          {/* 此号码注册了什么：自媒体平台（账号矩阵自动关联）+ 微信 */}
           {editing && (
-            <div>
-              <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>用此号码注册的账号（账号矩阵自动关联）</span>
-              {liveEditing?.linked_accounts && liveEditing.linked_accounts.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {liveEditing.linked_accounts.map((a) => (
-                    <span key={a.id} className="rounded-full px-2.5 py-0.5 text-xs"
-                      style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}>
-                      {a.platform} · {a.account_name}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-                  还没有账号关联到这个号码。去「账号矩阵」编辑账号，把「注册号码」选成它即可。
-                </p>
-              )}
+            <div className="rounded-lg p-3" style={{ background: "var(--surface-soft)", border: "1px solid var(--border)" }}>
+              {(() => {
+                const accs = liveEditing?.linked_accounts || [];
+                const hasWechat = !!(form.wechat_id.trim() || form.wechat_user.trim());
+                return (
+                  <>
+                    <div className="text-sm font-semibold mb-2" style={{ color: "var(--ink)" }}>
+                      📇 此号码注册了：
+                      <span style={{ color: "var(--brand)" }}> {accs.length} </span>个自媒体平台
+                      {hasWechat ? " ＋ 微信" : ""}
+                    </div>
+                    {/* 微信 */}
+                    {hasWechat && (
+                      <div className="flex items-center gap-2 text-sm mb-2 px-2 py-1.5 rounded" style={{ background: "var(--surface)" }}>
+                        <span>💬</span>
+                        <span style={{ color: "var(--ink)" }}>微信 {form.wechat_id || "(未填号)"}</span>
+                        <span style={{ color: "var(--muted)" }}>· 使用人 {form.wechat_user || "(未填)"}</span>
+                      </div>
+                    )}
+                    {/* 自媒体平台账号 + 运营人 */}
+                    {accs.length > 0 ? (
+                      <div className="flex flex-col gap-1">
+                        {accs.map((a) => (
+                          <div key={a.id} className="flex items-center gap-2 text-sm px-2 py-1.5 rounded" style={{ background: "var(--surface)" }}>
+                            <span className="rounded px-1.5 py-0.5 text-xs" style={{ background: "var(--surface-soft)", color: "var(--ink)" }}>{a.platform}</span>
+                            <span style={{ color: "var(--ink)" }}>{a.account_name}</span>
+                            <span style={{ color: "var(--muted)" }}>· 运营 {a.operator_name || "未指定"}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs" style={{ color: "var(--muted)" }}>
+                        还没有自媒体账号关联到这个号码。去「账号矩阵」编辑账号，把「注册号码」选成它即可。
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
           <Field label="其他账号备注（手填，可选）">
