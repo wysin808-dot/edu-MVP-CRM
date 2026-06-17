@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { NAV_ITEMS, ROLE_CONFIG } from "@/lib/constants";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useUnread } from "@/hooks/useMessages";
 import { createClient } from "@/lib/supabase/client";
+import { ChangePasswordModal } from "@/components/auth/ChangePassword";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [showPwModal, setShowPwModal] = useState(false);
   const { role, profile, signOut, user } = useAuth();
   const config = ROLE_CONFIG[role];
   const { data: unread } = useUnread();
@@ -118,6 +120,14 @@ export default function Sidebar() {
           </div>
         </div>
         <button
+          onClick={() => setShowPwModal(true)}
+          className="text-xs px-2 py-1 rounded transition-colors cursor-pointer border-none"
+          style={{ color: "var(--muted)", background: "transparent" }}
+          title="修改密码"
+        >
+          改密码
+        </button>
+        <button
           onClick={signOut}
           className="text-xs px-2 py-1 rounded transition-colors cursor-pointer border-none"
           style={{
@@ -129,6 +139,7 @@ export default function Sidebar() {
           退出
         </button>
       </div>
+      <ChangePasswordModal open={showPwModal} onClose={() => setShowPwModal(false)} />
     </aside>
   );
 }

@@ -130,6 +130,7 @@ export async function POST(request: NextRequest) {
       display_name,
       role: role || "operator",
       team: finalTeam,
+      must_change_password: true,
     });
 
   if (profileError) {

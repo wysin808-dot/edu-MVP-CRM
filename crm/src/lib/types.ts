@@ -187,6 +187,7 @@ export interface UserProfile {
   team: string;
   avatar_url: string | null;
   daily_publish_target: number;
+  must_change_password?: boolean;
   created_at: string;
 }
 

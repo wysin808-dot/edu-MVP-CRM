@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { ForceChangePassword } from "@/components/auth/ChangePassword";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { loading, user, role } = useAuth();
+  const { loading, user, role, profile } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const hasRedirected = useRef(false);
@@ -42,6 +43,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return null;
+  }
+
+  // 新成员首次登录：强制改密码后才能进系统
+  if (profile?.must_change_password) {
+    return <ForceChangePassword />;
   }
 
   return <>{children}</>;
