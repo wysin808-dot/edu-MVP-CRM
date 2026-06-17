@@ -10,13 +10,14 @@ import {
   useDeleteRecharge,
 } from "@/hooks/usePhoneNumbers";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useColleagues } from "@/hooks/useMessages";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import type { PhoneNumber } from "@/lib/types";
 
-const CARRIERS = ["移动", "联通", "电信", "广电", "其他"];
+const CARRIERS = ["Singtel", "StarHub", "M1", "Simba", "移动", "联通", "电信", "广电", "其他"];
 const STATUSES = ["在用", "停用", "已注销"];
 const RECHARGE_CHANNELS = ["支付宝", "微信", "营业厅", "话费卡", "其他"];
 
@@ -30,6 +31,7 @@ const emptyForm = {
   wechat_id: "",
   wechat_user: "",
   registered_accounts: "",
+  owner_id: "",
   status: "在用",
   notes: "",
 };
@@ -50,8 +52,15 @@ function maskIdCard(id: string | null) {
 }
 
 export default function PhoneAssetsPage() {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const canManage = role === "admin" || role === "lead";
+  const isAdmin = role === "admin";
+
+  // 可被指派为负责人的成员（部门负责人）
+  const { data: colleagues } = useColleagues();
+  const leads = (colleagues || []).filter((c) => c.role === "lead" || c.role === "admin");
+  const ownerName = (id: string | null) =>
+    id ? (leads.find((l) => l.id === id)?.display_name || (id === user?.id ? "我" : "—")) : "未分配";
 
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
@@ -102,6 +111,7 @@ export default function PhoneAssetsPage() {
       monthly_fee: p.monthly_fee || 0,
       wechat_id: p.wechat_id || "", wechat_user: p.wechat_user || "",
       registered_accounts: p.registered_accounts || "",
+      owner_id: p.owner_id || "",
       status: p.status, notes: p.notes || "",
     });
     resetRecharge();
@@ -114,6 +124,7 @@ export default function PhoneAssetsPage() {
 
   const handleSubmit = async () => {
     if (!form.phone.trim()) { alert("请填写号码"); return; }
+    if (!form.real_name.trim()) { alert("请填写实名持有人"); return; }
     const payload = {
       phone: form.phone.trim(),
       real_name: form.real_name.trim() || null,
@@ -124,6 +135,9 @@ export default function PhoneAssetsPage() {
       wechat_id: form.wechat_id.trim() || null,
       wechat_user: form.wechat_user.trim() || null,
       registered_accounts: form.registered_accounts.trim() || null,
+      owner_id: isAdmin
+        ? (form.owner_id || null)
+        : (editing ? (editing.owner_id ?? null) : (user?.id || null)),
       status: form.status,
       notes: form.notes.trim() || null,
     };
@@ -214,7 +228,7 @@ export default function PhoneAssetsPage() {
           <table className="w-full" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                {["号码", "实名", "身份证", "运营商", "归属地", "月租", "注册账号", "累计充值", "状态"].map((h) => (
+                {["号码", "实名", "身份证", "运营商", "归属地", "月租", "注册账号", "累计充值", ...(isAdmin ? ["负责人"] : []), "状态"].map((h) => (
                   <th key={h} className="text-left text-xs font-medium px-4 py-3 whitespace-nowrap" style={{ color: "var(--muted)" }}>{h}</th>
                 ))}
               </tr>
@@ -247,6 +261,7 @@ export default function PhoneAssetsPage() {
                     ) : "-"}
                   </td>
                   <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: "var(--brand)" }}>¥{Number(p.total_recharged || 0)}</td>
+                  {isAdmin && <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: "var(--muted)" }}>{ownerName(p.owner_id)}</td>}
                   <td className="px-4 py-3"><Badge variant={statusColor(p.status)}>{p.status}</Badge></td>
                 </tr>
               ))}
@@ -285,9 +300,9 @@ export default function PhoneAssetsPage() {
               className={inputCls} placeholder="例: 13800138000" />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="实名持有人">
+            <Field label="实名持有人 *">
               <input type="text" value={form.real_name} onChange={(e) => setForm({ ...form, real_name: e.target.value })}
-                className={inputCls} placeholder="身份证上的姓名" />
+                className={inputCls} placeholder="身份证上的姓名（必填）" />
             </Field>
             <Field label="身份证号">
               <input type="text" value={form.id_card} onChange={(e) => setForm({ ...form, id_card: e.target.value })}
@@ -317,6 +332,23 @@ export default function PhoneAssetsPage() {
                 className={inputCls} placeholder="微信使用人" />
             </Field>
           </div>
+
+          {/* 负责人：仅超管可指派 */}
+          {isAdmin ? (
+            <Select label="负责人（指派给哪个部门负责人）" value={form.owner_id}
+              onChange={(e) => setForm({ ...form, owner_id: e.target.value })}
+              options={[
+                { value: "", label: "未分配" },
+                ...leads.map((l) => ({ value: l.id, label: l.display_name || "未命名" })),
+              ]} />
+          ) : (
+            <div>
+              <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>负责人</span>
+              <p className="text-sm mt-1" style={{ color: "var(--ink)" }}>
+                {editing ? ownerName(editing.owner_id) : "我（新建后归我）"}
+              </p>
+            </div>
+          )}
 
           {/* 此号码注册了什么：自媒体平台（账号矩阵自动关联）+ 微信 */}
           {editing && (

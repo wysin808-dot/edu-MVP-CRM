@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAccountList, useCreateAccount, useUpdateAccount } from "@/hooks/useAccounts";
 import { usePersonaList } from "@/hooks/usePersonas";
 import { usePhoneNumberList } from "@/hooks/usePhoneNumbers";
+import { useColleagues } from "@/hooks/useMessages";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { PLATFORMS, ACCOUNT_STAGES } from "@/lib/constants";
 import { Modal } from "@/components/ui/Modal";
@@ -14,8 +15,15 @@ import { formatNumber } from "@/lib/utils";
 import type { Account } from "@/lib/types";
 
 export default function AccountsPage() {
-  const { profile, role } = useAuth();
+  const { user, profile, role } = useAuth();
   const isOperator = role === "operator";
+  const isAdmin = role === "admin";
+
+  // 可被指派为负责人的成员
+  const { data: colleagues } = useColleagues();
+  const leads = (colleagues || []).filter((c) => c.role === "lead" || c.role === "admin");
+  const ownerName = (id: string | null) =>
+    id ? (leads.find((l) => l.id === id)?.display_name || (id === user?.id ? "我" : "—")) : "未分配";
 
   const [platformFilter, setPlatformFilter] = useState("");
   const [stageFilter, setStageFilter] = useState("");
@@ -25,6 +33,8 @@ export default function AccountsPage() {
     stage: stageFilter || undefined,
     // 运营人员只看自己负责的账号
     operatorName: isOperator ? (profile?.display_name || undefined) : undefined,
+    // 部门负责人只看分配给自己的账号
+    ownerId: role === "lead" ? (user?.id || undefined) : undefined,
   });
   const { data: personas } = usePersonaList();
   const { data: phoneNumbers } = usePhoneNumberList();
@@ -40,6 +50,7 @@ export default function AccountsPage() {
     persona_id: "",
     operator_name: "",
     phone_number_id: "",
+    owner_id: "",
     stage: "养号",
     follower_count: 0,
     total_posts: 0,
@@ -54,7 +65,7 @@ export default function AccountsPage() {
     setEditing(null);
     setForm({
       account_name: "", platform: "", persona_id: "", operator_name: "",
-      phone_number_id: "",
+      phone_number_id: "", owner_id: "",
       stage: "养号", follower_count: 0, total_posts: 0, total_leads: 0,
     });
     setShowModal(true);
@@ -65,7 +76,7 @@ export default function AccountsPage() {
     setForm({
       account_name: a.account_name, platform: a.platform,
       persona_id: a.persona_id || "", operator_name: a.operator_name || "",
-      phone_number_id: a.phone_number_id || "",
+      phone_number_id: a.phone_number_id || "", owner_id: a.owner_id || "",
       stage: a.stage, follower_count: a.follower_count,
       total_posts: a.total_posts, total_leads: a.total_leads,
     });
@@ -81,6 +92,9 @@ export default function AccountsPage() {
       persona_id: form.persona_id || null,
       operator_name: form.operator_name || null,
       phone_number_id: form.phone_number_id || null,
+      owner_id: isAdmin
+        ? (form.owner_id || null)
+        : (editing ? (editing.owner_id ?? null) : (user?.id || null)),
       stage: form.stage,
       follower_count: form.follower_count,
       total_posts: form.total_posts,
@@ -142,7 +156,7 @@ export default function AccountsPage() {
           <table className="w-full" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                {["平台", "账号名", "IP角色", "运营人", "实名", "电话", "阶段", "粉丝", "发布", "线索"].map((h) => (
+                {["平台", "账号名", "IP角色", "运营人", "实名", "电话", ...(isAdmin ? ["负责人"] : []), "阶段", "粉丝", "发布", "线索"].map((h) => (
                   <th key={h} className="text-left text-xs font-medium px-4 py-3" style={{ color: "var(--muted)" }}>{h}</th>
                 ))}
               </tr>
@@ -162,6 +176,7 @@ export default function AccountsPage() {
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.operator_name || "-"}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.phone_ref?.real_name || account.real_name || "-"}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.phone_ref?.phone || account.phone || "-"}</td>
+                    {isAdmin && <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{ownerName(account.owner_id)}</td>}
                     <td className="px-4 py-3"><Badge variant={stageColor(account.stage)}>{account.stage}</Badge></td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{formatNumber(account.follower_count)}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.total_posts}</td>
@@ -287,6 +302,21 @@ export default function AccountsPage() {
             <p className="text-xs -mt-2" style={{ color: "var(--muted)" }}>
               号码资产里还没有号码，先去「📞 号码资产」录入，这里就能选了
             </p>
+          )}
+          {isAdmin ? (
+            <Select label="负责人（指派给哪个部门负责人）" value={form.owner_id}
+              onChange={(e) => setForm({ ...form, owner_id: e.target.value })}
+              options={[
+                { value: "", label: "未分配" },
+                ...leads.map((l) => ({ value: l.id, label: l.display_name || "未命名" })),
+              ]} />
+          ) : (
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>负责人</label>
+              <p className="text-sm" style={{ color: "var(--ink)" }}>
+                {editing ? ownerName(editing.owner_id) : "我（新建后归我）"}
+              </p>
+            </div>
           )}
           <Select label="账号阶段" value={form.stage}
             onChange={(e) => setForm({ ...form, stage: e.target.value })}

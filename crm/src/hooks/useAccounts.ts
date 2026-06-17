@@ -14,6 +14,7 @@ export function useAccountList(filters?: {
   platform?: string;
   stage?: string;
   operatorName?: string;
+  ownerId?: string;
 }) {
   const team = useTeamFilter();
 
@@ -30,7 +31,9 @@ export function useAccountList(filters?: {
       if (filters?.stage) query = query.eq("stage", filters.stage);
       if (filters?.operatorName)
         query = query.eq("operator_name", filters.operatorName);
-      if (team) query = query.eq("team", team);
+      // owner 指派优先：传了 ownerId 就按负责人过滤（跳过 team），否则沿用 team 过滤
+      if (filters?.ownerId) query = query.eq("owner_id", filters.ownerId);
+      else if (team) query = query.eq("team", team);
 
       const { data, error } = await query;
       if (error) throw error;

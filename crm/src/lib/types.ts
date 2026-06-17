@@ -23,6 +23,7 @@ export interface Account {
   real_name?: string | null;
   phone?: string | null;
   phone_number_id: string | null;
+  owner_id: string | null;
   stage: string;
   follower_count: number;
   total_posts: number;
@@ -265,6 +266,7 @@ export interface PhoneNumber {
   registered_accounts: string | null;
   wechat_id: string | null;
   wechat_user: string | null;
+  owner_id: string | null;
   status: string;
   notes: string | null;
   team: string;

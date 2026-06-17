@@ -10,17 +10,13 @@ import type {
   PhoneRechargeInsert,
 } from "@/lib/types";
 
-function useTeamFilter() {
-  const { profile, role } = useAuth();
-  return role === "admin" ? null : profile?.team || null;
-}
-
-// 号码列表（带充值汇总）
+// 号码列表（带充值汇总）。超管看全部；其余只看分配给自己的（owner_id）
 export function usePhoneNumberList(filters?: { status?: string; q?: string }) {
-  const team = useTeamFilter();
+  const { user, role } = useAuth();
+  const ownerScope = role === "admin" ? null : user?.id || "__none__";
 
   return useQuery({
-    queryKey: ["phone_numbers", filters, { team }],
+    queryKey: ["phone_numbers", filters, { ownerScope }],
     queryFn: async () => {
       const supabase = createClient();
       let query = supabase
@@ -29,7 +25,7 @@ export function usePhoneNumberList(filters?: { status?: string; q?: string }) {
         .order("created_at", { ascending: false });
 
       if (filters?.status) query = query.eq("status", filters.status);
-      if (team) query = query.eq("team", team);
+      if (ownerScope) query = query.eq("owner_id", ownerScope);
 
       const { data, error } = await query;
       if (error) throw error;

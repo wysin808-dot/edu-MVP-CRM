@@ -57,7 +57,7 @@ export default function Sidebar() {
         />
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm truncate" style={{ color: "var(--ink)" }}>
-            SEDA 获客系统
+            SEDA OS
           </div>
           <div className="text-[10px] truncate" style={{ color: "var(--muted)" }}>
             {config.title}
