@@ -226,7 +226,15 @@ export default function PhoneAssetsPage() {
                   <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: "var(--muted)" }}>{p.carrier || "-"}</td>
                   <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: "var(--muted)" }}>{p.region || "-"}</td>
                   <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: "var(--ink)" }}>¥{Number(p.monthly_fee || 0)}</td>
-                  <td className="px-4 py-3 text-sm max-w-[220px] truncate" style={{ color: "var(--muted)" }} title={p.registered_accounts || ""}>{p.registered_accounts || "-"}</td>
+                  <td className="px-4 py-3 text-sm max-w-[240px]" style={{ color: "var(--muted)" }}>
+                    {p.linked_accounts && p.linked_accounts.length > 0 ? (
+                      <span className="truncate inline-block max-w-[240px] align-bottom" title={p.linked_accounts.map((a) => `${a.platform}·${a.account_name}`).join("，")}>
+                        <span style={{ color: "var(--brand)" }}>{p.linked_accounts.length}</span> 个：{p.linked_accounts.map((a) => a.account_name).join("，")}
+                      </span>
+                    ) : p.registered_accounts ? (
+                      <span className="truncate inline-block max-w-[240px] align-bottom" title={p.registered_accounts}>{p.registered_accounts}</span>
+                    ) : "-"}
+                  </td>
                   <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: "var(--brand)" }}>¥{Number(p.total_recharged || 0)}</td>
                   <td className="px-4 py-3"><Badge variant={statusColor(p.status)}>{p.status}</Badge></td>
                 </tr>
@@ -287,9 +295,29 @@ export default function PhoneAssetsPage() {
                 onChange={(e) => setForm({ ...form, monthly_fee: parseFloat(e.target.value) || 0 })} className={inputCls} />
             </Field>
           </div>
-          <Field label="注册了哪些账号">
+          {/* 用此号码注册的账号（来自账号矩阵的关联，自动） */}
+          {editing && (
+            <div>
+              <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>用此号码注册的账号（账号矩阵自动关联）</span>
+              {liveEditing?.linked_accounts && liveEditing.linked_accounts.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {liveEditing.linked_accounts.map((a) => (
+                    <span key={a.id} className="rounded-full px-2.5 py-0.5 text-xs"
+                      style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}>
+                      {a.platform} · {a.account_name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+                  还没有账号关联到这个号码。去「账号矩阵」编辑账号，把「注册号码」选成它即可。
+                </p>
+              )}
+            </div>
+          )}
+          <Field label="其他账号备注（手填，可选）">
             <textarea value={form.registered_accounts} onChange={(e) => setForm({ ...form, registered_accounts: e.target.value })}
-              rows={2} className={inputCls + " resize-y"} placeholder="如：小红书-SEDA留学日记 / 抖音-海外升学Vera / 微信-xxx" />
+              rows={2} className={inputCls + " resize-y"} placeholder="不在账号矩阵里的账号可以记在这，如：微信-xxx" />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Select label="状态" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}

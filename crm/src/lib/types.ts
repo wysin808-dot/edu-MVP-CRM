@@ -20,8 +20,9 @@ export interface Account {
   platform: string;
   persona_id: string | null;
   operator_name: string | null;
-  real_name: string | null;
-  phone: string | null;
+  real_name?: string | null;
+  phone?: string | null;
+  phone_number_id: string | null;
   stage: string;
   follower_count: number;
   total_posts: number;
@@ -31,6 +32,7 @@ export interface Account {
   updated_at: string;
   // Joined fields
   persona?: Persona;
+  phone_ref?: { id: string; phone: string; real_name: string | null } | null;
 }
 
 export interface KnowledgeItem {
@@ -269,6 +271,7 @@ export interface PhoneNumber {
   // Joined / aggregated
   recharges?: PhoneRecharge[];
   total_recharged?: number;
+  linked_accounts?: { id: string; account_name: string; platform: string }[];
 }
 
 // ── Form Input Types ──
@@ -276,7 +279,7 @@ export type ContentInsert = Omit<Content, "id" | "created_at" | "updated_at" | "
 export type ContentUpdate = Partial<ContentInsert>;
 export type KnowledgeInsert = Omit<KnowledgeItem, "id" | "created_at" | "updated_at">;
 export type PersonaInsert = Omit<Persona, "id" | "created_at" | "updated_at" | "team">;
-export type AccountInsert = Omit<Account, "id" | "created_at" | "updated_at" | "team" | "persona">;
+export type AccountInsert = Omit<Account, "id" | "created_at" | "updated_at" | "team" | "persona" | "phone_ref">;
 export type CrmLeadInsert = Omit<CrmLead, "id" | "created_at" | "updated_at" | "team" | "source_content">;
 export type AiPromptInsert = Omit<AiPrompt, "id" | "created_at" | "team" | "persona">;
 export type PhoneNumberInsert = Omit<PhoneNumber, "id" | "created_at" | "updated_at" | "team" | "recharges" | "total_recharged">;

@@ -25,7 +25,7 @@ export function usePhoneNumberList(filters?: { status?: string; q?: string }) {
       const supabase = createClient();
       let query = supabase
         .from("phone_numbers")
-        .select("*, recharges:phone_recharges(*)")
+        .select("*, recharges:phone_recharges(*), linked_accounts:accounts(id, account_name, platform)")
         .order("created_at", { ascending: false });
 
       if (filters?.status) query = query.eq("status", filters.status);

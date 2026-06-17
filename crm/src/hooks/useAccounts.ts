@@ -23,7 +23,7 @@ export function useAccountList(filters?: {
       const supabase = createClient();
       let query = supabase
         .from("accounts")
-        .select("*, persona:personas(*)")
+        .select("*, persona:personas(*), phone_ref:phone_numbers(id, phone, real_name)")
         .order("created_at", { ascending: false });
 
       if (filters?.platform) query = query.eq("platform", filters.platform);

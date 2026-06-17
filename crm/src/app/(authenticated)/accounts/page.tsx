@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAccountList, useCreateAccount, useUpdateAccount } from "@/hooks/useAccounts";
 import { usePersonaList } from "@/hooks/usePersonas";
+import { usePhoneNumberList } from "@/hooks/usePhoneNumbers";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { PLATFORMS, ACCOUNT_STAGES } from "@/lib/constants";
 import { Modal } from "@/components/ui/Modal";
@@ -26,6 +27,7 @@ export default function AccountsPage() {
     operatorName: isOperator ? (profile?.display_name || undefined) : undefined,
   });
   const { data: personas } = usePersonaList();
+  const { data: phoneNumbers } = usePhoneNumberList();
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
 
@@ -37,8 +39,7 @@ export default function AccountsPage() {
     platform: "",
     persona_id: "",
     operator_name: "",
-    real_name: "",
-    phone: "",
+    phone_number_id: "",
     stage: "养号",
     follower_count: 0,
     total_posts: 0,
@@ -53,7 +54,7 @@ export default function AccountsPage() {
     setEditing(null);
     setForm({
       account_name: "", platform: "", persona_id: "", operator_name: "",
-      real_name: "", phone: "",
+      phone_number_id: "",
       stage: "养号", follower_count: 0, total_posts: 0, total_leads: 0,
     });
     setShowModal(true);
@@ -64,7 +65,7 @@ export default function AccountsPage() {
     setForm({
       account_name: a.account_name, platform: a.platform,
       persona_id: a.persona_id || "", operator_name: a.operator_name || "",
-      real_name: a.real_name || "", phone: a.phone || "",
+      phone_number_id: a.phone_number_id || "",
       stage: a.stage, follower_count: a.follower_count,
       total_posts: a.total_posts, total_leads: a.total_leads,
     });
@@ -79,8 +80,7 @@ export default function AccountsPage() {
       platform: form.platform,
       persona_id: form.persona_id || null,
       operator_name: form.operator_name || null,
-      real_name: form.real_name.trim() || null,
-      phone: form.phone.trim() || null,
+      phone_number_id: form.phone_number_id || null,
       stage: form.stage,
       follower_count: form.follower_count,
       total_posts: form.total_posts,
@@ -160,8 +160,8 @@ export default function AccountsPage() {
                     <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--ink)" }}>{account.account_name}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.persona?.name || "-"}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.operator_name || "-"}</td>
-                    <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.real_name || "-"}</td>
-                    <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.phone || "-"}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.phone_ref?.real_name || account.real_name || "-"}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.phone_ref?.phone || account.phone || "-"}</td>
                     <td className="px-4 py-3"><Badge variant={stageColor(account.stage)}>{account.stage}</Badge></td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{formatNumber(account.follower_count)}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.total_posts}</td>
@@ -212,11 +212,11 @@ export default function AccountsPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>实名注册人</label>
-                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.real_name || "-"}</p>
+                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.phone_ref?.real_name || viewing.real_name || "-"}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: "var(--muted)" }}>注册电话</label>
-                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.phone || "-"}</p>
+                <p className="text-sm" style={{ color: "var(--ink)" }}>{viewing.phone_ref?.phone || viewing.phone || "-"}</p>
               </div>
             </div>
             <div className="rounded-lg p-4" style={{ background: "var(--surface-soft)" }}>
@@ -274,24 +274,20 @@ export default function AccountsPage() {
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>实名注册人</label>
-              <input type="text" value={form.real_name}
-                onChange={(e) => setForm({ ...form, real_name: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
-                placeholder="账号实名是谁" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>注册电话</label>
-              <input type="tel" value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                style={{ background: "var(--surface-soft)", border: "1px solid var(--border)", color: "var(--ink)" }}
-                placeholder="绑定手机号" />
-            </div>
-          </div>
+          <Select label="注册号码（从号码资产选）" value={form.phone_number_id}
+            onChange={(e) => setForm({ ...form, phone_number_id: e.target.value })}
+            options={[
+              { value: "", label: "未关联号码" },
+              ...(phoneNumbers?.map((p) => ({
+                value: p.id,
+                label: `${p.phone}${p.real_name ? " · " + p.real_name : ""}`,
+              })) || []),
+            ]} />
+          {(!phoneNumbers || phoneNumbers.length === 0) && (
+            <p className="text-xs -mt-2" style={{ color: "var(--muted)" }}>
+              号码资产里还没有号码，先去「📞 号码资产」录入，这里就能选了
+            </p>
+          )}
           <Select label="账号阶段" value={form.stage}
             onChange={(e) => setForm({ ...form, stage: e.target.value })}
             options={ACCOUNT_STAGES.map((s) => ({ value: s, label: s }))} />
