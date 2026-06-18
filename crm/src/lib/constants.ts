@@ -165,7 +165,6 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "工作台", icon: "📊", href: "/dashboard" },
-  { id: "publishing", label: "今日发布", icon: "📤", href: "/publishing" },
   { id: "content", label: "内容资产库", icon: "📝", href: "/content" },
   { id: "knowledge", label: "知识与AI", icon: "📚", href: "/knowledge" },
   { id: "personas", label: "IP 矩阵", icon: "👤", href: "/personas" },

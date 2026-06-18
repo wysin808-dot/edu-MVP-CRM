@@ -107,7 +107,7 @@ export function generateNotifications({
       icon: "📤",
       title: "今日待发布",
       message: `${todayPublish.length} 条内容计划今日发布`,
-      href: "/publishing",
+      href: "/dashboard",
       priority: "high",
     });
   }

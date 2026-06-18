@@ -253,7 +253,7 @@ export default function SettingsPage() {
     return false;
   };
 
-  const roleChangeOptions = (targetUser: UserProfile) => {
+  const roleChangeOptions = (_targetUser: UserProfile) => {
     if (isAdmin) {
       return Object.entries(ROLE_CONFIG).map(([k, v]) => ({ value: k, label: v.title }));
     }

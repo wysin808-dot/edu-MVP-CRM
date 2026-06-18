@@ -1,31 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ForceChangePassword } from "@/components/auth/ChangePassword";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-  const { loading, user, role, profile } = useAuth();
+  const { loading, user, profile } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const hasRedirected = useRef(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
     }
   }, [loading, user, router]);
-
-  // Redirect operator/ai to /publishing on initial login (when landing on /dashboard)
-  useEffect(() => {
-    if (!loading && user && !hasRedirected.current) {
-      if ((role === "operator" || role === "ai") && pathname === "/dashboard") {
-        hasRedirected.current = true;
-        router.replace("/publishing");
-      }
-    }
-  }, [loading, user, role, pathname, router]);
 
   if (loading) {
     return (
