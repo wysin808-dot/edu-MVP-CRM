@@ -115,7 +115,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
   operator: {
     title: "运营人员",
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
-    nav: ["dashboard", "knowledge", "accounts", "calendar", "crm", "coach", "chat", "ai-assistant"],
+    nav: ["dashboard", "knowledge", "accounts", "calendar", "publish-log", "crm", "coach", "chat", "ai-assistant"],
     defaultUser: "运营 A",
     team: "china",
   },
@@ -124,7 +124,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
     nav: [
       "dashboard", "knowledge",
-      "personas", "accounts", "phone-assets", "calendar", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics",
+      "personas", "accounts", "phone-assets", "calendar", "publish-log", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics",
     ],
     defaultUser: "Ocean Wang",
     team: "hq",
@@ -134,7 +134,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
     summary: "管理用户、角色、账号、IP、资料库和全局数据权限。",
     nav: [
       "dashboard", "knowledge",
-      "personas", "accounts", "phone-assets", "calendar", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings",
+      "personas", "accounts", "phone-assets", "calendar", "publish-log", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings",
     ],
     defaultUser: "管理员",
     team: "hq",
@@ -171,6 +171,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "accounts", label: "账号矩阵", icon: "📱", href: "/accounts" },
   { id: "phone-assets", label: "号码资产", icon: "📞", href: "/phone-assets" },
   { id: "calendar", label: "内容日历", icon: "📅", href: "/calendar" },
+  { id: "publish-log", label: "发布记录", icon: "📋", href: "/publish-log" },
   { id: "crm", label: "招生 CRM", icon: "🎯", href: "/crm" },
   { id: "coach", label: "内容生产", icon: "💡", href: "/coach" },
   { id: "tasks", label: "任务中心", icon: "✅", href: "/tasks" },

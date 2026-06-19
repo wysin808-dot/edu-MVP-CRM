@@ -56,8 +56,8 @@ export default function TodayPublishing() {
         <div>
           <h3 className="text-lg font-bold m-0 flex items-center gap-2" style={{ color: "var(--ink)" }}>
             📤 今日发布
-            <Link href="/content?status=已发布" className="text-xs font-medium" style={{ color: "var(--brand)", textDecoration: "none" }}>
-              查看已发布 →
+            <Link href="/publish-log" className="text-xs font-medium" style={{ color: "var(--brand)", textDecoration: "none" }}>
+              发布记录 →
             </Link>
           </h3>
           <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>{today}</p>
