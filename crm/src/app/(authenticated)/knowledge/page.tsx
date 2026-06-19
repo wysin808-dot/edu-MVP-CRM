@@ -28,7 +28,7 @@ export default function KnowledgePage() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-5">
-        <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>知识与 AI</h2>
+        <h2 className="text-lg font-bold m-0" style={{ color: "var(--ink)" }}>资料与模板</h2>
         <p className="text-sm mt-1" style={{ color: "var(--muted)" }}>管理参考资料和 AI Prompt 模板</p>
       </div>
 
