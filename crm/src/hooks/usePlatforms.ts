@@ -9,6 +9,7 @@ export interface Platform {
   name: string;
   label: string;
   icon: string;
+  logo_url: string | null;
   budgetPercent: number;
   sort_order: number;
 }
@@ -17,6 +18,7 @@ interface PlatformRow {
   id: string;
   label: string;
   icon: string | null;
+  logo_url: string | null;
   budget_percent: number | null;
   sort_order: number | null;
   active: boolean;
@@ -28,9 +30,30 @@ function toPlatform(r: PlatformRow): Platform {
     name: r.id,
     label: r.label || r.id,
     icon: r.icon || "📱",
+    logo_url: r.logo_url || null,
     budgetPercent: Number(r.budget_percent || 0),
     sort_order: r.sort_order ?? 100,
   };
+}
+
+// 按平台名自动识别官方 logo（Simple Icons CDN，默认品牌色）
+const LOGO_SLUG: Record<string, string> = {
+  "小红书": "xiaohongshu", "红书": "xiaohongshu", "抖音": "douyin", "tiktok": "tiktok", "快手": "kuaishou",
+  "视频号": "wechat", "公众号": "wechat", "微信": "wechat", "wechat": "wechat",
+  "微博": "sinaweibo", "知乎": "zhihu", "豆瓣": "douban",
+  "b站": "bilibili", "哔哩": "bilibili", "bilibili": "bilibili",
+  "youtube": "youtube", "google": "google", "百度": "baidu",
+  "instagram": "instagram", "ins": "instagram", "facebook": "facebook", "fb": "facebook",
+  "threads": "threads", "twitter": "x", "linkedin": "linkedin", "pinterest": "pinterest",
+  "telegram": "telegram", "whatsapp": "whatsapp", "snapchat": "snapchat", "reddit": "reddit",
+};
+export function guessLogoUrl(name: string): string | null {
+  const n = (name || "").trim().toLowerCase();
+  if (!n) return null;
+  for (const [k, slug] of Object.entries(LOGO_SLUG)) {
+    if (n.includes(k.toLowerCase())) return `https://cdn.simpleicons.org/${slug}`;
+  }
+  return null;
 }
 
 // 启用中的平台列表（下拉、统计、图标查找都用它）
@@ -74,12 +97,13 @@ function invalidate(qc: ReturnType<typeof useQueryClient>) {
 export function useSavePlatform() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (p: { id: string; label: string; icon: string; budget_percent: number; sort_order: number; active?: boolean }) => {
+    mutationFn: async (p: { id: string; label: string; icon: string; logo_url?: string | null; budget_percent: number; sort_order: number; active?: boolean }) => {
       const supabase = createClient();
       const { error } = await supabase.from("platforms").upsert({
         id: p.id,
         label: p.label,
         icon: p.icon,
+        logo_url: p.logo_url ?? null,
         budget_percent: p.budget_percent,
         sort_order: p.sort_order,
         active: p.active ?? true,

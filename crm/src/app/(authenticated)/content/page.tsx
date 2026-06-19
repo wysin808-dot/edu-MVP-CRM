@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useContentList, useCreateContent } from "@/hooks/useContents";
 import { CONTENT_STATUSES, FUNNEL_STAGES, TOPIC_CLUSTERS, EMOTIONAL_TRIGGERS, CONTENT_TYPES } from "@/lib/constants";
 import { usePlatforms } from "@/hooks/usePlatforms";
+import { PlatformLogo } from "@/components/ui/PlatformLogo";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -143,8 +144,8 @@ export default function ContentPage() {
                   <div className="p-4">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-2">
-                      <span className="text-xs" style={{ color: "var(--muted)" }}>
-                        {platform ? `${platform.icon} ${platform.label}` : content.platform}
+                      <span className="text-xs inline-flex items-center gap-1.5" style={{ color: "var(--muted)" }}>
+                        {platform ? <><PlatformLogo icon={platform.icon} logoUrl={platform.logo_url} label={platform.label} size={14} />{platform.label}</> : content.platform}
                       </span>
                       <Badge variant={statusVariant(content.status)}>{content.status}</Badge>
                     </div>

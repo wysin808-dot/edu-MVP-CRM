@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTodayPublishing, useUpdateContent } from "@/hooks/useContents";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePlatforms } from "@/hooks/usePlatforms";
+import { PlatformLogo } from "@/components/ui/PlatformLogo";
 import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { localDateStr } from "@/lib/utils";
@@ -105,8 +106,8 @@ export default function TodayPublishing() {
                 <div className="flex items-center gap-4 p-4 cursor-pointer"
                   onClick={() => setExpandedId(isExpanded ? null : content.id)}>
                   <div className="w-3 h-3 rounded-full shrink-0" style={{ background: isPublished ? "var(--green)" : "var(--amber)" }} />
-                  <span className="text-sm shrink-0" style={{ color: "var(--muted)" }}>
-                    {platform ? `${platform.icon} ${platform.label}` : content.platform}
+                  <span className="text-sm shrink-0 inline-flex items-center gap-1.5" style={{ color: "var(--muted)" }}>
+                    {platform ? <><PlatformLogo icon={platform.icon} logoUrl={platform.logo_url} label={platform.label} size={16} />{platform.label}</> : content.platform}
                   </span>
                   <span className="flex-1 text-sm font-medium truncate"
                     style={{ color: "var(--ink)", textDecoration: isPublished ? "line-through" : "none" }}>

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useAllPlatforms, useSavePlatform, useDeletePlatform } from "@/hooks/usePlatforms";
+import { useAllPlatforms, useSavePlatform, useDeletePlatform, guessLogoUrl } from "@/hooks/usePlatforms";
 import { Button } from "@/components/ui/Button";
+import { PlatformLogo } from "@/components/ui/PlatformLogo";
 
 const inputCls =
   "px-2 py-1.5 rounded-lg text-sm outline-none bg-[var(--surface-soft)] border border-[var(--border)] text-[var(--ink)] focus:border-blue-500";
@@ -35,7 +36,7 @@ export default function PlatformManager() {
   const save = useSavePlatform();
   const del = useDeletePlatform();
   const [add, setAdd] = useState(emptyAdd);
-  const [editing, setEditing] = useState<Record<string, { icon: string; budget_percent: number; sort_order: number }>>({});
+  const [editing, setEditing] = useState<Record<string, { icon: string; logo_url: string; budget_percent: number; sort_order: number }>>({});
 
   const handleAdd = async () => {
     const name = add.id.trim();
@@ -43,6 +44,7 @@ export default function PlatformManager() {
     try {
       await save.mutateAsync({
         id: name, label: name, icon: add.icon.trim() || "📱",
+        logo_url: guessLogoUrl(name), // 按名字自动配官方 logo
         budget_percent: Number(add.budget_percent) || 0,
         sort_order: Number(add.sort_order) || 99,
       });
@@ -55,7 +57,7 @@ export default function PlatformManager() {
   const handleSaveEdit = async (id: string, label: string) => {
     const e = editing[id];
     if (!e) return;
-    await save.mutateAsync({ id, label, icon: e.icon.trim() || "📱", budget_percent: Number(e.budget_percent) || 0, sort_order: Number(e.sort_order) || 99 });
+    await save.mutateAsync({ id, label, icon: e.icon.trim() || "📱", logo_url: e.logo_url.trim() || null, budget_percent: Number(e.budget_percent) || 0, sort_order: Number(e.sort_order) || 99 });
     setEditing((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 
@@ -81,8 +83,10 @@ export default function PlatformManager() {
               <div key={p.id} className="flex items-center gap-2 p-2.5 rounded-lg" style={{ background: "var(--surface-soft)" }}>
                 {ed ? (
                   <>
-                    <input value={ed.icon} onChange={(e) => setEditing((prev) => ({ ...prev, [p.id]: { ...ed, icon: e.target.value } }))} className={inputCls + " w-14 text-center"} />
-                    <span className="flex-1 text-sm font-medium" style={{ color: "var(--ink)" }}>{p.label}</span>
+                    <span className="w-8 flex justify-center items-center"><PlatformLogo icon={ed.icon} logoUrl={ed.logo_url} label={p.label} size={20} /></span>
+                    <input value={ed.icon} onChange={(e) => setEditing((prev) => ({ ...prev, [p.id]: { ...ed, icon: e.target.value } }))} className={inputCls + " w-12 text-center"} title="emoji 回退图标" />
+                    <input value={ed.logo_url} onChange={(e) => setEditing((prev) => ({ ...prev, [p.id]: { ...ed, logo_url: e.target.value } }))} className={inputCls + " flex-1 min-w-[120px]"} placeholder="logo 图片地址（留空用 emoji）" />
+                    <span className="text-sm" style={{ color: "var(--ink)" }}>{p.label}</span>
                     <label className="text-xs flex items-center gap-1" style={{ color: "var(--muted)" }}>预算%
                       <input type="number" value={ed.budget_percent} onChange={(e) => setEditing((prev) => ({ ...prev, [p.id]: { ...ed, budget_percent: parseFloat(e.target.value) || 0 } }))} className={inputCls + " w-16"} /></label>
                     <label className="text-xs flex items-center gap-1" style={{ color: "var(--muted)" }}>排序
@@ -92,10 +96,10 @@ export default function PlatformManager() {
                   </>
                 ) : (
                   <>
-                    <span className="text-lg w-8 text-center">{p.icon || "📱"}</span>
+                    <span className="w-8 flex justify-center items-center"><PlatformLogo icon={p.icon} logoUrl={p.logo_url} label={p.label} size={20} /></span>
                     <span className="flex-1 text-sm font-medium" style={{ color: "var(--ink)" }}>{p.label}</span>
                     <span className="text-xs" style={{ color: "var(--muted)" }}>预算占比 {Number(p.budget_percent || 0)}%</span>
-                    <button onClick={() => setEditing((prev) => ({ ...prev, [p.id]: { icon: p.icon || "📱", budget_percent: Number(p.budget_percent || 0), sort_order: p.sort_order ?? 99 } }))}
+                    <button onClick={() => setEditing((prev) => ({ ...prev, [p.id]: { icon: p.icon || "📱", logo_url: p.logo_url || "", budget_percent: Number(p.budget_percent || 0), sort_order: p.sort_order ?? 99 } }))}
                       className="text-xs px-2 py-1 rounded cursor-pointer border-none" style={{ color: "var(--brand)", background: "transparent" }}>编辑</button>
                     <button onClick={() => handleDelete(p.id)}
                       className="text-xs px-2 py-1 rounded cursor-pointer border-none" style={{ color: "var(--red)", background: "transparent" }}>删除</button>

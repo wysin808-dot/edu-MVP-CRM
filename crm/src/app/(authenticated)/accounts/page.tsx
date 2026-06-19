@@ -8,6 +8,7 @@ import { useColleagues } from "@/hooks/useMessages";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ACCOUNT_STAGES } from "@/lib/constants";
 import { usePlatforms } from "@/hooks/usePlatforms";
+import { PlatformLogo } from "@/components/ui/PlatformLogo";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -198,7 +199,11 @@ export default function AccountsPage() {
                     onClick={() => isOperator ? openView(account) : openEdit(account)}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-soft)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
-                    <td className="px-4 py-3 text-sm">{platform ? `${platform.icon} ${platform.label}` : account.platform}</td>
+                    <td className="px-4 py-3 text-sm">
+                      {platform ? (
+                        <span className="inline-flex items-center gap-1.5"><PlatformLogo icon={platform.icon} logoUrl={platform.logo_url} label={platform.label} size={16} />{platform.label}</span>
+                      ) : account.platform}
+                    </td>
                     <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--ink)" }}>
                       {account.account_name}
                       {account.active === false && <span className="ml-2 text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--surface-soft)", color: "var(--muted)" }}>停用</span>}
