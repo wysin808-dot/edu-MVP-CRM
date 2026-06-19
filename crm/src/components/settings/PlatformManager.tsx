@@ -9,6 +9,27 @@ const inputCls =
 
 const emptyAdd = { id: "", icon: "📱", budget_percent: 0, sort_order: 99 };
 
+// 常见平台 → 图标，按名字自动识别（emoji 形式的 logo）
+const ICON_GUESS: Record<string, string> = {
+  "小红书": "📕", "红书": "📕", "抖音": "🎵", "tiktok": "🎵", "快手": "⚡",
+  "视频号": "📹", "公众号": "📰", "微信": "💬", "wechat": "💬",
+  "微博": "🆚", "知乎": "💡", "贴吧": "📋", "豆瓣": "📗",
+  "b站": "📺", "哔哩": "📺", "bilibili": "📺",
+  "youtube": "▶️", "google": "🔍", "百度": "🔍",
+  "instagram": "📸", "ins": "📸", "facebook": "📘", "fb": "📘",
+  "threads": "🧵", "twitter": "🐦", "linkedin": "💼", "pinterest": "📌",
+  "telegram": "✈️", "whatsapp": "💬", "snapchat": "👻",
+  "独立站": "🌐", "网站": "🌐", "seo": "🌐", "官网": "🌐", "邮件": "📧", "edm": "📧",
+};
+function guessIcon(name: string): string | null {
+  const n = name.trim().toLowerCase();
+  if (!n) return null;
+  for (const [k, v] of Object.entries(ICON_GUESS)) {
+    if (n.includes(k.toLowerCase())) return v;
+  }
+  return null;
+}
+
 export default function PlatformManager() {
   const { data: platforms, isLoading } = useAllPlatforms();
   const save = useSavePlatform();
@@ -87,7 +108,12 @@ export default function PlatformManager() {
           {/* 新增平台 */}
           <div className="flex items-center gap-2 p-2.5 rounded-lg mt-1" style={{ border: "1px dashed var(--border)" }}>
             <input value={add.icon} onChange={(e) => setAdd({ ...add, icon: e.target.value })} className={inputCls + " w-14 text-center"} placeholder="图标" />
-            <input value={add.id} onChange={(e) => setAdd({ ...add, id: e.target.value })} className={inputCls + " flex-1"} placeholder="平台名称，如 Threads / 知乎" />
+            <input value={add.id} onChange={(e) => {
+              const name = e.target.value;
+              const g = guessIcon(name);
+              // 自动识别图标：填名字时若匹配到已知平台、且当前还是默认图标，就自动套上
+              setAdd((prev) => ({ ...prev, id: name, icon: g && (prev.icon === "📱" || guessIcon(prev.id)) ? g : prev.icon }));
+            }} className={inputCls + " flex-1"} placeholder="平台名称，如 Threads / 知乎（图标自动识别）" />
             <label className="text-xs flex items-center gap-1" style={{ color: "var(--muted)" }}>预算%
               <input type="number" value={add.budget_percent} onChange={(e) => setAdd({ ...add, budget_percent: parseFloat(e.target.value) || 0 })} className={inputCls + " w-16"} /></label>
             <label className="text-xs flex items-center gap-1" style={{ color: "var(--muted)" }}>排序

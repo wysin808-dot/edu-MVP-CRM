@@ -19,6 +19,7 @@ export function useContentList(filters?: {
   funnelStage?: string;
   topicCluster?: string;
   accountIds?: string[];
+  authorName?: string;
 }) {
   const team = useTeamFilter();
 
@@ -35,8 +36,9 @@ export function useContentList(filters?: {
       if (filters?.status) query = query.eq("status", filters.status);
       if (filters?.funnelStage) query = query.eq("funnel_stage", filters.funnelStage);
       if (filters?.topicCluster) query = query.eq("topic_cluster", filters.topicCluster);
-      // 按账号归属收口（数据复盘的"本部门"）：传了 accountIds 就按账号过滤，并跳过 team 过滤
-      if (filters?.accountIds) query = query.in("account_id", filters.accountIds);
+      // 收口优先级：作者(运营只看自己) > 账号归属(本部门) > 团队
+      if (filters?.authorName) query = query.eq("author_name", filters.authorName);
+      else if (filters?.accountIds) query = query.in("account_id", filters.accountIds);
       else if (team) query = query.eq("team", team);
 
       const { data, error } = await query;
@@ -118,10 +120,13 @@ export function useContentWithMetrics(id: string) {
 // ── Today's publishing list ──
 
 export function useTodayPublishing() {
+  const { profile, role } = useAuth();
   const team = useTeamFilter();
+  // 运营/AI 只看自己的（按作者），不看团队
+  const selfAuthor = role === "operator" || role === "ai" ? (profile?.display_name || "__none__") : null;
 
   return useQuery({
-    queryKey: ["contents", "today", { team }],
+    queryKey: ["contents", "today", { team, selfAuthor }],
     queryFn: async () => {
       const supabase = createClient();
       const today = new Date();
@@ -133,7 +138,8 @@ export function useTodayPublishing() {
         .eq("publish_date", dateStr)
         .order("created_at", { ascending: true });
 
-      if (team) query = query.eq("team", team);
+      if (selfAuthor) query = query.eq("author_name", selfAuthor);
+      else if (team) query = query.eq("team", team);
 
       const { data, error } = await query;
       if (error) throw error;

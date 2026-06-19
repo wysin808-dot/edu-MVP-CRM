@@ -12,11 +12,14 @@ import { localDateStr, getWeekStart } from "@/lib/utils";
 import { generateNotifications, type Notification } from "@/lib/notifications";
 
 export default function DashboardPage() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, role } = useAuth();
+  // 运营/AI 工作台只看自己的数据（不看团队）
+  const selfOnly = role === "operator" || role === "ai";
+  const selfName = selfOnly ? (profile?.display_name || undefined) : undefined;
   const { data: taskData } = useTaskList();
-  const { data: pendingContents } = useContentList({ status: "待审核" });
-  const { data: allContents } = useContentList();
-  const { data: allLeads } = useCrmLeadList();
+  const { data: pendingContents } = useContentList({ status: "待审核", authorName: selfName });
+  const { data: allContents } = useContentList({ authorName: selfName });
+  const { data: allLeads } = useCrmLeadList({ assignedTo: selfName });
   const [showAllNotifications, setShowAllNotifications] = useState(false);
 
   // Generate notifications from all data
