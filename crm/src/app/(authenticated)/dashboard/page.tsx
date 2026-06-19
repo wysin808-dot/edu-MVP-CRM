@@ -100,13 +100,13 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* GrowthOS 看板（真实数据） */}
-      <GrowthBoard />
-
-      {/* 今日发布（原独立菜单，已并入工作台） */}
-      <div className="rounded-xl p-6 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+      {/* 今日发布 —— 工作台第一优先，置顶、加品牌色描边强调 */}
+      <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--surface)", border: "2px solid var(--brand)", boxShadow: "0 4px 16px color-mix(in srgb, var(--brand) 12%, transparent)" }}>
         <TodayPublishing />
       </div>
+
+      {/* GrowthOS 看板（真实数据） */}
+      <GrowthBoard />
 
       {/* My Tasks（任务中心合并到工作台：员工首页直接看到自己的任务与进度） */}
       {myActiveTasks.length > 0 && (

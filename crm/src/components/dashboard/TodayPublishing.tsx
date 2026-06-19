@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useTodayPublishing, useUpdateContent } from "@/hooks/useContents";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { usePlatforms } from "@/hooks/usePlatforms";
@@ -53,7 +54,12 @@ export default function TodayPublishing() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-bold m-0" style={{ color: "var(--ink)" }}>📤 今日发布</h3>
+          <h3 className="text-lg font-bold m-0 flex items-center gap-2" style={{ color: "var(--ink)" }}>
+            📤 今日发布
+            <Link href="/content?status=已发布" className="text-xs font-medium" style={{ color: "var(--brand)", textDecoration: "none" }}>
+              查看已发布 →
+            </Link>
+          </h3>
           <p className="text-xs mt-0.5" style={{ color: "var(--muted)" }}>{today}</p>
         </div>
         <div className="text-right">
