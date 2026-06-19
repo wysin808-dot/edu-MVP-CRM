@@ -38,7 +38,7 @@ function toPlatform(r: PlatformRow): Platform {
 
 // 按平台名自动识别官方 logo（Simple Icons CDN，默认品牌色）
 const LOGO_SLUG: Record<string, string> = {
-  "小红书": "xiaohongshu", "红书": "xiaohongshu", "抖音": "douyin", "tiktok": "tiktok", "快手": "kuaishou",
+  "小红书": "xiaohongshu", "红书": "xiaohongshu", "抖音": "tiktok", "douyin": "tiktok", "tiktok": "tiktok", "快手": "kuaishou",
   "视频号": "wechat", "公众号": "wechat", "微信": "wechat", "wechat": "wechat",
   "微博": "sinaweibo", "知乎": "zhihu", "豆瓣": "douban",
   "b站": "bilibili", "哔哩": "bilibili", "bilibili": "bilibili",
