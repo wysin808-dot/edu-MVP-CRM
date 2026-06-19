@@ -3,11 +3,12 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useContentList } from "@/hooks/useContents";
-import { PLATFORMS } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { localDateStr, DAY_NAMES, getWeekStart, getWeekDates } from "@/lib/utils";
 
 export default function CalendarPage() {
+  const PLATFORMS = usePlatforms().data ?? [];
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState("");

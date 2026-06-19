@@ -7,7 +7,8 @@ import { useContentList } from "@/hooks/useContents";
 import { useCrmLeadList } from "@/hooks/useCrmLeads";
 import { useAccountList } from "@/hooks/useAccounts";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { PLATFORMS, CRM_STAGES, FUNNEL_STAGES, CONTENT_TYPES, CONTENT_STATUSES } from "@/lib/constants";
+import { CRM_STAGES, FUNNEL_STAGES, CONTENT_TYPES, CONTENT_STATUSES } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { getWeekStart } from "@/lib/utils";
 
 interface MetricRow {
@@ -32,6 +33,7 @@ function useMetricRows() {
 
 export default function AnalyticsPage() {
   const { role, user } = useAuth();
+  const PLATFORMS = usePlatforms().data ?? [];
   const isLead = role === "lead";
 
   // 部门负责人：只复盘自己名下账号的数据

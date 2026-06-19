@@ -5,7 +5,7 @@ import { useKnowledgeList, useCreateKnowledge, useUpdateKnowledge } from "@/hook
 import { useKnowledgeMedia, useUploadKnowledgeMedia, useDeleteKnowledgeMedia } from "@/hooks/useKnowledgeMedia";
 import { usePromptList, useCreatePrompt, useUpdatePrompt, useIncrementPromptUsage } from "@/hooks/usePrompts";
 import { usePersonaList } from "@/hooks/usePersonas";
-import { PLATFORMS } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -517,6 +517,7 @@ function KnowledgeTab() {
 // ═══════════════════════════════════════
 
 function PromptsTab() {
+  const PLATFORMS = usePlatforms().data ?? [];
   const [catFilter, setCatFilter] = useState("");
   const [platFilter, setPlatFilter] = useState("");
   const [search, setSearch] = useState("");

@@ -11,7 +11,8 @@ import {
   useRepurposeContent,
 } from "@/hooks/useContents";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { PLATFORMS, CONTENT_STATUSES, FUNNEL_STAGES, EMOTIONAL_TRIGGERS, CONTENT_TYPES, TOPIC_CLUSTERS } from "@/lib/constants";
+import { CONTENT_STATUSES, FUNNEL_STAGES, EMOTIONAL_TRIGGERS, CONTENT_TYPES, TOPIC_CLUSTERS } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -27,6 +28,7 @@ export default function ContentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const PLATFORMS = usePlatforms().data ?? [];
   const { profile, role } = useAuth();
   const { data: content, isLoading } = useContentWithMetrics(id);
   const { data: mediaFiles } = useContentMedia(id);

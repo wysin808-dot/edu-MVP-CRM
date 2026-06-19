@@ -4,7 +4,8 @@ import { useState, useRef, useMemo } from "react";
 import { useCrmLeadList, useCreateCrmLead, useUpdateCrmLead, useMoveCrmLead } from "@/hooks/useCrmLeads";
 import { usePersonaList } from "@/hooks/usePersonas";
 import { useAccountList } from "@/hooks/useAccounts";
-import { CRM_STAGES, PLATFORMS } from "@/lib/constants";
+import { CRM_STAGES } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -23,6 +24,7 @@ const STAGE_CONFIG: Record<string, { color: string; icon: string }> = {
 };
 
 export default function CrmPage() {
+  const PLATFORMS = usePlatforms().data ?? [];
   const { data: leads, isLoading } = useCrmLeadList();
   const { data: personas } = usePersonaList();
   const { data: accounts } = useAccountList();

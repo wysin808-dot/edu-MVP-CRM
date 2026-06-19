@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useTodayPublishing, useUpdateContent } from "@/hooks/useContents";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { PLATFORMS } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { localDateStr } from "@/lib/utils";
 
 // 今日发布（原 /publishing 页面，现并入工作台，可复用）
 export default function TodayPublishing() {
+  const PLATFORMS = usePlatforms().data ?? [];
   const today = localDateStr(new Date());
   const { profile } = useAuth();
   const { data: todayContents, isLoading } = useTodayPublishing();

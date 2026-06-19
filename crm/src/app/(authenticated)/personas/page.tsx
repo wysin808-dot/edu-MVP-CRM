@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { usePersonaList, useCreatePersona, useUpdatePersona } from "@/hooks/usePersonas";
-import { PLATFORMS } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import type { Persona } from "@/lib/types";
 
 export default function PersonasPage() {
+  const PLATFORMS = usePlatforms().data ?? [];
   const { data: personas, isLoading } = usePersonaList();
   const createPersona = useCreatePersona();
   const updatePersona = useUpdatePersona();
