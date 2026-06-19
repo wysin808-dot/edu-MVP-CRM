@@ -35,10 +35,13 @@ export default function AccountsPage() {
 
   const [platformFilter, setPlatformFilter] = useState("");
   const [stageFilter, setStageFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("active"); // active(在用,默认) / inactive(停用) / all
 
   const { data: accounts, isLoading } = useAccountList({
     platform: platformFilter || undefined,
     stage: stageFilter || undefined,
+    // 在用/停用筛选（默认只看在用，停用=软删除可在筛选里找回）
+    active: statusFilter === "all" ? undefined : statusFilter === "inactive" ? false : true,
     // 运营人员只看自己运营的账号（按成员 id，改名不丢）
     operatorId: isOperator ? (user?.id || undefined) : undefined,
     // 部门负责人只看分配给自己的账号
@@ -122,6 +125,19 @@ export default function AccountsPage() {
     }
   };
 
+  // 停用 / 启用账号（软删除，不删数据）
+  const toggleActive = async () => {
+    if (!editing) return;
+    const next = editing.active === false; // 当前停用 → 启用；否则停用
+    if (!next && !confirm(`停用账号「${editing.account_name}」？\n停用后默认不在列表显示(可在"已停用/全部"筛选里找回并启用)。数据和历史线索都保留。`)) return;
+    try {
+      await updateAccount.mutateAsync({ id: editing.id, active: next });
+      setShowModal(false);
+    } catch (err) {
+      alert("操作失败: " + (err instanceof Error ? err.message : "未知错误"));
+    }
+  };
+
   const getPlatformInfo = (id: string) => PLATFORMS.find((p) => p.id === id);
   const stageColor = (stage: string): "info" | "warning" | "success" | "default" => {
     switch (stage) {
@@ -158,6 +174,8 @@ export default function AccountsPage() {
           options={[{ value: "", label: "全部平台" }, ...PLATFORMS.map((p) => ({ value: p.id, label: `${p.icon} ${p.label}` }))]} />
         <Select label="" value={stageFilter} onChange={(e) => setStageFilter(e.target.value)}
           options={[{ value: "", label: "全部阶段" }, ...ACCOUNT_STAGES.map((s) => ({ value: s, label: s }))]} />
+        <Select label="" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+          options={[{ value: "active", label: "在用" }, { value: "inactive", label: "已停用" }, { value: "all", label: "全部" }]} />
       </div>
 
       {/* Table */}
@@ -176,12 +194,15 @@ export default function AccountsPage() {
                 const platform = getPlatformInfo(account.platform);
                 return (
                   <tr key={account.id} className="cursor-pointer transition-colors"
-                    style={{ borderBottom: "1px solid var(--border)" }}
+                    style={{ borderBottom: "1px solid var(--border)", opacity: account.active === false ? 0.5 : 1 }}
                     onClick={() => isOperator ? openView(account) : openEdit(account)}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-soft)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
                     <td className="px-4 py-3 text-sm">{platform ? `${platform.icon} ${platform.label}` : account.platform}</td>
-                    <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--ink)" }}>{account.account_name}</td>
+                    <td className="px-4 py-3 text-sm font-medium" style={{ color: "var(--ink)" }}>
+                      {account.account_name}
+                      {account.active === false && <span className="ml-2 text-xs px-1.5 py-0.5 rounded" style={{ background: "var(--surface-soft)", color: "var(--muted)" }}>停用</span>}
+                    </td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{account.persona?.name || "-"}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--muted)" }}>{memberName(account.operator_id, account.operator_name)}</td>
                     <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{account.phone_ref?.real_name || account.real_name || "-"}</td>
@@ -269,12 +290,19 @@ export default function AccountsPage() {
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}
         title={editing ? `编辑账号: ${editing.account_name}` : "新建账号"}
         footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setShowModal(false)}>取消</Button>
-            <Button variant="primary" onClick={handleSubmit}
-              disabled={createAccount.isPending || updateAccount.isPending}>
-              {createAccount.isPending || updateAccount.isPending ? "保存中..." : "保存"}
-            </Button>
+          <div className="flex justify-between items-center w-full">
+            {editing ? (
+              <Button variant="secondary" onClick={toggleActive} disabled={updateAccount.isPending}>
+                {editing.active === false ? "✅ 启用账号" : "⏸ 停用账号"}
+              </Button>
+            ) : <span />}
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => setShowModal(false)}>取消</Button>
+              <Button variant="primary" onClick={handleSubmit}
+                disabled={createAccount.isPending || updateAccount.isPending}>
+                {createAccount.isPending || updateAccount.isPending ? "保存中..." : "保存"}
+              </Button>
+            </div>
           </div>
         }>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

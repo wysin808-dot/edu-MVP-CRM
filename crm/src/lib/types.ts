@@ -25,6 +25,7 @@ export interface Account {
   phone?: string | null;
   phone_number_id: string | null;
   owner_id: string | null;
+  active?: boolean;
   stage: string;
   follower_count: number;
   total_posts: number;

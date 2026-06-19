@@ -16,6 +16,7 @@ export function useAccountList(filters?: {
   operatorName?: string;
   operatorId?: string;
   ownerId?: string;
+  active?: boolean;
 }) {
   const team = useTeamFilter();
 
@@ -30,6 +31,7 @@ export function useAccountList(filters?: {
 
       if (filters?.platform) query = query.eq("platform", filters.platform);
       if (filters?.stage) query = query.eq("stage", filters.stage);
+      if (filters?.active !== undefined) query = query.eq("active", filters.active);
       if (filters?.operatorId) query = query.eq("operator_id", filters.operatorId);
       else if (filters?.operatorName)
         query = query.eq("operator_name", filters.operatorName);
