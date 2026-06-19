@@ -166,7 +166,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "工作台", icon: "📊", href: "/dashboard" },
   { id: "content", label: "内容资产库", icon: "📝", href: "/content" },
-  { id: "knowledge", label: "知识与AI", icon: "📚", href: "/knowledge" },
+  { id: "knowledge", label: "资料与模板", icon: "📚", href: "/knowledge" },
   { id: "personas", label: "IP 矩阵", icon: "👤", href: "/personas" },
   { id: "accounts", label: "账号矩阵", icon: "📱", href: "/accounts" },
   { id: "phone-assets", label: "号码资产", icon: "📞", href: "/phone-assets" },
@@ -176,7 +176,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "tasks", label: "任务中心", icon: "✅", href: "/tasks" },
   { id: "chat", label: "团队聊天", icon: "💬", href: "/chat" },
   { id: "monitor", label: "运营监控", icon: "🖥️", href: "/monitor" },
-  { id: "ai-assistant", label: "AI升学助手", icon: "🤖", href: "/ai-assistant" },
+  { id: "ai-assistant", label: "升学咨询工具", icon: "🤖", href: "/ai-assistant" },
   { id: "analytics", label: "数据复盘", icon: "📈", href: "/analytics" },
   { id: "settings", label: "系统设置", icon: "⚙️", href: "/settings" },
 ];
