@@ -5,6 +5,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useContentList } from "@/hooks/useContents";
 import { useAccountList } from "@/hooks/useAccounts";
 import { usePlatforms } from "@/hooks/usePlatforms";
+import { usePersonaList } from "@/hooks/usePersonas";
+import { useColleagues } from "@/hooks/useMessages";
 import { PlatformLogo } from "@/components/ui/PlatformLogo";
 import { Select } from "@/components/ui/Select";
 import { localDateStr } from "@/lib/utils";
@@ -32,9 +34,21 @@ export default function PublishLogPage() {
 
   const { data: published, isLoading } = useContentList({ status: "已发布", accountIds, authorName });
 
+  // 筛选下拉数据
+  const { data: personas } = usePersonaList();
+  const { data: colleagues } = useColleagues();
+  const members = [
+    ...(user ? [{ id: user.id, display_name: profile?.display_name || "我", role: role || "operator" }] : []),
+    ...(colleagues || []),
+  ];
+  const leads = members.filter((m) => m.role === "lead" || m.role === "admin");
+
   const [platformFilter, setPlatformFilter] = useState("");
   const [timeFilter, setTimeFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [personaFilter, setPersonaFilter] = useState("");
+  const [deptFilter, setDeptFilter] = useState("");      // 按账号负责人(owner_id)= 部门
+  const [operatorFilter, setOperatorFilter] = useState(""); // 按账号运营人(operator_id)
 
   const scopeLabel = isAdmin ? "全公司" : isLead ? "本部门" : "我的";
 
@@ -57,13 +71,16 @@ export default function PublishLogPage() {
   const rows = useMemo(() => {
     let list = all;
     if (platformFilter) list = list.filter((c) => c.platform === platformFilter);
+    if (personaFilter) list = list.filter((c) => c.persona_id === personaFilter);
+    if (deptFilter) list = list.filter((c) => c.account?.owner_id === deptFilter);
+    if (operatorFilter) list = list.filter((c) => c.account?.operator_id === operatorFilter);
     if (startStr) list = list.filter((c) => (c.publish_date || "") >= startStr);
     if (search) {
       const q = search.toLowerCase();
       list = list.filter((c) => (c.title || "").toLowerCase().includes(q) || (c.account?.account_name || "").toLowerCase().includes(q));
     }
     return [...list].sort((a, b) => (b.publish_date || "").localeCompare(a.publish_date || ""));
-  }, [all, platformFilter, startStr, search]);
+  }, [all, platformFilter, personaFilter, deptFilter, operatorFilter, startStr, search]);
 
   const monthCount = useMemo(() => all.filter((c) => (c.publish_date || "") >= monthStart).length, [all, monthStart]);
   const byPlatform = useMemo(() => {
@@ -109,6 +126,16 @@ export default function PublishLogPage() {
       <div className="flex gap-3 mb-4 items-end flex-wrap">
         <Select label="" value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)}
           options={[{ value: "", label: "全部平台" }, ...platforms.map((p) => ({ value: p.id, label: p.label }))]} />
+        <Select label="" value={personaFilter} onChange={(e) => setPersonaFilter(e.target.value)}
+          options={[{ value: "", label: "全部 IP" }, ...(personas || []).map((p) => ({ value: p.id, label: p.name }))]} />
+        {isAdmin && (
+          <Select label="" value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)}
+            options={[{ value: "", label: "全部部门" }, ...leads.map((l) => ({ value: l.id, label: `部门:${l.display_name || "—"}` }))]} />
+        )}
+        {(isAdmin || isLead) && (
+          <Select label="" value={operatorFilter} onChange={(e) => setOperatorFilter(e.target.value)}
+            options={[{ value: "", label: "全部运营人员" }, ...members.map((m) => ({ value: m.id, label: m.display_name || "未命名" }))]} />
+        )}
         <Select label="" value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)} options={TIME_OPTIONS} />
         <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder="🔍 搜索标题 / 账号"
