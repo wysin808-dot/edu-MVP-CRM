@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useContentList, useCreateContent } from "@/hooks/useContents";
-import { PLATFORMS, CONTENT_STATUSES, FUNNEL_STAGES, TOPIC_CLUSTERS, EMOTIONAL_TRIGGERS, CONTENT_TYPES } from "@/lib/constants";
+import { CONTENT_STATUSES, FUNNEL_STAGES, TOPIC_CLUSTERS, EMOTIONAL_TRIGGERS, CONTENT_TYPES } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -14,6 +15,7 @@ import type { Content } from "@/lib/types";
 
 export default function ContentPage() {
   const router = useRouter();
+  const PLATFORMS = usePlatforms().data ?? [];
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get("status") || "";
   const [filters, setFilters] = useState({ platform: "", status: initialStatus, funnelStage: "", topicCluster: "" });

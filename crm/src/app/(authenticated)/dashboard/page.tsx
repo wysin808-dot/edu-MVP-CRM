@@ -156,118 +156,58 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Notification Center */}
-      {notifications.length > 0 && (
-        <div
-          className="rounded-xl p-6 mb-6"
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--ink)" }}>
-              通知中心
-              {highPriorityCount > 0 && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ background: "rgba(239,68,68,0.15)", color: "var(--red)" }}
-                >
-                  {highPriorityCount} 条紧急
-                </span>
-              )}
-            </h3>
-            <span className="text-xs" style={{ color: "var(--muted)" }}>
-              共 {notifications.length} 条通知
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {visibleNotifications.map((notif) => (
-              <NotificationRow key={notif.id} notification={notif} />
-            ))}
-          </div>
-
-          {notifications.length > 5 && (
-            <button
-              onClick={() => setShowAllNotifications(!showAllNotifications)}
-              className="w-full mt-3 text-xs py-2 rounded-lg transition-colors"
-              style={{ color: "var(--brand)", background: "transparent" }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-soft)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              {showAllNotifications ? "收起" : `查看全部 ${notifications.length} 条通知`}
-            </button>
-          )}
+      {/* 待办与提醒（通知中心 + 优先待办 合并，去重复、更紧凑） */}
+      <div className="rounded-xl p-6 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--ink)" }}>
+            📌 待办与提醒
+            {highPriorityCount > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: "rgba(239,68,68,0.15)", color: "var(--red)" }}>
+                {highPriorityCount} 条紧急
+              </span>
+            )}
+          </h3>
         </div>
-      )}
 
-      {/* Priority Queue */}
-      <div
-        className="rounded-xl p-6 mb-6"
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-        }}
-      >
-        <h3
-          className="text-sm font-semibold mb-4"
-          style={{ color: "var(--ink)" }}
-        >
-          优先待办
-        </h3>
-
-        {priorityItems.length === 0 ? (
-          <div
-            className="text-center py-8"
-            style={{ color: "var(--muted)" }}
-          >
+        {priorityItems.length === 0 && notifications.length === 0 ? (
+          <div className="text-center py-8" style={{ color: "var(--muted)" }}>
             <div className="text-3xl mb-2">🎉</div>
             <p className="text-sm">暂无待办</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
+            {/* 优先待办：要立即处理的 */}
             {priorityItems.map((item) => (
-              <Link
-                key={item.id}
-                href={item.href}
+              <Link key={item.id} href={item.href}
                 className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors"
-                style={{
-                  background: "var(--surface-soft)",
-                  textDecoration: "none",
-                  color: "inherit",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "var(--border)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "var(--surface-soft)")
-                }
-              >
+                style={{ background: "var(--surface-soft)", textDecoration: "none", color: "inherit" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--border)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface-soft)")}>
                 <span className="text-lg flex-shrink-0">{item.icon}</span>
-                <span
-                  className="text-sm font-medium flex-1 truncate"
-                  style={{ color: "var(--ink)" }}
-                >
-                  {item.title}
-                </span>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
-                  style={{
-                    background: `color-mix(in srgb, ${item.badgeColor} 15%, transparent)`,
-                    color: item.badgeColor,
-                  }}
-                >
+                <span className="text-sm font-medium flex-1 truncate" style={{ color: "var(--ink)" }}>{item.title}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+                  style={{ background: `color-mix(in srgb, ${item.badgeColor} 15%, transparent)`, color: item.badgeColor }}>
                   {item.badge}
                 </span>
-                <span
-                  className="text-xs flex-shrink-0 hidden sm:inline"
-                  style={{ color: "var(--muted)" }}
-                >
-                  {item.hint}
-                </span>
+                <span className="text-xs flex-shrink-0 hidden sm:inline" style={{ color: "var(--muted)" }}>{item.hint}</span>
               </Link>
             ))}
+
+            {/* 系统提醒（通知） */}
+            {visibleNotifications.map((notif) => (
+              <NotificationRow key={notif.id} notification={notif} />
+            ))}
+
+            {notifications.length > 5 && (
+              <button
+                onClick={() => setShowAllNotifications(!showAllNotifications)}
+                className="w-full mt-1 text-xs py-2 rounded-lg transition-colors"
+                style={{ color: "var(--brand)", background: "transparent" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-soft)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                {showAllNotifications ? "收起提醒" : `查看全部 ${notifications.length} 条提醒`}
+              </button>
+            )}
           </div>
         )}
       </div>

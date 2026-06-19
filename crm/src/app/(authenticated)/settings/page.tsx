@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { ROLE_CONFIG, PLATFORMS, type UserRole } from "@/lib/constants";
+import { ROLE_CONFIG, type UserRole } from "@/lib/constants";
+import PlatformManager from "@/components/settings/PlatformManager";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -434,21 +435,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Platform Configuration */}
-      <div className="rounded-xl p-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-        <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--ink)" }}>平台配置</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {PLATFORMS.map((p) => (
-            <div key={p.id} className="flex items-center gap-2 p-3 rounded-lg" style={{ background: "var(--surface-soft)" }}>
-              <span className="text-lg">{p.icon}</span>
-              <div>
-                <div className="text-sm font-medium" style={{ color: "var(--ink)" }}>{p.label}</div>
-                <div className="text-xs" style={{ color: "var(--muted)" }}>预算占比 {p.budgetPercent}%</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Platform Configuration（管理员可增删平台） */}
+      <PlatformManager />
 
       {/* Invite Member Modal */}
       <Modal isOpen={showInvite} onClose={() => setShowInvite(false)} title="邀请新成员"

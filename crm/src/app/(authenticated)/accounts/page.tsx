@@ -6,7 +6,8 @@ import { usePersonaList } from "@/hooks/usePersonas";
 import { usePhoneNumberList } from "@/hooks/usePhoneNumbers";
 import { useColleagues } from "@/hooks/useMessages";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { PLATFORMS, ACCOUNT_STAGES } from "@/lib/constants";
+import { ACCOUNT_STAGES } from "@/lib/constants";
+import { usePlatforms } from "@/hooks/usePlatforms";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -16,6 +17,7 @@ import type { Account } from "@/lib/types";
 
 export default function AccountsPage() {
   const { user, profile, role } = useAuth();
+  const PLATFORMS = usePlatforms().data ?? [];
   const isOperator = role === "operator";
   const isAdmin = role === "admin";
 

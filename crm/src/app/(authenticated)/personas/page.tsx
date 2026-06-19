@@ -159,18 +159,20 @@ export default function PersonasPage() {
                 )}
               </div>
 
-              {/* Monthly Target */}
-              <div
-                className="flex items-center justify-between pt-3"
-                style={{ borderTop: "1px solid var(--border)" }}
-              >
-                <span className="text-xs" style={{ color: "var(--muted)" }}>
-                  月度目标
-                </span>
-                <span className="text-sm font-semibold" style={{ color: "var(--brand)" }}>
-                  {persona.monthly_target} 篇
-                </span>
-              </div>
+              {/* Monthly Target（仅当设置了目标时显示） */}
+              {persona.monthly_target > 0 && (
+                <div
+                  className="flex items-center justify-between pt-3"
+                  style={{ borderTop: "1px solid var(--border)" }}
+                >
+                  <span className="text-xs" style={{ color: "var(--muted)" }}>
+                    月度目标
+                  </span>
+                  <span className="text-sm font-semibold" style={{ color: "var(--brand)" }}>
+                    {persona.monthly_target} 篇
+                  </span>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -291,27 +293,6 @@ export default function PersonasPage() {
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Monthly Target */}
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: "var(--ink)" }}>
-              月度产出目标 (篇)
-            </label>
-            <input
-              type="number"
-              min={0}
-              value={form.monthly_target}
-              onChange={(e) =>
-                setForm({ ...form, monthly_target: parseInt(e.target.value) || 0 })
-              }
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-              style={{
-                background: "var(--surface-soft)",
-                border: "1px solid var(--border)",
-                color: "var(--ink)",
-              }}
-            />
           </div>
         </form>
       </Modal>
