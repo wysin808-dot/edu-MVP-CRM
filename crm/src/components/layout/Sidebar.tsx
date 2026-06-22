@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { NAV_ITEMS, ROLE_CONFIG } from "@/lib/constants";
+import { NAV_ITEMS, NAV_GROUPS, ROLE_CONFIG } from "@/lib/constants";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useUnread } from "@/hooks/useMessages";
 import { createClient } from "@/lib/supabase/client";
@@ -36,10 +36,13 @@ export default function Sidebar() {
     };
   }, [user, qc]);
 
-  // Filter nav items by role permission
-  const visibleItems = NAV_ITEMS.filter((item) =>
-    config.nav.includes(item.id)
-  );
+  const navItemMap = Object.fromEntries(NAV_ITEMS.map((i) => [i.id, i]));
+  const allowedIds = new Set(config.nav);
+
+  const visibleGroups = NAV_GROUPS.map((g) => ({
+    ...g,
+    items: g.items.filter((id) => allowedIds.has(id)).map((id) => navItemMap[id]).filter(Boolean),
+  })).filter((g) => g.items.length > 0);
 
   return (
     <aside
@@ -68,36 +71,49 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-2 py-1">
-        {visibleItems.map((item) => {
-          const isActive = pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
-
-          return (
-            <Link
-              key={item.id}
-              href={item.href}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg mb-0.5 text-sm no-underline transition-colors"
-              style={{
-                background: isActive ? "var(--brand-light)" : "transparent",
-                color: isActive ? "var(--brand)" : "var(--ink)",
-                fontWeight: isActive ? 600 : 400,
-              }}
-            >
-              <span className="text-base">{item.icon}</span>
-              <span>{item.label}</span>
-              {item.id === "chat" && unreadTotal > 0 && (
-                <span
-                  className="ml-auto text-[10px] leading-none min-w-[18px] h-[18px] px-1 rounded-full text-white flex items-center justify-center font-semibold"
-                  style={{ background: "#dc2626" }}
-                  title={`${unreadTotal} 条未读消息`}
+      <nav className="flex-1 overflow-y-auto px-2 py-1 pb-2">
+        {visibleGroups.map((group, gi) => (
+          <div key={group.label} className={gi > 0 ? "mt-3" : ""}>
+            {/* Group header — only show when there are multiple groups */}
+            {visibleGroups.length > 1 && (
+              <div
+                className="px-3 mb-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                style={{ color: "var(--muted)" }}
+              >
+                {group.label}
+              </div>
+            )}
+            {group.items.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg mb-0.5 text-sm no-underline transition-colors"
+                  style={{
+                    background: isActive ? "var(--brand-light)" : "transparent",
+                    color: isActive ? "var(--brand)" : "var(--ink)",
+                    fontWeight: isActive ? 600 : 400,
+                  }}
                 >
-                  {unreadTotal > 99 ? "99+" : unreadTotal}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+                  <span className="text-base">{item.icon}</span>
+                  <span>{item.label}</span>
+                  {item.id === "chat" && unreadTotal > 0 && (
+                    <span
+                      className="ml-auto text-[10px] leading-none min-w-[18px] h-[18px] px-1 rounded-full text-white flex items-center justify-center font-semibold"
+                      style={{ background: "#dc2626" }}
+                      title={`${unreadTotal} 条未读消息`}
+                    >
+                      {unreadTotal > 99 ? "99+" : unreadTotal}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* User footer */}

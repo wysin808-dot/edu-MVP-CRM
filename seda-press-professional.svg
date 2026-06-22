@@ -1,0 +1,52 @@
+<svg width="1280" height="360" viewBox="0 0 1280 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SEDA PRESS Logo</title>
+  <desc id="desc">A minimalist academic publishing house logo for SEDA PRESS with an abstract page symbol, Oxford Navy, Slate Gray, and Libre Baskerville typography.</desc>
+  <style>
+    .navy-fill {
+      fill: #0B2341;
+    }
+
+    .slate-fill {
+      fill: #6B7280;
+    }
+
+    .slate-stroke {
+      fill: none;
+      stroke: #6B7280;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .name {
+      fill: #0B2341;
+      font-family: "Libre Baskerville", Baskerville, Georgia, "Times New Roman", serif;
+      font-size: 108px;
+      font-weight: 700;
+      letter-spacing: 10px;
+    }
+
+    .press {
+      fill: #6B7280;
+      font-family: "Libre Baskerville", Baskerville, Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      font-weight: 400;
+      letter-spacing: 18px;
+    }
+  </style>
+
+  <g id="minimal-page-symbol" transform="translate(92 42)">
+    <path id="primary-page" class="navy-fill" d="M38 20 L146 83 C187 107 210 144 210 188 L210 295 C169 241 108 211 38 204 Z"/>
+    <path id="inner-fold" class="navy-fill" d="M210 188 C210 228 210 263 211 312 C196 284 177 262 152 244 C177 248 197 265 210 295 Z"/>
+    <path id="secondary-page" class="slate-stroke" d="M226 197 C251 144 291 107 340 91 L340 235 C291 237 252 261 218 312"/>
+    <path id="page-shadow" class="navy-fill" d="M218 312 C263 275 323 266 389 282 L389 298 C317 283 263 289 218 312 Z"/>
+    <path id="fine-page-edge" class="slate-fill" d="M226 303 C254 274 292 258 340 256 L340 263 C296 265 260 280 226 303 Z"/>
+  </g>
+
+  <g id="typographic-lockup" transform="translate(505 114)">
+    <text class="name" x="0" y="0">SEDA</text>
+    <line x1="2" y1="63" x2="178" y2="63" stroke="#6B7280" stroke-width="3"/>
+    <text class="press" x="222" y="75">PRESS</text>
+    <line x1="486" y1="63" x2="664" y2="63" stroke="#6B7280" stroke-width="3"/>
+  </g>
+</svg>

@@ -1,0 +1,24 @@
+<svg width="1060" height="340" viewBox="0 0 1060 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SEDA Press Wordmark</title>
+  <desc id="desc">Right wordmark from the SEDA Press logo.</desc>
+  <style>
+    .brand {
+      fill: #001f4f;
+      font-family: "Times New Roman", Times, Georgia, serif;
+      font-size: 185px;
+      font-weight: 400;
+      letter-spacing: 78px;
+    }
+    .press {
+      fill: #70757a;
+      font-family: "Times New Roman", Times, Georgia, serif;
+      font-size: 72px;
+      font-weight: 400;
+      letter-spacing: 54px;
+    }
+  </style>
+  <text class="brand" x="0" y="176">SEDA</text>
+  <line x1="0" y1="276" x2="154" y2="276" stroke="#70757a" stroke-width="4"/>
+  <text class="press" x="238" y="300">PRESS</text>
+  <line x1="874" y1="276" x2="1035" y2="276" stroke="#70757a" stroke-width="4"/>
+</svg>

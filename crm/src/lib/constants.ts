@@ -182,6 +182,42 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "settings", label: "系统设置", icon: "⚙️", href: "/settings" },
 ];
 
+export interface NavGroup {
+  label: string;
+  items: string[]; // NavItem ids
+}
+
+export const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "工作台",
+    items: ["dashboard", "tasks", "chat"],
+  },
+  {
+    label: "内容运营",
+    items: ["content", "calendar", "publish-log", "coach"],
+  },
+  {
+    label: "知识库",
+    items: ["knowledge", "ai-assistant"],
+  },
+  {
+    label: "矩阵资产",
+    items: ["personas", "accounts", "phone-assets"],
+  },
+  {
+    label: "招生 CRM",
+    items: ["crm"],
+  },
+  {
+    label: "数据复盘",
+    items: ["analytics", "monitor"],
+  },
+  {
+    label: "系统设置",
+    items: ["settings"],
+  },
+];
+
 
 // ── Coach System Constants ──
 export const COACH_PLATFORMS = [

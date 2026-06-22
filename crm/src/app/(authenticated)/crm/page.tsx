@@ -4,6 +4,7 @@ import { useState, useRef, useMemo } from "react";
 import { useCrmLeadList, useCreateCrmLead, useUpdateCrmLead, useMoveCrmLead } from "@/hooks/useCrmLeads";
 import { usePersonaList } from "@/hooks/usePersonas";
 import { useAccountList } from "@/hooks/useAccounts";
+import { useContentList } from "@/hooks/useContents";
 import { CRM_STAGES } from "@/lib/constants";
 import { usePlatforms } from "@/hooks/usePlatforms";
 import { Modal } from "@/components/ui/Modal";
@@ -28,6 +29,7 @@ export default function CrmPage() {
   const { data: leads, isLoading } = useCrmLeadList();
   const { data: personas } = usePersonaList();
   const { data: accounts } = useAccountList();
+  const { data: publishedContents } = useContentList({ status: "已发布" });
   const createLead = useCreateCrmLead();
   const updateLead = useUpdateCrmLead();
   const moveLead = useMoveCrmLead();
@@ -45,6 +47,7 @@ export default function CrmPage() {
   const [form, setForm] = useState({
     name: "", phone: "", child_name: "", child_grade: "",
     source_platform: "", source_persona_id: "", source_account_id: "",
+    source_content_id: "",
     interest_program: "", assigned_to: "",
     notes: "", next_followup: "", stage: "新线索",
   });
@@ -76,6 +79,7 @@ export default function CrmPage() {
     setForm({
       name: "", phone: "", child_name: "", child_grade: "",
       source_platform: "", source_persona_id: "", source_account_id: "",
+      source_content_id: "",
       interest_program: "", assigned_to: "",
       notes: "", next_followup: "", stage: "新线索",
     });
@@ -90,6 +94,7 @@ export default function CrmPage() {
       source_platform: lead.source_platform || "",
       source_persona_id: lead.source_persona_id || "",
       source_account_id: lead.source_account_id || "",
+      source_content_id: lead.source_content_id || "",
       interest_program: lead.interest_program || "",
       assigned_to: lead.assigned_to || "", notes: lead.notes || "",
       next_followup: lead.next_followup || "", stage: lead.stage,
@@ -108,6 +113,7 @@ export default function CrmPage() {
       source_platform: form.source_platform || null,
       source_persona_id: form.source_persona_id || null,
       source_account_id: form.source_account_id || null,
+      source_content_id: form.source_content_id || null,
       interest_program: form.interest_program || null,
       assigned_to: form.assigned_to || null,
       notes: form.notes || null,
@@ -117,7 +123,7 @@ export default function CrmPage() {
       if (editing) {
         await updateLead.mutateAsync({ id: editing.id, ...payload, stage: form.stage });
       } else {
-        await createLead.mutateAsync({ ...payload, stage: "新线索", source_content_id: null });
+        await createLead.mutateAsync({ ...payload, stage: "新线索" });
       }
       setShowModal(false);
     } catch {
@@ -464,6 +470,26 @@ export default function CrmPage() {
               options={[{ value: "", label: "选择账号" }, ...(accounts || [])
                 .filter((a) => !form.source_persona_id || a.persona_id === form.source_persona_id)
                 .map((a) => ({ value: a.id, label: `${a.account_name}${a.platform ? ` · ${a.platform}` : ""}` }))]} />
+          </div>
+          <div>
+            <Select label="来源内容（选填）" value={form.source_content_id}
+              onChange={(e) => {
+                const c = (publishedContents || []).find((x) => x.id === e.target.value);
+                setForm({
+                  ...form,
+                  source_content_id: e.target.value,
+                  source_platform: c?.platform || form.source_platform,
+                  source_account_id: c?.account_id || form.source_account_id,
+                  source_persona_id: c?.persona_id || form.source_persona_id,
+                });
+              }}
+              options={[
+                { value: "", label: "不关联内容" },
+                ...(publishedContents || []).map((c) => ({
+                  value: c.id,
+                  label: `${c.platform} · ${c.title.slice(0, 30)}${c.title.length > 30 ? "…" : ""}`,
+                })),
+              ]} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

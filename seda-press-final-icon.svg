@@ -1,0 +1,7 @@
+<svg width="300" height="330" viewBox="0 0 300 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SEDA PRESS Icon</title>
+  <desc id="desc">Minimal abstract page symbol for SEDA PRESS, an academic publishing house.</desc>
+  <path id="left-page" d="M42 18 L145 80 C184 104 204 137 204 176 L204 300 C166 238 108 207 42 198 Z" fill="#0B2341"/>
+  <path id="right-page" d="M211 188 C230 143 258 112 286 100 L286 216 C250 218 222 240 204 300" fill="none" stroke="#6B7280" stroke-width="7" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path id="lower-page" d="M204 300 C236 264 270 258 300 265 L300 279 C266 272 235 277 204 300 Z" fill="#0B2341"/>
+</svg>

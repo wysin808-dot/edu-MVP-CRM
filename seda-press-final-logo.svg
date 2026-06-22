@@ -1,0 +1,33 @@
+<svg width="1536" height="430" viewBox="0 0 1536 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SEDA PRESS Logo</title>
+  <desc id="desc">Full professional SEDA PRESS logo for an academic publishing house, with abstract page symbol and Libre Baskerville typography.</desc>
+  <style>
+    .seda {
+      fill: #0B2341;
+      font-family: "Libre Baskerville", Baskerville, Georgia, "Times New Roman", serif;
+      font-size: 132px;
+      font-weight: 400;
+      letter-spacing: 46px;
+    }
+    .press {
+      fill: #6B7280;
+      font-family: "Libre Baskerville", Baskerville, Georgia, "Times New Roman", serif;
+      font-size: 46px;
+      font-weight: 400;
+      letter-spacing: 35px;
+    }
+  </style>
+
+  <g id="icon" transform="translate(245 72)">
+    <path id="left-page" d="M42 18 L145 80 C184 104 204 137 204 176 L204 300 C166 238 108 207 42 198 Z" fill="#0B2341"/>
+    <path id="right-page" d="M211 188 C230 143 258 112 286 100 L286 216 C250 218 222 240 204 300" fill="none" stroke="#6B7280" stroke-width="7" stroke-linecap="square" stroke-linejoin="miter"/>
+    <path id="lower-page" d="M204 300 C236 264 270 258 300 265 L300 279 C266 272 235 277 204 300 Z" fill="#0B2341"/>
+  </g>
+
+  <g id="wordmark" transform="translate(560 122)">
+    <text id="seda-text" class="seda" x="0" y="116">SEDA</text>
+    <line id="left-rule" x1="0" y1="176" x2="112" y2="176" stroke="#6B7280" stroke-width="3"/>
+    <text id="press-text" class="press" x="166" y="194">PRESS</text>
+    <line id="right-rule" x1="650" y1="176" x2="764" y2="176" stroke="#6B7280" stroke-width="3"/>
+  </g>
+</svg>

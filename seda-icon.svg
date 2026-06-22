@@ -1,0 +1,9 @@
+<svg width="217" height="272" viewBox="0 0 217 272" xmlns="http://www.w3.org/2000/svg">
+  <g id="seda-press-icon">
+    <path id="left-page" d="M0 0 L96 58 C135 82 153 112 153 152 L153 272 C116 207 62 178 0 169 Z" fill="#0B2341"/>
+    <path id="right-page-curve" d="M158 155 C174 113 201 79 217 70 L217 78 C199 88 176 119 164 159 Z" fill="#6B7280"/>
+    <rect id="right-page-spine" x="210" y="70" width="7" height="158" fill="#6B7280"/>
+    <path id="right-page-base" d="M153 272 C168 234 190 220 217 228 L217 235 C190 227 170 239 158 272 Z" fill="#6B7280"/>
+    <path id="bottom-page" d="M153 272 C177 241 194 239 217 245 L217 258 C192 251 176 252 153 272 Z" fill="#0B2341"/>
+  </g>
+</svg>

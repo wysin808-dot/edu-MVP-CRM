@@ -1,0 +1,31 @@
+<svg width="1643" height="515" viewBox="0 0 1643 515" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SEDA Press Logo</title>
+  <desc id="desc">Combined SEDA Press logo with book symbol and wordmark.</desc>
+  <style>
+    .brand {
+      fill: #001f4f;
+      font-family: "Times New Roman", Times, Georgia, serif;
+      font-size: 185px;
+      font-weight: 400;
+      letter-spacing: 78px;
+    }
+    .press {
+      fill: #70757a;
+      font-family: "Times New Roman", Times, Georgia, serif;
+      font-size: 72px;
+      font-weight: 400;
+      letter-spacing: 54px;
+    }
+  </style>
+  <g transform="translate(104 61)">
+    <path d="M54 20 L159 82 C200 107 222 145 222 188 L222 394 C181 329 123 296 54 286 Z" fill="#001f4f"/>
+    <path d="M226 250 C245 204 270 166 291 147 L291 324 C260 327 235 350 222 401" fill="none" stroke="#70757a" stroke-width="7" stroke-linejoin="miter" stroke-linecap="butt"/>
+    <path d="M222 401 C246 373 273 364 299 368 L299 384 C271 379 246 382 222 401 Z" fill="#001f4f"/>
+  </g>
+  <g transform="translate(558 101)">
+    <text class="brand" x="0" y="176">SEDA</text>
+    <line x1="0" y1="276" x2="154" y2="276" stroke="#70757a" stroke-width="4"/>
+    <text class="press" x="238" y="300">PRESS</text>
+    <line x1="874" y1="276" x2="1035" y2="276" stroke="#70757a" stroke-width="4"/>
+  </g>
+</svg>
