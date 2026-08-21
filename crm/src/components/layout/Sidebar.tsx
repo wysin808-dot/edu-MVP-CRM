@@ -84,20 +84,19 @@ export default function Sidebar() {
               </div>
             )}
             {group.items.map((item) => {
+              const isExternal = item.href.startsWith("http");
               const isActive =
-                pathname === item.href ||
-                (item.href !== "/dashboard" && pathname.startsWith(item.href));
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg mb-0.5 text-sm no-underline transition-colors"
-                  style={{
-                    background: isActive ? "var(--brand-light)" : "transparent",
-                    color: isActive ? "var(--brand)" : "var(--ink)",
-                    fontWeight: isActive ? 600 : 400,
-                  }}
-                >
+                !isExternal &&
+                (pathname === item.href ||
+                  (item.href !== "/dashboard" && pathname.startsWith(item.href)));
+              const linkClass = "flex items-center gap-2.5 px-3 py-2 rounded-lg mb-0.5 text-sm no-underline transition-colors";
+              const linkStyle = {
+                background: isActive ? "var(--brand-light)" : "transparent",
+                color: isActive ? "var(--brand)" : "var(--ink)",
+                fontWeight: isActive ? 600 : 400,
+              };
+              const content = (
+                <>
                   <span className="text-base">{item.icon}</span>
                   <span>{item.label}</span>
                   {item.id === "chat" && unreadTotal > 0 && (
@@ -109,6 +108,27 @@ export default function Sidebar() {
                       {unreadTotal > 99 ? "99+" : unreadTotal}
                     </span>
                   )}
+                </>
+              );
+              return isExternal ? (
+                <a
+                  key={item.id}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={linkClass}
+                  style={linkStyle}
+                >
+                  {content}
+                </a>
+              ) : (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className={linkClass}
+                  style={linkStyle}
+                >
+                  {content}
                 </Link>
               );
             })}

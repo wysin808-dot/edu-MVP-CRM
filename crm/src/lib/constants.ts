@@ -115,7 +115,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
   operator: {
     title: "运营人员",
     summary: "负责账号内容生产、提交审核、发布归档和数据回填。",
-    nav: ["dashboard", "knowledge", "accounts", "calendar", "publish-log", "crm", "coach", "chat", "ai-assistant"],
+    nav: ["dashboard", "knowledge", "accounts", "calendar", "publish-log", "crm", "coach", "chat", "ai-assistant", "bci-planner"],
     defaultUser: "运营 A",
     team: "china",
   },
@@ -124,7 +124,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
     summary: "集中检查待审核内容、账号发布进度、内容效果和线索来源。",
     nav: [
       "dashboard", "knowledge",
-      "personas", "accounts", "phone-assets", "calendar", "publish-log", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics",
+      "personas", "accounts", "phone-assets", "calendar", "publish-log", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "bci-planner",
     ],
     defaultUser: "Ocean Wang",
     team: "hq",
@@ -134,7 +134,7 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
     summary: "管理用户、角色、账号、IP、资料库和全局数据权限。",
     nav: [
       "dashboard", "knowledge",
-      "personas", "accounts", "phone-assets", "calendar", "publish-log", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings",
+      "personas", "accounts", "phone-assets", "calendar", "publish-log", "crm", "coach", "tasks", "chat", "monitor", "ai-assistant", "analytics", "settings", "bci-planner",
     ],
     defaultUser: "管理员",
     team: "hq",
@@ -142,14 +142,14 @@ export const ROLE_CONFIG: Record<UserRole, RoleConfig> = {
   ai: {
     title: "AI 内容编辑",
     summary: "基于知识库生成内容，保存 prompt、版本和采用记录。",
-    nav: ["dashboard", "knowledge", "calendar", "coach", "chat", "ai-assistant"],
+    nav: ["dashboard", "knowledge", "calendar", "coach", "chat", "ai-assistant", "bci-planner"],
     defaultUser: "AI 编辑",
     team: "china",
   },
   admission: {
     title: "招生顾问",
     summary: "跟进分配线索，查看来源内容，记录到访、报名和流失结果。",
-    nav: ["dashboard", "crm", "coach", "chat", "ai-assistant"],
+    nav: ["dashboard", "crm", "coach", "chat", "ai-assistant", "bci-planner"],
     defaultUser: "招生顾问",
     team: "china",
   },
@@ -180,6 +180,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "ai-assistant", label: "升学咨询工具", icon: "🤖", href: "/ai-assistant" },
   { id: "analytics", label: "数据复盘", icon: "📈", href: "/analytics" },
   { id: "settings", label: "系统设置", icon: "⚙️", href: "/settings" },
+  { id: "bci-planner", label: "博林升学规划", icon: "🎓", href: "http://192.168.79.51:5290/alevel/field" },
 ];
 
 export interface NavGroup {
@@ -206,7 +207,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "招生 CRM",
-    items: ["crm"],
+    items: ["crm", "bci-planner"],
   },
   {
     label: "数据复盘",
