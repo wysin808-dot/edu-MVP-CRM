@@ -180,7 +180,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: "ai-assistant", label: "升学咨询工具", icon: "🤖", href: "/ai-assistant" },
   { id: "analytics", label: "数据复盘", icon: "📈", href: "/analytics" },
   { id: "settings", label: "系统设置", icon: "⚙️", href: "/settings" },
-  { id: "bci-planner", label: "博林升学规划", icon: "🎓", href: "https://sgoa.ai/bci-planner/#/alevel/field" },
+  { id: "bci-planner", label: "博林升学规划", icon: "🎓", href: "https://sgoa.ai/planner/#/alevel/field" },
 ];
 
 export interface NavGroup {
