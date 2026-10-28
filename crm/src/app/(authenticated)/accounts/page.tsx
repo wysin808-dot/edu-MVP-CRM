@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAccountList, useCreateAccount, useUpdateAccount } from "@/hooks/useAccounts";
+import { useAccountList, useCreateAccount, useUpdateAccount, useDeleteAccount } from "@/hooks/useAccounts";
 import { usePersonaList } from "@/hooks/usePersonas";
 import { usePhoneNumberList } from "@/hooks/usePhoneNumbers";
 import { useColleagues } from "@/hooks/useMessages";
@@ -52,6 +52,7 @@ export default function AccountsPage() {
   const { data: phoneNumbers } = usePhoneNumberList();
   const createAccount = useCreateAccount();
   const updateAccount = useUpdateAccount();
+  const deleteAccount = useDeleteAccount();
 
   const [showModal, setShowModal] = useState(false);
   const [viewing, setViewing] = useState<Account | null>(null);
@@ -123,6 +124,17 @@ export default function AccountsPage() {
       setShowModal(false);
     } catch (err) {
       alert("保存失败: " + (err instanceof Error ? err.message : "未知错误"));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editing) return;
+    if (!confirm(`永久删除账号「${editing.account_name}」？\n此操作不可恢复，该账号的所有数据将被删除。`)) return;
+    try {
+      await deleteAccount.mutateAsync(editing.id);
+      setShowModal(false);
+    } catch (err) {
+      alert("删除失败: " + (err instanceof Error ? err.message : "未知错误"));
     }
   };
 
@@ -296,11 +308,19 @@ export default function AccountsPage() {
         title={editing ? `编辑账号: ${editing.account_name}` : "新建账号"}
         footer={
           <div className="flex justify-between items-center w-full">
-            {editing ? (
-              <Button variant="secondary" onClick={toggleActive} disabled={updateAccount.isPending}>
-                {editing.active === false ? "✅ 启用账号" : "⏸ 停用账号"}
-              </Button>
-            ) : <span />}
+            <div className="flex gap-2">
+              {editing && (
+                <Button variant="secondary" onClick={toggleActive} disabled={updateAccount.isPending}>
+                  {editing.active === false ? "✅ 启用账号" : "⏸ 停用账号"}
+                </Button>
+              )}
+              {editing && isAdmin && (
+                <Button variant="danger" onClick={handleDelete} disabled={deleteAccount.isPending}>
+                  {deleteAccount.isPending ? "删除中..." : "🗑 删除"}
+                </Button>
+              )}
+              {!editing && <span />}
+            </div>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => setShowModal(false)}>取消</Button>
               <Button variant="primary" onClick={handleSubmit}
